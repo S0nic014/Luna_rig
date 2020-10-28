@@ -1,7 +1,6 @@
 """Based on 2015 GDC talk by David Hunt & Forrest Sderlind https://www.youtube.com/watch?v=U_4u0kbf-JE"""
 
 import pymel.core as pm
-from pymel.core.nodetypes import Network
 from Luna import Logger
 
 
@@ -14,12 +13,12 @@ class MetaRigNode(object):
         :return: Evaluated meta class
         :rtype: Meta rig node class instance
         """
-        import Luna.rig  # noqa: F401
+        import Luna_rig  # noqa: F401
         result = None
         if node:
             node = pm.PyNode(node)
             class_string = node.metaRigType.get()
-            eval_class = eval("Luna.rig." + class_string, globals(), locals())
+            eval_class = eval("Luna_rig." + class_string, globals(), locals())
             result = eval_class.__new__(eval_class, node)
         else:
             result = super(MetaRigNode, cls)
@@ -56,7 +55,7 @@ class MetaRigNode(object):
 
         # Create node
 
-        node = pm.createNode("network")  # type: Network
+        node = pm.createNode("network")
 
         # Add attributes
         node.addAttr("version", at="long")

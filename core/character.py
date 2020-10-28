@@ -1,6 +1,6 @@
 import pymel.core as pm
 from Luna import Logger
-from Luna.rig.core import component
+from Luna_rig.core import component
 
 
 class Character(component.Component):

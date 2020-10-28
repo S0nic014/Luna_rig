@@ -1,8 +1,7 @@
-from logging import log
 import pymel.core as pm
 from Luna import Logger
-from Luna.rig.core import meta
-from Luna.rig.functions import nameFn
+from Luna_rig.core import meta
+from Luna_rig.functions import nameFn
 
 
 class _dataStruct:

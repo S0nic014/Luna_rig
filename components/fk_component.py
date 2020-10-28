@@ -1,13 +1,13 @@
 import pymel.core as pm
 from Luna import Logger
-from Luna.rig.core import component
+from Luna_rig.core import component
 
 
 class FKComponent(component.Component):
     def __init__(self, node):
         super(FKComponent, self).__init__(node)
 
-    def __create__(self):
+    def __create__(self, side, name):
         pass
 
     @staticmethod
