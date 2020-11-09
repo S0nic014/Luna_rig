@@ -1,18 +1,22 @@
 import pymel.core as pm
 from Luna import Logger
 from Luna_rig.functions import nameFn
+reload(nameFn)
 
 
-def duplicate_chain(original_chain=[], start_joint=None,
+def duplicate_chain(original_chain=[],
+                    start_joint=None,
                     end_joint=None,
                     add_name="",
                     replace_name="",
                     replace_side="",
-                    replace_suffix=""):
+                    replace_suffix="",
+                    new_parent=None):
+
     if not original_chain:
         original_chain = joint_chain(start_joint, end_joint)
 
-    new_chain = pm.duplicate(original_chain, po=1, rc=1)
+    new_chain = pm.duplicate(original_chain, po=1, rc=1)  # type :list
     for old_jnt, new_jnt in zip(original_chain, new_chain):
         original_name = nameFn.deconstruct_name(str(old_jnt))
         if replace_name:
@@ -27,11 +31,17 @@ def duplicate_chain(original_chain=[], start_joint=None,
         new_name = nameFn.generate_name(original_name.name, original_name.side, original_name.suffix)
         new_jnt.rename(new_name)
 
+    if new_parent:
+        if new_parent == "world":
+            pm.parent(new_chain[0], w=1)
+        else:
+            pm.parent(new_chain[0], new_parent)
+
     return new_chain
 
 
 def joint_chain(start_joint, end_joint=None):
-    """Get joint from start joint. Optionally slice the chain at end joint.
+    """Get joint chain from start joint. Optionally slice the chain at end joint.
 
     :param start_joint: First joint in the chain
     :type start_joint: str,PyNode

@@ -20,9 +20,12 @@ def generate_name(name, side="", suffix=""):
         side += "_"
     if suffix:
         suffix = "_" + suffix
+    if isinstance(name, list):
+        name = "_".join(name)
 
     index = 0
     version = '_{0:02}'.format(index)
+
     full_name = side + name + version + suffix
     while pm.objExists(full_name):
         index += 1
