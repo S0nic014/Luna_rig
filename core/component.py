@@ -19,6 +19,9 @@ class Component(meta.MetaRigNode):
         super(Component, self).__init__(node)
         self.data = _dataStruct()
 
+    def __eq__(self, other):
+        return self.pynode == other.pynode
+
     def __create__(self, side, name):
         # Store data in a struct
         self.data.side = side
@@ -28,10 +31,21 @@ class Component(meta.MetaRigNode):
 
     @ staticmethod
     def create(meta_parent, meta_type, version, side="c", name="component"):
+        if isinstance(meta_parent, meta.MetaRigNode):
+            meta_parent = meta_parent.pynode
+
+        meta_type = Component._type_to_str(meta_type)
         obj_instance = super(Component, Component).create(meta_parent, meta_type, version)  # type: Component
         obj_instance.__create__(side, name)
 
         return obj_instance
+
+    @staticmethod
+    def _type_to_str(meta_type):
+        meta_module = meta_type.__module__.replace("Luna_rig.", "")
+        meta_name = meta_type.__name__
+        meta_type_str = ".".join([meta_module, meta_name])
+        return meta_type_str
 
     def get_name(self):
         return nameFn.deconstruct_name(self.pynode)
@@ -51,15 +65,16 @@ class Component(meta.MetaRigNode):
 
     def get_meta_parent(self):
         result = None
-        connections = self.pynode.listConnections()
+        connections = self.pynode.metaParent.listConnections()
         if connections:
-            result = Component(connections[0])
+            result = meta.MetaRigNode(connections[0])
         return result
 
     def attach_to_component(self, parent):
         if not isinstance(parent, Component):
             parent = meta.MetaRigNode(parent)
-        self.pynode.metaParent.connect(parent.pynode.metaChildren, na=1)
+        if parent.pynode not in self.pynode.metaParent.listConnections():
+            self.pynode.metaParent.connect(parent.pynode.metaChildren, na=1)
 
 
 class AnimComponent(Component):
@@ -103,8 +118,10 @@ class AnimComponent(Component):
         self.group.parts.metaParent.connect(self.pynode.partsGroup)
 
     @ staticmethod
-    def create(meta_parent, meta_type, version, side="c", name="animComponent"):
-        obj_instance = super(AnimComponent, AnimComponent).create(meta_parent, meta_type, version, side, name)
+    def create(meta_parent=None, meta_type=None, version=1, side="c", name="anim_component"):  # noqa:F821
+        if not meta_type:
+            meta_type = AnimComponent
+        obj_instance = super(AnimComponent, AnimComponent).create(meta_parent, meta_type, version, side, name)  # type: AnimComponent
 
         return obj_instance
 

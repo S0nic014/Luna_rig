@@ -3,13 +3,15 @@ from Luna import Logger
 from Luna_rig.core import component
 
 
-class FKComponent(component.Component):
+class FKComponent(component.AnimComponent):
     def __init__(self, node):
         super(FKComponent, self).__init__(node)
 
     def __create__(self, side, name):
-        pass
+        super(FKComponent, self).__create__(side, name)
 
     @staticmethod
-    def create(meta_parent, meta_type, version):
-        return super(FKComponent, FKComponent).create(meta_parent, meta_type, version)
+    def create(meta_parent=None, version=1, side="c", name="fk_component"):  # noqa:F821
+        obj_instance = super(FKComponent, FKComponent).create(meta_parent, FKComponent, version, side, name)  # type: FKComponent
+
+        return obj_instance
