@@ -91,6 +91,12 @@ class AnimComponent(Component):
         super(AnimComponent, self).__init__(node)
         self.group = _groupStruct()
 
+        if pm.hasAttr(self.pynode, "rootGroup"):
+            self.group.root = self.pynode.rootGroup.listConnections()[0]
+            self.group.ctls = self.pynode.ctlsGroup.listConnections()[0]
+            self.group.joints = self.pynode.jointsGroup.listConnections()[0]
+            self.group.parts = self.pynode.partsGroup.listConnections()[0]
+
     def __create__(self, side, name):
         super(AnimComponent, self).__create__(side, name)
 
