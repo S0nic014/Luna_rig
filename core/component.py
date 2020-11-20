@@ -11,6 +11,14 @@ class _dataStruct:
         self.fullname = None  # type: str
 
 
+class _groupStruct:
+    def __init__(self):
+        self.root = None
+        self.ctls = None
+        self.joints = None
+        self.parts = None
+
+
 class Component(meta.MetaRigNode):
     def __new__(cls, node=None):
         return object.__new__(cls, node)
@@ -78,21 +86,10 @@ class Component(meta.MetaRigNode):
 
 
 class AnimComponent(Component):
-    class _groupStruct:
-        def __init__(self):
-            self.root = None
-            self.ctls = None
-            self.joints = None
-            self.parts = None
-
-    class _controlStruct:
-        def __init__(self):
-            pass
 
     def __init__(self, node):
         super(AnimComponent, self).__init__(node)
-        self.group = self._groupStruct()
-        self.controls = self._controlStruct()
+        self.group = _groupStruct()
 
     def __create__(self, side, name):
         super(AnimComponent, self).__create__(side, name)
