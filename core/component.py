@@ -1,7 +1,8 @@
 import pymel.core as pm
 from Luna import Logger
-from Luna_rig.core import meta
 from Luna_rig.functions import nameFn
+from Luna_rig.core.meta import MetaRigNode
+from Luna_rig.core.control import Control
 
 
 class _dataStruct:
@@ -19,7 +20,7 @@ class _groupStruct:
         self.parts = None
 
 
-class Component(meta.MetaRigNode):
+class Component(MetaRigNode):
     def __new__(cls, node=None):
         return object.__new__(cls, node)
 
@@ -31,6 +32,15 @@ class Component(meta.MetaRigNode):
         return self.pynode == other.pynode
 
     def __create__(self, side, name):
+        """Override
+        Base creation method. Called after object instance is created in "create" method.
+
+        :param side: Component side.
+        :type side: str
+        :param name: Component name
+        :type name: str
+        """
+
         # Store data in a struct
         self.data.side = side
         self.data.name = name
@@ -39,50 +49,80 @@ class Component(meta.MetaRigNode):
 
     @ staticmethod
     def create(meta_parent, meta_type, version, side="c", name="component"):
-        if isinstance(meta_parent, meta.MetaRigNode):
+        """Creates instance of component
+
+        :param meta_parent: Other Component to parent to.
+        :type meta_parent: Component
+        :param meta_type: Component class.
+        :type meta_type: Class
+        :param version: Component version.
+        :type version: int
+        :param side: Component side, defaults to "c"
+        :type side: str, optional
+        :param name: Component name, defaults to "component"
+        :type name: str, optional
+        :return: New component instance.
+        :rtype: Component
+        """
+        if isinstance(meta_parent, MetaRigNode):
             meta_parent = meta_parent.pynode
 
-        meta_type = Component._type_to_str(meta_type)
         obj_instance = super(Component, Component).create(meta_parent, meta_type, version)  # type: Component
         obj_instance.__create__(side, name)
 
         return obj_instance
 
-    @staticmethod
-    def _type_to_str(meta_type):
-        meta_module = meta_type.__module__.replace("Luna_rig.", "")
-        meta_name = meta_type.__name__
-        meta_type_str = ".".join([meta_module, meta_name])
-        return meta_type_str
-
     def get_name(self):
+        """Get component name parts
+
+        :return: Name struct with members: {side, name, index, suffix}
+        :rtype: nameStruct
+        """
         return nameFn.deconstruct_name(self.pynode)
 
     def get_meta_children(self, of_type=None):
+        """Get list of connected meta children
+
+        :param of_type: Only list children of specific type, defaults to None
+        :type of_type: class, optional
+        :return: List of meta children instances
+        :rtype: list[MetaRigNode]
+        """
         result = []
         if self.pynode.hasAttr("metaChildren"):
             connections = self.pynode.listConnections()
             if connections:
-                children = [meta.MetaRigNode(connection_node) for connection_node in connections if pm.hasAttr(connection_node, "metaRigType")]
+                children = [MetaRigNode(connection_node) for connection_node in connections if pm.hasAttr(connection_node, "metaRigType")]
                 if not of_type:
                     result = children
                 else:
-                    result = [child for child in children if isinstance(child, of_type)]
+                    if isinstance(of_type, str):
+                        result = [child for child in children if of_type in child.as_str()]
+                    else:
+                        result = [child for child in children if isinstance(child, of_type)]
 
         return result
 
     def get_meta_parent(self):
+        """Get instance of meta parent
+
+        :return: Meta parent Component instance.
+        :rtype: Component
+        """
         result = None
         connections = self.pynode.metaParent.listConnections()
         if connections:
-            result = meta.MetaRigNode(connections[0])
+            result = MetaRigNode(connections[0])
         return result
 
-    def attach_to_component(self, parent):
-        if not isinstance(parent, Component):
-            parent = meta.MetaRigNode(parent)
-        if parent.pynode not in self.pynode.metaParent.listConnections():
-            self.pynode.metaParent.connect(parent.pynode.metaChildren, na=1)
+    def attach_to_component(self, other_comp):
+        if not isinstance(other_comp, Component):
+            other_comp = MetaRigNode(other_comp)
+        if other_comp.pynode not in self.pynode.metaParent.listConnections():
+            self.pynode.metaParent.connect(other_comp.pynode.metaChildren, na=1)
+
+    def connect_to_character(self, character):
+        pass
 
 
 class AnimComponent(Component):
@@ -98,6 +138,14 @@ class AnimComponent(Component):
             self.group.parts = self.pynode.partsGroup.listConnections()[0]
 
     def __create__(self, side, name):
+        """Override
+        Base creation method. Called after object instance is created in "create" method.
+
+        :param side: Component side.
+        :type side: str
+        :param name: Component name
+        :type name: str
+        """
         super(AnimComponent, self).__create__(side, name)
 
         # Create hierarchy
@@ -113,6 +161,8 @@ class AnimComponent(Component):
         self.pynode.addAttr("ctlsGroup", at="message")
         self.pynode.addAttr("jointsGroup", at="message")
         self.pynode.addAttr("partsGroup", at="message")
+        self.pynode.addAttr("bindJoints", at="message", multi=1, im=0)
+        self.pynode.addAttr("controls", at="message", multi=1, im=0)
 
         # Connect hierarchy to meta
         self.group.root.metaParent.connect(self.pynode.rootGroup)
@@ -120,44 +170,115 @@ class AnimComponent(Component):
         self.group.joints.metaParent.connect(self.pynode.jointsGroup)
         self.group.parts.metaParent.connect(self.pynode.partsGroup)
 
-    @ staticmethod
-    def create(meta_parent=None, meta_type=None, version=1, side="c", name="anim_component"):  # noqa:F821
+    @staticmethod
+    def create(meta_parent=None,
+               meta_type=None,
+               version=1,
+               side="c",
+               name="anim_component"):  # noqa:F821
+        """Create AnimComponent hierarchy in the scene and instance.
+
+        :param meta_parent: Other Rig element to connect to, defaults to None
+        :type meta_parent: AnimComponent, optional
+        :param meta_type: Component class if None will use generic AnimComponent, defaults to None
+        :type meta_type: class, optional
+        :param version: Component version, defaults to 1
+        :type version: int, optional
+        :param side: Component side, used for naming, defaults to "c"
+        :type side: str, optional
+        :param name: Component name. If list - items will be connected by underscore, defaults to "anim_component"
+        :type name: str, list[str], optional
+        :return: New instance of AnimComponent.
+        :rtype: AnimComponent
+        """
+
         if not meta_type:
             meta_type = AnimComponent
         obj_instance = super(AnimComponent, AnimComponent).create(meta_parent, meta_type, version, side, name)  # type: AnimComponent
 
         return obj_instance
 
-    def populate_structs(self):
-        # Populate structs from message connections
-        self.group.root = self.pynode.rootGroup.get()
+    def remove(self):
+        """Delete component from scene"""
+        pm.delete(self.group.root)
 
     def get_controls(self):
-        pass
+        """Get list of component controls.
+
+        :return: List of all component controls.
+        :rtype: list[Control]
+        """
+        connected_nodes = self.pynode.controls.listConnections()
+        return [Control(node) for node in connected_nodes]
 
     def get_bind_joints(self):
-        pass
+        """Get list of component bind joints.
+
+        :return: List of component bind joints.
+        :rtype: list[PyNode]
+        """
+        return self.pynode.bindJoints.listConnections()
 
     def select_controls(self):
-        pass
+        """Select all component controls"""
+        controls = self.get_controls()
+        for ctl in controls:
+            ctl.transform.select(add=1)
 
     def key_controls(self):
+        """Override: key all componets controls"""
         pass
 
     def attach_to_skeleton(self):
-        pass
-
-    def remove(self):
+        """Override: attach to skeleton"""
         pass
 
     def bake_to_skeleton(self):
-        pass
-
-    def bake_to_rig(self):
+        """Override: bake animation to skeleton"""
         pass
 
     def bake_and_detach(self):
         pass
 
-    def to_default_pose(self):
+    def bake_to_rig(self):
+        """Override: reverse bake to rig"""
         pass
+
+    def to_default_pose(self):
+        """Override: revert all controls to default values"""
+        pass
+
+    def attach_to_component(self, other_comp):
+        """Attach to other component.
+
+        :param other_comp: Component to attach to.
+        :type other_comp: Component
+        """
+        super(AnimComponent, self).attach_to_component(other_comp)
+        # TODO: add parenting/constraining?
+
+    def connect_to_character(self, character_name=""):
+        """Connect component to character
+
+        :param character_name: Specific character to connect to, defaults to ""
+        :type character_name: str, optional
+        """
+        character = None
+        all_characters = MetaRigNode.list_nodes("Character")
+        if not all_characters:
+            Logger.error("No characters found in the scene!")
+            return
+
+        if character_name:
+            for char_node in all_characters:
+                if char_node.pynode.characterName.get() == character_name:
+                    character = char_node
+                    break
+            if character is None:
+                Logger.error("No character: {0} found!".format(character_name))
+                return
+        else:
+            character = all_characters[0]
+
+        self.pynode.message.connect(character.pynode.metaChildren, na=1)
+        pm.parent(self.group.root, character.hierarchy.control_rig)

@@ -17,8 +17,13 @@ class _hierachyStruct:
 
 class Character(component.Component):
     def __init__(self, node):
+        """Character constructor.
+        Can be used to instansiate Character object from meta network node.
+
+        :param node: Node to instansiate from.
+        :type node: str, PyNode
+        """
         super(Character, self).__init__(node)
-        Logger.debug(pm.listAttr(self.pynode))
         self.hierarchy = _hierachyStruct()
 
         if pm.hasAttr(self.pynode, "rootCtl"):
@@ -30,9 +35,14 @@ class Character(component.Component):
             self.hierarchy.world_loc = self.pynode.worldLocator.listConnections()[0]
 
     def __create__(self, side, name):
-        super(Character, self).__create__(side, name)
+        """Create new character instance and hierarchy of nodes.
 
-        Logger.debug("CREATE CALL")
+        :param side: Character side. Not used, will be defaulted to "char"
+        :type side: str
+        :param name: Character name
+        :type name: str
+        """
+        super(Character, self).__create__(side, name)
 
         # Create hierarchy nodes
         self.hierarchy.root_ctl = control.Control.create(name="character_node", side="c", offset_grp=False)
@@ -44,6 +54,7 @@ class Character(component.Component):
         pm.parent(self.hierarchy.world_loc, self.hierarchy.locators_grp)
 
         # Add message attrs to meta node
+        self.pynode.addAttr("characterName", dt="string")
         self.pynode.addAttr("rootCtl", at="message")
         self.pynode.addAttr("controlRig", at="message")
         self.pynode.addAttr("deformationRig", at="message")
@@ -56,6 +67,7 @@ class Character(component.Component):
             node.addAttr("metaParent", at="message")
 
         # Connect to meta node
+        self.pynode.characterName.set(name)
         self.hierarchy.root_ctl.transform.metaParent.connect(self.pynode.rootCtl)
         self.hierarchy.control_rig.metaParent.connect(self.pynode.controlRig)
         self.hierarchy.deformation_rig.metaParent.connect(self.pynode.deformationRig)
@@ -63,7 +75,41 @@ class Character(component.Component):
         self.hierarchy.locators_grp.metaParent.connect(self.pynode.locatorsGroup)
         self.hierarchy.world_loc.metaParent.connect(self.pynode.worldLocator)
 
+        # Set attributes on members
+        # Merge scale to make uniform
+        self.hierarchy.root_ctl.transform.addAttr("Scale", defaultValue=1.0, shortName="us", at="float")
+        self.hierarchy.root_ctl.transform.Scale.connect(self.hierarchy.root_ctl.transform.scaleX)
+        self.hierarchy.root_ctl.transform.Scale.connect(self.hierarchy.root_ctl.transform.scaleY)
+        self.hierarchy.root_ctl.transform.Scale.connect(self.hierarchy.root_ctl.transform.scaleZ)
+
+        # Visibility
+        self.hierarchy.locators_grp.visibility.set(0)
+
     @staticmethod
     def create(meta_parent=None, version=1, name="character"):
-        obj_instance = super(Character, Character).create(meta_parent, Character, version, name=name)  # type: Character
+        """Creation method, will call base AnimComponent.create and then __create__. 
+
+        :param meta_parent: Not used, defaults to None
+        :type meta_parent: Component, optional
+        :param version: Character version, defaults to 1
+        :type version: int, optional
+        :param name: Character name, defaults to "character"
+        :type name: str, optional
+        :return: New character instance.
+        :rtype: Character
+        """
+        obj_instance = super(Character, Character).create(meta_parent, Character, version, name=name, side="char")  # type: Character
         return obj_instance
+
+    def list_geometry(self):
+        """List geometry nodes under geometry group.
+
+        :return: List of nodes.
+        :rtype: list[PyNode]
+        """
+        result = []
+        for child in self.hierarchy.geometry_grp.listRelatives(ad=1):
+            if isinstance(child, pm.nodetypes.Mesh):
+                result.append(child)
+
+        return result

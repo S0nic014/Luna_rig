@@ -5,6 +5,19 @@ from Luna import Logger
 
 
 class MetaRigNode(object):
+
+    @classmethod
+    def as_str(cls):
+        """Get a string representation of class path.
+
+        :return: Class string
+        :rtype: str
+        """
+        meta_module = cls.__module__
+        meta_name = cls.__name__
+        meta_type_str = ".".join([meta_module, meta_name])
+        return meta_type_str
+
     def __new__(cls, node=None):
         """Initialize class stored in metaRigType attribute and return a intance of it.
 
@@ -18,7 +31,7 @@ class MetaRigNode(object):
         if node:
             node = pm.PyNode(node)
             class_string = node.metaRigType.get()
-            eval_class = eval("Luna_rig." + class_string, globals(), locals())
+            eval_class = eval(class_string, globals(), locals())
             result = eval_class.__new__(eval_class, node)
         else:
             result = super(MetaRigNode, cls)
@@ -54,7 +67,6 @@ class MetaRigNode(object):
             meta_parent = MetaRigNode(meta_parent)
 
         # Create node
-
         node = pm.createNode("network")
 
         # Add attributes
@@ -63,7 +75,7 @@ class MetaRigNode(object):
         node.addAttr("metaChildren", at="message", multi=1, im=0)
         node.addAttr("metaParent", at="message")
         node.version.set(version)
-        node.metaRigType.set(meta_type)
+        node.metaRigType.set(meta_type.as_str())
         node = MetaRigNode(node)
         if meta_parent:
             node.set_meta_parent(meta_parent)
@@ -72,3 +84,24 @@ class MetaRigNode(object):
 
     def set_meta_parent(self, parent):
         self.pynode.metaParent.connect(parent.pynode.metaChildren, na=1)
+
+    @staticmethod
+    def list_nodes(of_type=None):
+        """List Metarig nodes
+
+        :param of_type: List only specific type, defaults to None
+        :type of_type: str, class, optional
+        :return: List of MetaRigNode instances.
+        :rtype: list[MetaRigNode]
+        """
+        result = []
+        all_nodes = [MetaRigNode(node) for node in pm.ls(typ="network") if node.hasAttr("metaRigType")]
+        if of_type:
+            if isinstance(of_type, str):
+                result = [node for node in all_nodes if of_type in node.as_str()]
+            else:
+                result = [node for node in all_nodes if isinstance(node, of_type)]
+        else:
+            result = all_nodes
+
+        return result

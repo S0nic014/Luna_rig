@@ -71,25 +71,26 @@ class Control():
         # Group
         offset_node = None
         ctl_joint = None
-        group_node = pm.createNode('transform', n=nameFn.generate_name(name, side, suffix="grp"), p=parent)
-        parent = group_node
+        temp_parent = parent
+
+        group_node = pm.createNode('transform', n=nameFn.generate_name(name, side, suffix="grp"), p=temp_parent)
+        temp_parent = group_node
         if object_to_match:
             pm.matchTransform(group_node, object_to_match, pos=match_pos, rot=match_orient, piv=match_pivot)
             if delete_match_object:
                 pm.delete(object_to_match)
         # Offset
         if offset_grp:
-            offset_node = pm.createNode('transform', n=nameFn.generate_name(name, side, suffix="ofs"), p=parent)
-            parent = offset_node
+            offset_node = pm.createNode('transform', n=nameFn.generate_name(name, side, suffix="ofs"), p=temp_parent)
+            temp_parent = offset_node
 
         # Transform
-        transform_node = pm.createNode('transform', n=nameFn.generate_name(name, side, suffix="ctl"), p=parent)
-
-        parent = transform_node
+        transform_node = pm.createNode('transform', n=nameFn.generate_name(name, side, suffix="ctl"), p=temp_parent)
+        temp_parent = transform_node
 
         # Joint
         if joint:
-            ctl_joint = pm.createNode('joint', n=nameFn.generate_name([name, "ctl"], side, suffix="jnt"), p=parent)
+            ctl_joint = pm.createNode('joint', n=nameFn.generate_name([name, "ctl"], side, suffix="jnt"), p=temp_parent)
             ctl_joint.visibility.set(0)
 
         # Tag node
@@ -117,6 +118,8 @@ class Control():
 
         # Connect to tag node
         group_node.metaParent.connect(tag_node.group)
+        if parent:
+            parent.message.connect(tag_node.parent)
         if offset_node:
             offset_node.metaParent.connect(tag_node.offset, na=1)
         if ctl_joint:
@@ -125,7 +128,27 @@ class Control():
         return instance
 
     def set_parent(self, parent):
+        if not parent:
+            self.tag_node.parent.disconnect()
+            pm.parent(self.group, w=1)
+            return
+
+        if isinstance(parent, str):
+            parent = pm.PyNode(parent)
+
+        if isinstance(parent, Control):
+            parent = parent.transform
+
         pm.parent(self.group, parent)
+        parent.message.connect(self.tag_node.parent, f=1)
+
+    def get_parent(self):
+        result = None
+        conn = self.tag_node.parent.listConnections()
+        if conn:
+            result = conn[0]  # type: pm.PyNode
+
+        return result
 
     def lock_attrib(self, exclude_attr, channel_box=False):
         Logger.debug("TODO: {0} - locking attributes. Excluding: {1}".format(self.transform, exclude_attr))
@@ -168,9 +191,3 @@ class Control():
 
     def get_color(self):
         Logger.debug("TODO: {0} - getting ctl color...")
-
-
-if __name__ == "__main__":
-    # ctl = Control.create(name="arm_ik", side="l", object_to_match="C_temp_LOC", joint=1)
-    test_control = Control("l_arm_ik_00_ctl")
-    test_control.insert_offset(extra_name="new")
