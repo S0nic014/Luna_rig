@@ -1,8 +1,9 @@
 import pymel.core as pm
 from Luna import Logger
+from Luna.static import names
 from Luna_rig.core import component
 from Luna_rig.core import control
-from Luna.static import names
+from Luna_rig.functions import attrFn
 
 
 class _hierachyStruct:
@@ -16,6 +17,9 @@ class _hierachyStruct:
 
 
 class Character(component.Component):
+    def __repr__(self):
+        return "Character component: ({0}, version: {1})".format(self.pynode.characterName.get(), self.pynode.version.get())
+
     def __init__(self, node):
         """Character constructor.
         Can be used to instansiate Character object from meta network node.
@@ -34,6 +38,9 @@ class Character(component.Component):
             self.hierarchy.locators_grp = self.pynode.locatorsGroup.listConnections()[0]
             self.hierarchy.world_loc = self.pynode.worldLocator.listConnections()[0]
 
+        # Signals
+        self.signals.created.emit()
+
     def __create__(self, side, name):
         """Create new character instance and hierarchy of nodes.
 
@@ -46,12 +53,19 @@ class Character(component.Component):
 
         # Create hierarchy nodes
         self.hierarchy.root_ctl = control.Control.create(name="character_node", side="c", offset_grp=False)
+        self.hierarchy.root_ctl.rename(index="")
         self.hierarchy.control_rig = pm.createNode('transform', n=names.Character.control_rig.value, p=self.hierarchy.root_ctl.transform)
         self.hierarchy.deformation_rig = pm.createNode('transform', n=names.Character.deformation_rig.value, p=self.hierarchy.root_ctl.transform)
-        self.hierarchy.geometry_grp = pm.createNode('transform', n=names.Character.geometry.value, p=self.hierarchy.root_ctl.transform)
         self.hierarchy.locators_grp = pm.createNode('transform', n=names.Character.locators.value, p=self.hierarchy.root_ctl.transform)
         self.hierarchy.world_loc = pm.spaceLocator(n=names.Character.world_space.value)
         pm.parent(self.hierarchy.world_loc, self.hierarchy.locators_grp)
+
+        # Handle geometry group
+        if not pm.objExists(names.Character.geometry.value):
+            self.hierarchy.geometry_grp = pm.createNode('transform', n=names.Character.geometry.value, p=self.hierarchy.root_ctl.transform)
+        else:
+            self.hierarchy.geometry_grp = pm.PyNode(names.Character.geometry.value)
+            pm.parent(self.hierarchy.geometry_grp, self.hierarchy.root_ctl.transform)
 
         # Add message attrs to meta node
         self.pynode.addAttr("characterName", dt="string")
@@ -75,9 +89,9 @@ class Character(component.Component):
         self.hierarchy.locators_grp.metaParent.connect(self.pynode.locatorsGroup)
         self.hierarchy.world_loc.metaParent.connect(self.pynode.worldLocator)
 
-        # Set attributes on members
+        # Edit attributes
         # Merge scale to make uniform
-        self.hierarchy.root_ctl.transform.addAttr("Scale", defaultValue=1.0, shortName="us", at="float")
+        self.hierarchy.root_ctl.transform.addAttr("Scale", defaultValue=1.0, shortName="us", at="float", keyable=1)
         self.hierarchy.root_ctl.transform.Scale.connect(self.hierarchy.root_ctl.transform.scaleX)
         self.hierarchy.root_ctl.transform.Scale.connect(self.hierarchy.root_ctl.transform.scaleY)
         self.hierarchy.root_ctl.transform.Scale.connect(self.hierarchy.root_ctl.transform.scaleZ)
@@ -85,9 +99,12 @@ class Character(component.Component):
         # Visibility
         self.hierarchy.locators_grp.visibility.set(0)
 
+        # Lock
+        attrFn.lock(self.hierarchy.root_ctl.transform, ["sx", "sy", "sz"])
+
     @staticmethod
     def create(meta_parent=None, version=1, name="character"):
-        """Creation method, will call base AnimComponent.create and then __create__. 
+        """Creation method, will call base AnimComponent.create and then __create__.
 
         :param meta_parent: Not used, defaults to None
         :type meta_parent: Component, optional
@@ -112,4 +129,14 @@ class Character(component.Component):
             if isinstance(child, pm.nodetypes.Mesh):
                 result.append(child)
 
+        return result
+
+    @staticmethod
+    def find(name):
+        result = []
+        for character_node in Character.list_nodes(of_type=Character):
+            if character_node.pynode.characterName.get() == name:
+                result.append(character_node)
+        if len(result) == 1:
+            return result[0]
         return result

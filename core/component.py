@@ -1,4 +1,6 @@
 import pymel.core as pm
+from PySide2 import QtCore
+
 from Luna import Logger
 from Luna_rig.functions import nameFn
 from Luna_rig.core.meta import MetaRigNode
@@ -20,6 +22,11 @@ class _groupStruct:
         self.parts = None
 
 
+class _compSignals(QtCore.QObject):
+    created = QtCore.Signal()
+    removed = QtCore.Signal()
+
+
 class Component(MetaRigNode):
     def __new__(cls, node=None):
         return object.__new__(cls, node)
@@ -27,6 +34,7 @@ class Component(MetaRigNode):
     def __init__(self, node):
         super(Component, self).__init__(node)
         self.data = _dataStruct()
+        self.signals = _compSignals()
 
     def __eq__(self, other):
         return self.pynode == other.pynode
@@ -201,6 +209,7 @@ class AnimComponent(Component):
     def remove(self):
         """Delete component from scene"""
         pm.delete(self.group.root)
+        self.signals.removed.emit()
 
     def get_controls(self):
         """Get list of component controls.

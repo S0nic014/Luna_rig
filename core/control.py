@@ -12,6 +12,9 @@ class _dataStruct:
 
 
 class Control():
+    def __repr__(self):
+        return "Control({0}), Offsets: {1}".format(self.transform, self.offset_list)
+
     def __init__(self, node):
         self.data = _dataStruct()
 
@@ -96,7 +99,6 @@ class Control():
         # Tag node
         pm.controller(transform_node)
         tag_node = transform_node.listConnections(t="controller")[0]
-        Logger.debug(tag_node)
         tag_node.addAttr("group", at="message")
         tag_node.addAttr("offset", at="message", multi=1, im=0)
         tag_node.addAttr("joint", at="message")
@@ -191,3 +193,7 @@ class Control():
 
     def get_color(self):
         Logger.debug("TODO: {0} - getting ctl color...")
+
+    def rename(self, side=None, name=None, index=None, suffix=None):
+        for node in [self.group, self.transform, self.joint] + self.offset_list:
+            nameFn.rename(node, side, name, index, suffix)

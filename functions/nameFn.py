@@ -15,6 +15,27 @@ def deconstruct_name(full_name):
     return _nameStruct()
 
 
+def rename(node, side=None, name=None, index=None, suffix=None):
+    if node is None:
+        return
+
+    old_name = str(node)
+    name_parts = deconstruct_name(old_name)
+    if side is not None:
+        name_parts.side = side
+    if name is not None:
+        name_parts.name = name
+    if index is not None:
+        name_parts.index = index
+    if side is not None:
+        name_parts.suffix = suffix
+
+    if isinstance(name_parts.name, list):
+        name_parts.name = "_".join(name_parts.name)
+    new_name = "_".join([name_parts.side, name_parts.name, name_parts.index, name_parts.suffix])
+    pm.rename(node, new_name)
+
+
 def generate_name(name, side="", suffix=""):
     if side:
         side += "_"
