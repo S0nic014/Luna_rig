@@ -4,6 +4,7 @@ from Luna.static import names
 from Luna_rig.core import component
 from Luna_rig.core import control
 from Luna_rig.functions import attrFn
+from Luna_rig.functions import outlinerFn
 
 
 class _hierachyStruct:
@@ -52,7 +53,7 @@ class Character(component.Component):
         super(Character, self).__create__(side, name)
 
         # Create hierarchy nodes
-        self.hierarchy.root_ctl = control.Control.create(name="character_node", side="c", offset_grp=False)
+        self.hierarchy.root_ctl = control.Control.create(name="character_node", side="c", offset_grp=False, attributes="trs")
         self.hierarchy.root_ctl.rename(index="")
         self.hierarchy.control_rig = pm.createNode('transform', n=names.Character.control_rig.value, p=self.hierarchy.root_ctl.transform)
         self.hierarchy.deformation_rig = pm.createNode('transform', n=names.Character.deformation_rig.value, p=self.hierarchy.root_ctl.transform)
@@ -98,9 +99,10 @@ class Character(component.Component):
 
         # Visibility
         self.hierarchy.locators_grp.visibility.set(0)
-
         # Lock
         attrFn.lock(self.hierarchy.root_ctl.transform, ["sx", "sy", "sz"])
+        # Colors
+        outlinerFn.set_color(self.hierarchy.root_ctl.group, rgb=[0.6, 0.8, 0.9])
 
     @staticmethod
     def create(meta_parent=None, version=1, name="character"):

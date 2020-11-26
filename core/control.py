@@ -1,8 +1,9 @@
 
 import pymel.core as pm
+from Luna import Logger
 from Luna.static import colors
 from Luna_rig.functions import nameFn
-from Luna import Logger
+from Luna_rig.functions import attrFn
 
 
 class _dataStruct:
@@ -153,7 +154,21 @@ class Control():
         return result
 
     def lock_attrib(self, exclude_attr, channel_box=False):
-        Logger.debug("TODO: {0} - locking attributes. Excluding: {1}".format(self.transform, exclude_attr))
+        to_lock = ['tx', 'ty', 'tz',
+                   'rx', 'ry', 'rz',
+                   'sx', 'sy', 'sz',
+                   'v']
+        exclude_attr = list(exclude_attr)
+
+        for attr in exclude_attr:
+            if attr in list("trs"):
+                for axis in "xyz":
+                    to_lock.remove(attr + axis)
+            else:
+                to_lock.remove(attr)
+
+        attrFn.lock(self.transform, to_lock, channel_box)
+        Logger.debug("{0} - locked attributes: {1}".format(self.transform, to_lock))
 
     def insert_offset(self, extra_name="extra"):
         Logger.debug("TODO: {0} - inserting offset with extra name: {1}".format(self.transform, extra_name))
