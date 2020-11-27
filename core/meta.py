@@ -50,8 +50,8 @@ class MetaRigNode(object):
             raise TypeError("{0} is not a valid meta rig node".format(str(node)))
         self.pynode = node  # type: pm.PyNode
 
-    @staticmethod
-    def create(meta_parent, meta_type, version):
+    @classmethod
+    def create(cls, meta_parent, version):
         """Creates meta node and calls constructor for MetaRigNode using meta_type.
 
         :param meta_parent: Meta parent node to connect to
@@ -75,12 +75,11 @@ class MetaRigNode(object):
         node.addAttr("metaChildren", at="message", multi=1, im=0)
         node.addAttr("metaParent", at="message")
         node.version.set(version)
-        node.metaRigType.set(meta_type.as_str())
-        node = MetaRigNode(node)
+        node.metaRigType.set(cls.as_str())
+        meta_node = MetaRigNode(node)
         if meta_parent:
-            node.set_meta_parent(meta_parent)
-
-        return node
+            meta_node.set_meta_parent(meta_parent)
+        return meta_node
 
     def set_meta_parent(self, parent):
         self.pynode.metaParent.connect(parent.pynode.metaChildren, na=1)

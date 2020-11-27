@@ -55,8 +55,8 @@ class Component(MetaRigNode):
 
         self.pynode.rename(nameFn.generate_name(name, side, suffix="meta"))
 
-    @ staticmethod
-    def create(meta_parent, meta_type, version, side="c", name="component"):
+    @ classmethod
+    def create(cls, meta_parent, version, side="c", name="component"):
         """Creates instance of component
 
         :param meta_parent: Other Component to parent to.
@@ -75,7 +75,7 @@ class Component(MetaRigNode):
         if isinstance(meta_parent, MetaRigNode):
             meta_parent = meta_parent.pynode
 
-        obj_instance = super(Component, Component).create(meta_parent, meta_type, version)  # type: Component
+        obj_instance = super(Component, cls).create(meta_parent, version)  # type: Component
         obj_instance.__create__(side, name)
 
         return obj_instance
@@ -178,9 +178,9 @@ class AnimComponent(Component):
         self.group.joints.metaParent.connect(self.pynode.jointsGroup)
         self.group.parts.metaParent.connect(self.pynode.partsGroup)
 
-    @staticmethod
-    def create(meta_parent=None,
-               meta_type=None,
+    @classmethod
+    def create(cls,
+               meta_parent=None,
                version=1,
                side="c",
                name="anim_component"):  # noqa:F821
@@ -200,9 +200,7 @@ class AnimComponent(Component):
         :rtype: AnimComponent
         """
 
-        if not meta_type:
-            meta_type = AnimComponent
-        obj_instance = super(AnimComponent, AnimComponent).create(meta_parent, meta_type, version, side, name)  # type: AnimComponent
+        obj_instance = super(AnimComponent, cls).create(meta_parent, version, side, name)  # type: AnimComponent
 
         return obj_instance
 

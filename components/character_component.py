@@ -104,8 +104,8 @@ class Character(component.Component):
         # Colors
         outlinerFn.set_color(self.hierarchy.root_ctl.group, rgb=[0.6, 0.8, 0.9])
 
-    @staticmethod
-    def create(meta_parent=None, version=1, name="character"):
+    @classmethod
+    def create(cls, meta_parent=None, version=1, name="character"):
         """Creation method, will call base AnimComponent.create and then __create__.
 
         :param meta_parent: Not used, defaults to None
@@ -117,7 +117,7 @@ class Character(component.Component):
         :return: New character instance.
         :rtype: Character
         """
-        obj_instance = super(Character, Character).create(meta_parent, Character, version, name=name, side="char")  # type: Character
+        obj_instance = super(Character, cls).create(meta_parent, version, name=name, side="char")  # type: Character
         return obj_instance
 
     def list_geometry(self):
