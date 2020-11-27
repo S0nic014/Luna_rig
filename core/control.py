@@ -56,8 +56,9 @@ class Control():
                         """.format(self.group, self.offset_list, self.offset, self.transform, self.joint, self.tag_node,
                                    self.data.side, self.data.name))
 
-    @staticmethod
-    def create(name="control_obj",
+    @classmethod
+    def create(cls,
+               name="control_obj",
                side="c",
                object_to_match=None,
                parent=None,
