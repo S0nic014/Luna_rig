@@ -3,6 +3,8 @@ from Luna import Logger
 
 
 def deconstruct_name(full_name):
+    if isinstance(full_name, pm.PyNode):
+        full_name = full_name.name()
     name_parts = full_name.split("_")
 
     class _nameStruct:
@@ -11,8 +13,12 @@ def deconstruct_name(full_name):
             self.name = name_parts[1:-2]
             self.index = name_parts[-2]
             self.suffix = name_parts[-1]
+    try:
+        name_struct = _nameStruct()
+    except IndexError:
+        Logger.exception("Failed to deconstruct name: {0}".format(full_name))
 
-    return _nameStruct()
+    return name_struct
 
 
 def rename(node, side=None, name=None, index=None, suffix=None):

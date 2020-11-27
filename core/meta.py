@@ -56,8 +56,6 @@ class MetaRigNode(object):
 
         :param meta_parent: Meta parent node to connect to
         :type meta_parent: str or PyNode
-        :param meta_type: Meta class name
-        :type meta_type: str
         :param version: meta version
         :type version: int
         :return: Instance of meta_type class

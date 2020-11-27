@@ -5,6 +5,7 @@ from Luna_rig.core import component
 from Luna_rig.core import control
 from Luna_rig.functions import attrFn
 from Luna_rig.functions import outlinerFn
+from Luna_rig.functions import nameFn
 
 
 class _hierachyStruct:
@@ -31,7 +32,14 @@ class Character(component.Component):
         super(Character, self).__init__(node)
         self.hierarchy = _hierachyStruct()
 
+        # Populate struct when pynode is properly initialized
         if pm.hasAttr(self.pynode, "rootCtl"):
+            # Data struct
+            name_parts = nameFn.deconstruct_name(self.pynode.name())
+            self.data.name = "_".join(name_parts.name)
+            self.data.side = name_parts.side
+            self.data.index = name_parts.index
+            # Hierachy struct
             self.hierarchy.root_ctl = control.Control(self.pynode.rootCtl.listConnections()[0])
             self.hierarchy.control_rig = self.pynode.controlRig.listConnections()[0]
             self.hierarchy.deformation_rig = self.pynode.deformationRig.listConnections()[0]
@@ -133,10 +141,10 @@ class Character(component.Component):
 
         return result
 
-    @staticmethod
-    def find(name):
+    @classmethod
+    def find(cls, name):
         result = []
-        for character_node in Character.list_nodes(of_type=Character):
+        for character_node in cls.list_nodes(of_type=cls):
             if character_node.pynode.characterName.get() == name:
                 result.append(character_node)
         if len(result) == 1:

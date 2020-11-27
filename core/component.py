@@ -11,7 +11,7 @@ class _dataStruct:
     def __init__(self):
         self.side = None  # type: str
         self.name = None  # type: str
-        self.fullname = None  # type: str
+        self.index = None  # type: str
 
 
 class _groupStruct:
@@ -61,8 +61,6 @@ class Component(MetaRigNode):
 
         :param meta_parent: Other Component to parent to.
         :type meta_parent: Component
-        :param meta_type: Component class.
-        :type meta_type: Class
         :param version: Component version.
         :type version: int
         :param side: Component side, defaults to "c"
@@ -127,9 +125,9 @@ class Component(MetaRigNode):
         if not isinstance(other_comp, Component):
             other_comp = MetaRigNode(other_comp)
         if other_comp.pynode not in self.pynode.metaParent.listConnections():
-            self.pynode.metaParent.connect(other_comp.pynode.metaChildren, na=1)
+            self.set_meta_parent(other_comp)
 
-    def connect_to_character(self, character):
+    def connect_to_character(self, character_name):
         pass
 
 
@@ -139,11 +137,18 @@ class AnimComponent(Component):
         super(AnimComponent, self).__init__(node)
         self.group = _groupStruct()
 
+        # Having rootGroup means node is properly initialized
         if pm.hasAttr(self.pynode, "rootGroup"):
+            # Fill structs
             self.group.root = self.pynode.rootGroup.listConnections()[0]
             self.group.ctls = self.pynode.ctlsGroup.listConnections()[0]
             self.group.joints = self.pynode.jointsGroup.listConnections()[0]
             self.group.parts = self.pynode.partsGroup.listConnections()[0]
+
+            name_parts = nameFn.deconstruct_name(self.pynode.name())
+            self.data.name = "_".join(name_parts.name)
+            self.data.side = name_parts.side
+            self.data.index = name_parts.index
 
     def __create__(self, side, name):
         """Override
@@ -157,7 +162,7 @@ class AnimComponent(Component):
         super(AnimComponent, self).__create__(side, name)
 
         # Create hierarchy
-        self.group.root = pm.group(n=nameFn.generate_name(self.data.name, self.data.side, suffix="grp"), em=1)
+        self.group.root = pm.group(n=nameFn.generate_name(self.data.name, self.data.side, suffix="comp"), em=1)
         self.group.ctls = pm.group(n=nameFn.generate_name(self.data.name, self.data.side, suffix="ctls"), em=1, p=self.group.root)
         self.group.joints = pm.group(n=nameFn.generate_name(self.data.name, self.data.side, suffix="jnts"), em=1, p=self.group.root)
         self.group.parts = pm.group(n=nameFn.generate_name(self.data.name, self.data.side, suffix="parts"), em=1, p=self.group.root)
@@ -178,7 +183,7 @@ class AnimComponent(Component):
         self.group.joints.metaParent.connect(self.pynode.jointsGroup)
         self.group.parts.metaParent.connect(self.pynode.partsGroup)
 
-    @classmethod
+    @ classmethod
     def create(cls,
                meta_parent=None,
                version=1,
@@ -188,8 +193,6 @@ class AnimComponent(Component):
 
         :param meta_parent: Other Rig element to connect to, defaults to None
         :type meta_parent: AnimComponent, optional
-        :param meta_type: Component class if None will use generic AnimComponent, defaults to None
-        :type meta_type: class, optional
         :param version: Component version, defaults to 1
         :type version: int, optional
         :param side: Component side, used for naming, defaults to "c"

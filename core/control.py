@@ -95,7 +95,7 @@ class Control():
 
         # Joint
         if joint:
-            ctl_joint = pm.createNode('joint', n=nameFn.generate_name([name, "ctl"], side, suffix="jnt"), p=temp_parent)
+            ctl_joint = pm.createNode('joint', n=nameFn.generate_name([name], side, suffix="cjnt"), p=temp_parent)
             ctl_joint.visibility.set(0)
 
         # Tag node
@@ -104,16 +104,6 @@ class Control():
         tag_node.addAttr("group", at="message")
         tag_node.addAttr("offset", at="message", multi=1, im=0)
         tag_node.addAttr("joint", at="message")
-
-        # Create instance
-        instance = Control(transform_node)
-        instance.data.name = name
-        instance.data.side = side
-        instance.set_shape(shape)
-        instance.set_color(color)
-
-        # Cleanup
-        instance.lock_attrib(exclude_attr=attributes, channel_box=False)
 
         # Add meta parent attribs
         for node in [group_node, offset_node, transform_node, ctl_joint]:
@@ -128,6 +118,16 @@ class Control():
             offset_node.metaParent.connect(tag_node.offset, na=1)
         if ctl_joint:
             ctl_joint.metaParent.connect(tag_node.joint)
+
+        # Create instance
+        instance = Control(transform_node)
+        instance.data.name = name
+        instance.data.side = side
+        instance.set_shape(shape)
+        instance.set_color(color)
+
+        # Cleanup
+        instance.lock_attrib(exclude_attr=attributes, channel_box=False)
 
         return instance
 
