@@ -28,6 +28,10 @@ class _compSignals(QtCore.QObject):
 
 
 class Component(MetaRigNode):
+
+    def __repr__(self):
+        return "{0}: {1}".format(self.as_str(name_only=True), self.pynode.name())
+
     def __new__(cls, node=None):
         return object.__new__(cls, node)
 
@@ -74,7 +78,11 @@ class Component(MetaRigNode):
             meta_parent = meta_parent.pynode
 
         obj_instance = super(Component, cls).create(meta_parent, version)  # type: Component
-        obj_instance.__create__(side, name)
+
+        # Store data in a struct
+        obj_instance.pynode.rename(nameFn.generate_name(name, side, suffix="meta"))
+        obj_instance.data.side = side
+        obj_instance.data.name = name
 
         return obj_instance
 
@@ -96,7 +104,7 @@ class Component(MetaRigNode):
         """
         result = []
         if self.pynode.hasAttr("metaChildren"):
-            connections = self.pynode.listConnections()
+            connections = self.pynode.metaChildren.listConnections()
             if connections:
                 children = [MetaRigNode(connection_node) for connection_node in connections if pm.hasAttr(connection_node, "metaRigType")]
                 if not of_type:
@@ -139,56 +147,25 @@ class AnimComponent(Component):
 
         # Having rootGroup means node is properly initialized
         if pm.hasAttr(self.pynode, "rootGroup"):
-            # Fill structs
+            # Recover data
+            # Group struct
             self.group.root = self.pynode.rootGroup.listConnections()[0]
             self.group.ctls = self.pynode.ctlsGroup.listConnections()[0]
             self.group.joints = self.pynode.jointsGroup.listConnections()[0]
             self.group.parts = self.pynode.partsGroup.listConnections()[0]
-
+            # Data struct
             name_parts = nameFn.deconstruct_name(self.pynode.name())
             self.data.name = "_".join(name_parts.name)
             self.data.side = name_parts.side
             self.data.index = name_parts.index
-
-    def __create__(self, side, name):
-        """Override
-        Base creation method. Called after object instance is created in "create" method.
-
-        :param side: Component side.
-        :type side: str
-        :param name: Component name
-        :type name: str
-        """
-        super(AnimComponent, self).__create__(side, name)
-
-        # Create hierarchy
-        self.group.root = pm.group(n=nameFn.generate_name(self.data.name, self.data.side, suffix="comp"), em=1)
-        self.group.ctls = pm.group(n=nameFn.generate_name(self.data.name, self.data.side, suffix="ctls"), em=1, p=self.group.root)
-        self.group.joints = pm.group(n=nameFn.generate_name(self.data.name, self.data.side, suffix="jnts"), em=1, p=self.group.root)
-        self.group.parts = pm.group(n=nameFn.generate_name(self.data.name, self.data.side, suffix="parts"), em=1, p=self.group.root)
-        for node in [self.group.root, self.group.ctls, self.group.joints, self.group.parts]:
-            node.addAttr("metaParent", at="message")
-
-        # Add message attrs
-        self.pynode.addAttr("rootGroup", at="message")
-        self.pynode.addAttr("ctlsGroup", at="message")
-        self.pynode.addAttr("jointsGroup", at="message")
-        self.pynode.addAttr("partsGroup", at="message")
-        self.pynode.addAttr("bindJoints", at="message", multi=1, im=0)
-        self.pynode.addAttr("controls", at="message", multi=1, im=0)
-
-        # Connect hierarchy to meta
-        self.group.root.metaParent.connect(self.pynode.rootGroup)
-        self.group.ctls.metaParent.connect(self.pynode.ctlsGroup)
-        self.group.joints.metaParent.connect(self.pynode.jointsGroup)
-        self.group.parts.metaParent.connect(self.pynode.partsGroup)
 
     @ classmethod
     def create(cls,
                meta_parent=None,
                version=1,
                side="c",
-               name="anim_component"):  # noqa:F821
+               name="anim_component",
+               attach_point_index=0):  # noqa:F821
         """Create AnimComponent hierarchy in the scene and instance.
 
         :param meta_parent: Other Rig element to connect to, defaults to None
@@ -204,6 +181,28 @@ class AnimComponent(Component):
         """
 
         obj_instance = super(AnimComponent, cls).create(meta_parent, version, side, name)  # type: AnimComponent
+        # Create hierarchy
+        obj_instance.group.root = pm.group(n=nameFn.generate_name(obj_instance.data.name, obj_instance.data.side, suffix="comp"), em=1)
+        obj_instance.group.ctls = pm.group(n=nameFn.generate_name(obj_instance.data.name, obj_instance.data.side, suffix="ctls"), em=1, p=obj_instance.group.root)
+        obj_instance.group.joints = pm.group(n=nameFn.generate_name(obj_instance.data.name, obj_instance.data.side, suffix="jnts"), em=1, p=obj_instance.group.root)
+        obj_instance.group.parts = pm.group(n=nameFn.generate_name(obj_instance.data.name, obj_instance.data.side, suffix="parts"), em=1, p=obj_instance.group.root)
+        for node in [obj_instance.group.root, obj_instance.group.ctls, obj_instance.group.joints, obj_instance.group.parts]:
+            node.addAttr("metaParent", at="message")
+
+        # Add message attrs
+        obj_instance.pynode.addAttr("rootGroup", at="message")
+        obj_instance.pynode.addAttr("ctlsGroup", at="message")
+        obj_instance.pynode.addAttr("jointsGroup", at="message")
+        obj_instance.pynode.addAttr("partsGroup", at="message")
+        obj_instance.pynode.addAttr("bindJoints", at="message", multi=1, im=0)
+        obj_instance.pynode.addAttr("attachPoints", at="message", multi=1, im=0)
+        obj_instance.pynode.addAttr("controls", at="message", multi=1, im=0)
+
+        # Connect hierarchy to meta
+        obj_instance.group.root.metaParent.connect(obj_instance.pynode.rootGroup)
+        obj_instance.group.ctls.metaParent.connect(obj_instance.pynode.ctlsGroup)
+        obj_instance.group.joints.metaParent.connect(obj_instance.pynode.jointsGroup)
+        obj_instance.group.parts.metaParent.connect(obj_instance.pynode.partsGroup)
 
         return obj_instance
 
@@ -258,7 +257,20 @@ class AnimComponent(Component):
         """Override: revert all controls to default values"""
         pass
 
-    def attach_to_component(self, other_comp):
+    def add_attach_point(self, node):
+        node = pm.PyNode(node)
+        node.message.connect(self.pynode.attachPoints, na=1)
+
+    def get_attach_point(self, index=0):
+        connected_points = self.pynode.attachPoints.listConnections()
+        try:
+            point = connected_points[index]
+        except IndexError:
+            Logger.error("{0}: No attach point at index {1}".format(self, index))
+            point = 0
+        return point
+
+    def attach_to_component(self, other_comp, attach_point_index=0):
         """Attach to other component.
 
         :param other_comp: Component to attach to.
@@ -267,7 +279,7 @@ class AnimComponent(Component):
         super(AnimComponent, self).attach_to_component(other_comp)
         # TODO: add parenting/constraining?
 
-    def connect_to_character(self, character_name=""):
+    def connect_to_character(self, character_name="", parent=False):
         """Connect component to character
 
         :param character_name: Specific character to connect to, defaults to ""
@@ -291,4 +303,5 @@ class AnimComponent(Component):
             character = all_characters[0]
 
         self.pynode.message.connect(character.pynode.metaChildren, na=1)
-        pm.parent(self.group.root, character.hierarchy.control_rig)
+        if parent:
+            pm.parent(self.group.root, character.hierarchy.control_rig)

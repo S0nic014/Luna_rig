@@ -50,68 +50,6 @@ class Character(component.Component):
         # Signals
         self.signals.created.emit()
 
-    def __create__(self, side, name):
-        """Create new character instance and hierarchy of nodes.
-
-        :param side: Character side. Not used, will be defaulted to "char"
-        :type side: str
-        :param name: Character name
-        :type name: str
-        """
-        super(Character, self).__create__(side, name)
-
-        # Create hierarchy nodes
-        self.hierarchy.root_ctl = control.Control.create(name="character_node", side="c", offset_grp=False, attributes="trs")
-        self.hierarchy.root_ctl.rename(index="")
-        self.hierarchy.control_rig = pm.createNode('transform', n=names.Character.control_rig.value, p=self.hierarchy.root_ctl.transform)
-        self.hierarchy.deformation_rig = pm.createNode('transform', n=names.Character.deformation_rig.value, p=self.hierarchy.root_ctl.transform)
-        self.hierarchy.locators_grp = pm.createNode('transform', n=names.Character.locators.value, p=self.hierarchy.root_ctl.transform)
-        self.hierarchy.world_loc = pm.spaceLocator(n=names.Character.world_space.value)
-        pm.parent(self.hierarchy.world_loc, self.hierarchy.locators_grp)
-
-        # Handle geometry group
-        if not pm.objExists(names.Character.geometry.value):
-            self.hierarchy.geometry_grp = pm.createNode('transform', n=names.Character.geometry.value, p=self.hierarchy.root_ctl.transform)
-        else:
-            self.hierarchy.geometry_grp = pm.PyNode(names.Character.geometry.value)
-            pm.parent(self.hierarchy.geometry_grp, self.hierarchy.root_ctl.transform)
-
-        # Add message attrs to meta node
-        self.pynode.addAttr("characterName", dt="string")
-        self.pynode.addAttr("rootCtl", at="message")
-        self.pynode.addAttr("controlRig", at="message")
-        self.pynode.addAttr("deformationRig", at="message")
-        self.pynode.addAttr("geometryGroup", at="message")
-        self.pynode.addAttr("locatorsGroup", at="message")
-        self.pynode.addAttr("worldLocator", at="message")
-
-        # Add meta parent attrs to hierarchy nodes
-        for node in [self.hierarchy.control_rig, self.hierarchy.deformation_rig, self.hierarchy.geometry_grp, self.hierarchy.locators_grp, self.hierarchy.world_loc]:
-            node.addAttr("metaParent", at="message")
-
-        # Connect to meta node
-        self.pynode.characterName.set(name)
-        self.hierarchy.root_ctl.transform.metaParent.connect(self.pynode.rootCtl)
-        self.hierarchy.control_rig.metaParent.connect(self.pynode.controlRig)
-        self.hierarchy.deformation_rig.metaParent.connect(self.pynode.deformationRig)
-        self.hierarchy.geometry_grp.metaParent.connect(self.pynode.geometryGroup)
-        self.hierarchy.locators_grp.metaParent.connect(self.pynode.locatorsGroup)
-        self.hierarchy.world_loc.metaParent.connect(self.pynode.worldLocator)
-
-        # Edit attributes
-        # Merge scale to make uniform
-        self.hierarchy.root_ctl.transform.addAttr("Scale", defaultValue=1.0, shortName="us", at="float", keyable=1)
-        self.hierarchy.root_ctl.transform.Scale.connect(self.hierarchy.root_ctl.transform.scaleX)
-        self.hierarchy.root_ctl.transform.Scale.connect(self.hierarchy.root_ctl.transform.scaleY)
-        self.hierarchy.root_ctl.transform.Scale.connect(self.hierarchy.root_ctl.transform.scaleZ)
-
-        # Visibility
-        self.hierarchy.locators_grp.visibility.set(0)
-        # Lock
-        attrFn.lock(self.hierarchy.root_ctl.transform, ["sx", "sy", "sz"])
-        # Colors
-        outlinerFn.set_color(self.hierarchy.root_ctl.group, rgb=[0.6, 0.8, 0.9])
-
     @classmethod
     def create(cls, meta_parent=None, version=1, name="character"):
         """Creation method, will call base AnimComponent.create and then __create__.
@@ -126,6 +64,57 @@ class Character(component.Component):
         :rtype: Character
         """
         obj_instance = super(Character, cls).create(meta_parent, version, name=name, side="char")  # type: Character
+        # Create hierarchy nodes
+        obj_instance.hierarchy.root_ctl = control.Control.create(name="character_node", side="c", offset_grp=False, attributes="trs")
+        obj_instance.hierarchy.root_ctl.rename(index="")
+        obj_instance.hierarchy.control_rig = pm.createNode('transform', n=names.Character.control_rig.value, p=obj_instance.hierarchy.root_ctl.transform)
+        obj_instance.hierarchy.deformation_rig = pm.createNode('transform', n=names.Character.deformation_rig.value, p=obj_instance.hierarchy.root_ctl.transform)
+        obj_instance.hierarchy.locators_grp = pm.createNode('transform', n=names.Character.locators.value, p=obj_instance.hierarchy.root_ctl.transform)
+        obj_instance.hierarchy.world_loc = pm.spaceLocator(n=names.Character.world_space.value)
+        pm.parent(obj_instance.hierarchy.world_loc, obj_instance.hierarchy.locators_grp)
+
+        # Handle geometry group
+        if not pm.objExists(names.Character.geometry.value):
+            obj_instance.hierarchy.geometry_grp = pm.createNode('transform', n=names.Character.geometry.value, p=obj_instance.hierarchy.root_ctl.transform)
+        else:
+            obj_instance.hierarchy.geometry_grp = pm.PyNode(names.Character.geometry.value)
+            pm.parent(obj_instance.hierarchy.geometry_grp, obj_instance.hierarchy.root_ctl.transform)
+
+        # Add message attrs to meta node
+        obj_instance.pynode.addAttr("characterName", dt="string")
+        obj_instance.pynode.addAttr("rootCtl", at="message")
+        obj_instance.pynode.addAttr("controlRig", at="message")
+        obj_instance.pynode.addAttr("deformationRig", at="message")
+        obj_instance.pynode.addAttr("geometryGroup", at="message")
+        obj_instance.pynode.addAttr("locatorsGroup", at="message")
+        obj_instance.pynode.addAttr("worldLocator", at="message")
+
+        # Add meta parent attrs to hierarchy nodes
+        for node in [obj_instance.hierarchy.control_rig, obj_instance.hierarchy.deformation_rig, obj_instance.hierarchy.geometry_grp, obj_instance.hierarchy.locators_grp, obj_instance.hierarchy.world_loc]:
+            node.addAttr("metaParent", at="message")
+
+        # Connect to meta node
+        obj_instance.pynode.characterName.set(name)
+        obj_instance.hierarchy.root_ctl.transform.metaParent.connect(obj_instance.pynode.rootCtl)
+        obj_instance.hierarchy.control_rig.metaParent.connect(obj_instance.pynode.controlRig)
+        obj_instance.hierarchy.deformation_rig.metaParent.connect(obj_instance.pynode.deformationRig)
+        obj_instance.hierarchy.geometry_grp.metaParent.connect(obj_instance.pynode.geometryGroup)
+        obj_instance.hierarchy.locators_grp.metaParent.connect(obj_instance.pynode.locatorsGroup)
+        obj_instance.hierarchy.world_loc.metaParent.connect(obj_instance.pynode.worldLocator)
+
+        # Edit attributes
+        # Merge scale to make uniform
+        obj_instance.hierarchy.root_ctl.transform.addAttr("Scale", defaultValue=1.0, shortName="us", at="float", keyable=1)
+        obj_instance.hierarchy.root_ctl.transform.Scale.connect(obj_instance.hierarchy.root_ctl.transform.scaleX)
+        obj_instance.hierarchy.root_ctl.transform.Scale.connect(obj_instance.hierarchy.root_ctl.transform.scaleY)
+        obj_instance.hierarchy.root_ctl.transform.Scale.connect(obj_instance.hierarchy.root_ctl.transform.scaleZ)
+
+        # Visibility
+        obj_instance.hierarchy.locators_grp.visibility.set(0)
+        # Lock
+        attrFn.lock(obj_instance.hierarchy.root_ctl.transform, ["sx", "sy", "sz"])
+        # Colors
+        outlinerFn.set_color(obj_instance.hierarchy.root_ctl.group, rgb=[0.6, 0.8, 0.9])
         return obj_instance
 
     def list_geometry(self):

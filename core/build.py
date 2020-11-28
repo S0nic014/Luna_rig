@@ -10,8 +10,6 @@ from Luna.workspace import project
 from Luna.workspace import asset
 from Luna_rig.functions import asset_files
 from Luna_rig import components
-reload(asset_files)
-reload(asset)
 
 
 class _buildSignals(QtCore.QObject):
@@ -19,7 +17,7 @@ class _buildSignals(QtCore.QObject):
     done = QtCore.Signal()
 
 
-class Build(object):
+class PyBuild(object):
     def __init__(self, asset_type, asset_name, version=1):
         self.signals = _buildSignals()
 
@@ -41,6 +39,7 @@ class Build(object):
         asset_files.import_model()
         asset_files.import_guides()
         # Setup character
+        Logger.info("Setting up character...")
         self.character = components.Character.create(version=version, name=asset_name)
         Logger.info(self.character)
 

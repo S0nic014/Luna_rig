@@ -7,7 +7,7 @@ from Luna import Logger
 class MetaRigNode(object):
 
     @classmethod
-    def as_str(cls):
+    def as_str(cls, name_only=False):
         """Get a string representation of class path.
 
         :return: Class string
@@ -15,6 +15,8 @@ class MetaRigNode(object):
         """
         meta_module = cls.__module__
         meta_name = cls.__name__
+        if name_only:
+            return meta_name
         meta_type_str = ".".join([meta_module, meta_name])
         return meta_type_str
 
