@@ -43,22 +43,6 @@ class Component(MetaRigNode):
     def __eq__(self, other):
         return self.pynode == other.pynode
 
-    def __create__(self, side, name):
-        """Override
-        Base creation method. Called after object instance is created in "create" method.
-
-        :param side: Component side.
-        :type side: str
-        :param name: Component name
-        :type name: str
-        """
-
-        # Store data in a struct
-        self.data.side = side
-        self.data.name = name
-
-        self.pynode.rename(nameFn.generate_name(name, side, suffix="meta"))
-
     @ classmethod
     def create(cls, meta_parent, version, side="c", name="component"):
         """Creates instance of component
@@ -176,6 +160,8 @@ class AnimComponent(Component):
         :type side: str, optional
         :param name: Component name. If list - items will be connected by underscore, defaults to "anim_component"
         :type name: str, list[str], optional
+        :param attach_point_index: Point index on parent component to attach to, defaults to 0
+        :type attach_point_index: int, optional
         :return: New instance of AnimComponent.
         :rtype: AnimComponent
         """

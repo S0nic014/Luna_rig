@@ -52,7 +52,7 @@ class Character(component.Component):
 
     @classmethod
     def create(cls, meta_parent=None, version=1, name="character"):
-        """Creation method, will call base AnimComponent.create and then __create__.
+        """Creation method.
 
         :param meta_parent: Not used, defaults to None
         :type meta_parent: Component, optional
