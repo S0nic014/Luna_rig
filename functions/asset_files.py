@@ -4,7 +4,7 @@ from Luna import Logger
 from Luna.utils import environFn
 
 
-def clearAllReferences(*args):
+def clear_all_references(*args):
     references = pm.listReferences()
     for r in references:
         r.remove()
@@ -32,7 +32,7 @@ def import_guides():
     return latest_guides_path
 
 
-def referenceLatestModel(*args):
+def reference_latest_model(*args):
     current_asset = environFn.get_asset_var()
     if current_asset:
         pm.createReference(current_asset.get_model_path())
