@@ -71,11 +71,49 @@ class Control():
                offset_grp=True,
                joint=False,
                shape="cube",
+               tag="",
                scale=1.0):
+        """Control creation method
+
+        :param name: Control name, defaults to "control_obj"
+        :type name: str, optional
+        :param side: Control side, defaults to "c"
+        :type side: str, optional
+        :param object_to_match: Transform object to match, defaults to None
+        :type object_to_match: pm.nodetypes.Transform, optional
+        :param parent: Object to parent to, defaults to None
+        :type parent: pm.nodetypes.Transform, optional
+        :param attributes: Attributes to leave unlocked and visible, defaults to "tr"
+        :type attributes: str, optional
+        :param delete_match_object: If guide object should be deleted after matched, defaults to False
+        :type delete_match_object: bool, optional
+        :param match_pos: If Control position should be matched to guide object, defaults to True
+        :type match_pos: bool, optional
+        :param match_orient: If Control rotation values should be matched to guide object, defaults to True
+        :type match_orient: bool, optional
+        :param match_pivot: If Control pivot should match guide object, defaults to True
+        :type match_pivot: bool, optional
+        :param color: Control color, if not set will use color based on side., defaults to None
+        :type color: int, enumFn.Enum, optional
+        :param offset_grp: If offset group should be created, defaults to True
+        :type offset_grp: bool, optional
+        :param joint: If control joint should be created, defaults to False
+        :type joint: bool, optional
+        :param shape: Desired control shape from shape lib, defaults to "cube"
+        :type shape: str, optional
+        :param tag: Additional tag to set on tag node, defaults to ""
+        :type tag: str, optional
+        :param scale: Control scale, defaults to 1.0
+        :type scale: float, optional
+        :return: Control instance
+        :rtype: Control
+        """
 
         # Group
         offset_node = None
         ctl_joint = None
+        if isinstance(parent, Control):
+            parent = parent.transform
         temp_parent = parent
 
         group_node = pm.createNode('transform', n=nameFn.generate_name(name, side, suffix="grp"), p=temp_parent)
@@ -104,6 +142,8 @@ class Control():
         tag_node.addAttr("group", at="message")
         tag_node.addAttr("offset", at="message", multi=1, im=0)
         tag_node.addAttr("joint", at="message")
+        tag_node.addAttr("tag", dt="string")
+        tag_node.tag.set(tag)
 
         # Add meta parent attribs
         for node in [group_node, offset_node, transform_node, ctl_joint]:
@@ -132,6 +172,11 @@ class Control():
         return instance
 
     def set_parent(self, parent):
+        """Set control parent
+
+        :param parent: Parent to set, if None - will be parented to world.
+        :type parent: pm.PyNode
+        """
         if not parent:
             self.tag_node.parent.disconnect()
             pm.parent(self.group, w=1)
@@ -147,6 +192,11 @@ class Control():
         parent.message.connect(self.tag_node.parent, f=1)
 
     def get_parent(self):
+        """Get current parent
+
+        :return: Parent node
+        :rtype: pm.PyNode
+        """
         result = None
         conn = self.tag_node.parent.listConnections()
         if conn:
@@ -155,6 +205,13 @@ class Control():
         return result
 
     def lock_attrib(self, exclude_attr, channel_box=False):
+        """Lock attributes on transform node
+
+        :param exclude_attr: Attributes to leave unlocked
+        :type exclude_attr: list
+        :param channel_box: If locked attributes should be present in channel box, defaults to False
+        :type channel_box: bool, optional
+        """
         to_lock = ['tx', 'ty', 'tz',
                    'rx', 'ry', 'rz',
                    'sx', 'sy', 'sz',
@@ -172,6 +229,13 @@ class Control():
         Logger.debug("{0} - locked attributes: {1}".format(self.transform, to_lock))
 
     def insert_offset(self, extra_name="extra"):
+        """Inserts extra ofset node and inbetween transform and last offset node present.
+
+        :param extra_name: name to add to new offset node, defaults to "extra"
+        :type extra_name: str, optional
+        :return: Created node
+        :rtype: pm.PyNode
+        """
         Logger.debug("TODO: {0} - inserting offset with extra name: {1}".format(self.transform, extra_name))
         if self.offset_list:
             parent = self.offset_list[-1]
@@ -186,30 +250,74 @@ class Control():
         return new_offset
 
     def set_shape(self, name):
+        """Set control's shape
+
+        :param name: Shape name
+        :type name: str
+        """
         Logger.debug("TODO: {0} - setting shape to {1}".format(self.transform, name))
 
     def set_color(self, color):
-        Logger.debug("TODO: {0} - setting color to {1}".format(self.transform, color))
+        """Set control color
+
+        :param color: New color
+        :type color: int or enumFn.Enum
+        """
         if not color:
             color = colors.SideColor[self.data.side].value
         self.data.color = color
+        Logger.debug("TODO: {0} - setting color to {1}".format(self.transform, color))
 
     def add_space(self, name, target):
+        """Add new space
+
+        :param name: Space name (will be used by enum attribute)
+        :type name: str
+        :param target: target space
+        :type target: str or pm.nodetypes.Transform
+        """
         Logger.debug("TODO: {0} - adding {1} space with named {2}".format(self.transform, target, name))
 
     def add_world_space(self):
+        """Uses add space method to add space to hidden world locator
+        """
         Logger.debug("TODO: {0} - adding world space".format(self.transform))
         self.add_space("World", "world_loc")
 
     def mirror_shape(self):
+        """Mirrors control's shape
+        """
         Logger.debug("TODO: {0} - mirroing shape...")
 
     def add_wire(self, source):
+        """Adds staight line curve connecting source object and controls' transform
+
+        :param source: Wire source object
+        :type source: str or pm.nodetypes.Transform
+        """
         Logger.debug("TODO: {0} - adding wire...")
 
     def get_color(self):
+        """Get current control color"""
         Logger.debug("TODO: {0} - getting ctl color...")
 
     def rename(self, side=None, name=None, index=None, suffix=None):
+        """Rename control member nodes
+
+        :param side: New side, defaults to None
+        :type side: str, optional
+        :param name: New name, defaults to None
+        :type name: str, optional
+        :param index: New index, defaults to None
+        :type index: int, optional
+        :param suffix: New suffix, defaults to None
+        :type suffix: str, optional
+        """
         for node in [self.group, self.transform, self.joint] + self.offset_list:
             nameFn.rename(node, side, name, index, suffix)
+
+
+if __name__ == "__main__":
+    pm.newFile(f=1)
+    new_ctl1 = Control.create(name="leg_fk", side="r", tag="fk", joint=True)
+    new_ctl2 = Control.create(name="leg_fk", side="r", tag="fk", parent=new_ctl1)

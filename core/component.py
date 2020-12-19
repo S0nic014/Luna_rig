@@ -2,6 +2,7 @@ import pymel.core as pm
 from PySide2 import QtCore
 
 from Luna import Logger
+from Luna.utils import enumFn
 from Luna_rig.functions import nameFn
 from Luna_rig.core.meta import MetaRigNode
 from Luna_rig.core.control import Control
@@ -30,7 +31,7 @@ class _compSignals(QtCore.QObject):
 class Component(MetaRigNode):
 
     def __repr__(self):
-        return "{0}: {1}".format(self.as_str(name_only=True), self.pynode.name())
+        return "{0}({1})".format(self.as_str(name_only=True), self.pynode.name())
 
     def __new__(cls, node=None):
         return object.__new__(cls, node)
@@ -149,7 +150,7 @@ class AnimComponent(Component):
                version=1,
                side="c",
                name="anim_component",
-               attach_point_index=0):  # noqa:F821
+               attach_point=0):  # noqa:F821
         """Create AnimComponent hierarchy in the scene and instance.
 
         :param meta_parent: Other Rig element to connect to, defaults to None
@@ -160,8 +161,8 @@ class AnimComponent(Component):
         :type side: str, optional
         :param name: Component name. If list - items will be connected by underscore, defaults to "anim_component"
         :type name: str, list[str], optional
-        :param attach_point_index: Point index on parent component to attach to, defaults to 0
-        :type attach_point_index: int, optional
+        :param attach_point: Point index on parent component to attach to, defaults to 0
+        :type attach_point: int, optional
         :return: New instance of AnimComponent.
         :rtype: AnimComponent
         """
@@ -244,26 +245,49 @@ class AnimComponent(Component):
         pass
 
     def add_attach_point(self, node):
+        """Set given node as attach point
+
+        :param node: Dag node
+        :type node: str or pm.PyNode
+        """
         node = pm.PyNode(node)
         node.message.connect(self.pynode.attachPoints, na=1)
 
     def get_attach_point(self, index=0):
+        """Get component attach point from index
+
+        :param index: Index for attach point, defaults to 0
+        :type index: int or enumFn.Enum, optional
+        :return: Attach point object.
+        :rtype: pm.PyNode
+        """
+        if isinstance(index, enumFn.Enum):
+            index = index.value
+
         connected_points = self.pynode.attachPoints.listConnections()
         try:
             point = connected_points[index]
         except IndexError:
             Logger.error("{0}: No attach point at index {1}".format(self, index))
-            point = 0
+            point = None
         return point
 
-    def attach_to_component(self, other_comp, attach_point_index=0):
-        """Attach to other component.
+    def attach_to_component(self, other_comp, attach_point=0):
+        """Attach to other AnimComponent
 
         :param other_comp: Component to attach to.
-        :type other_comp: Component
+        :type other_comp: AnimComponent
+        :param attach_point: Attach point index, defaults to 0
+        :type attach_point: int, enumFn.Enum, optional
+        :return: Attach object to use in derived method.
+        :rtype: pm.PyNode
         """
         super(AnimComponent, self).attach_to_component(other_comp)
-        # TODO: add parenting/constraining?
+        attach_obj = other_comp.get_attach_point(index=attach_point)
+        if not attach_obj:
+            Logger.error("Failed to connect {0} to {1} at point {2}".format(self, other_comp, attach_point))
+
+        return attach_obj
 
     def connect_to_character(self, character_name="", parent=False):
         """Connect component to character
