@@ -21,9 +21,9 @@ def get_MObject(name):
     name = str(name)
     sel = pma.MSelectionList()
     sel.add(name)
-    mObj = pma.MObject()
-    sel.getDependNode(0, mObj)
-    return mObj
+    mobj = pma.MObject()
+    sel.getDependNode(0, mobj)
+    return mobj
 
 
 def get_MDagPath_and_components(components):

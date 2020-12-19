@@ -1,10 +1,12 @@
 import os
 import pymel.core as pm
-import pymel.api as pma
 
+from Luna import Logger
 from Luna.utils import fileFn
+from Luna.utils import enumFn
 from Luna.static import directories
 from Luna_rig.functions import surfaceFn
+from Luna_rig.functions import curveFn
 
 
 class ShapeManager:
@@ -13,22 +15,106 @@ class ShapeManager:
     @classmethod
     def get_shapes(cls, node):
         node = pm.PyNode(node)
-        shape_nodes = []
+        shapes_list = []
+        if isinstance(node, pm.nodetypes.Transform):
+            child_shapes = node.getShapes()
+        elif isinstance(node, pm.nodetypes.Shape):
+            child_shapes = node.getTransform().getShapes()
+        if not child_shapes:
+            Logger.warning("No child shapes found for {0}".format(node))
+            return []
+
+        if isinstance(child_shapes[0], pm.nodetypes.NurbsSurface):
+            for shape_node in child_shapes:
+                shader_data = surfaceFn.Surface.get_surface_shader_data(shape_node)
+                shape_data = surfaceFn.Surface.get_surface_data(shape_node)
+                shape_data["color"] = shader_data.get("out_color", 0)
+                shape_data["transparency"] = shader_data.get("out_transparency", 0.0)
+                shape_data["type"] = "nurbsSurface"
+                shapes_list.append(shape_data)
+
+        elif isinstance(child_shapes[0], pm.nodetypes.NurbsCurve):
+            for shape_node in child_shapes:
+                shape_data = curveFn.get_curve_data(shape_node)
+                shapes_list.append(shape_data)
+
+        return shapes_list
 
     @classmethod
-    def set_shape(cls, transform, shape_name, surface_transparency=0.0):
-        pass
+    def set_shape(cls, node, shape_name, surface_transparency=0.0):
+        node = pm.PyNode(node)
+
+        # Store default values
+        default_color = 0
+        old_color = default_color
+        old_transparency = surface_transparency
+
+        # Get child shapes
+        if isinstance(node, pm.nodetypes.Transform):
+            child_shapes = node.getShapes()
+        elif isinstance(node, pm.nodetypes.Shape):
+            node = node.getTransform()
+            child_shapes = node.getShapes()
+
+        # Get old shapes colorm trasnparency data
+        if child_shapes:
+            if isinstance(child_shapes[0], pm.nodetypes.NurbsCurve):
+                old_color = child_shapes[0].overrideColor.get()
+                matching_shader = surfaceFn.Surface.get_shader_name(old_color)
+                if pm.objExists(matching_shader):
+                    old_transparency = surfaceFn.Surface.get_shader_data(matching_shader)
+            elif isinstance(child_shapes, pm.nodetypes.NurbsSurface):
+                shader_data = surfaceFn.Surface.get_surface_shader_data(child_shapes[0])
+                old_color = shader_data.get("out_color_index")
+                old_transparency = shader_data.get("out_transparency")
+            pm.delete(child_shapes)
+
+        # Iterate over loaded shape
+        loaded_shapes = cls.load_shape(shape_name)
+        for index, shape_dict in enumerate(loaded_shapes):
+            if shape_dict.get("type") == "nurbsCurve":
+                # Create temporary curve
+                tmp_curve = pm.curve(p=shape_dict.get("points"), k=shape_dict.get("knots"), d=shape_dict.get("degree"))
+                new_shape_node = tmp_curve.getShape()
+                # Parent new shape node to transform
+                pm.parent(new_shape_node, node, r=1, s=1)
+                pm.delete(tmp_curve)
+                # Rename newly creted shape node
+                new_shape_node = pm.rename(new_shape_node, str(node) + "Shape" + str(index + 1).zfill(2))
+                new_shape_node.overrideEnabled.set(1)
+                # Set color for new shape
+                if "color" in shape_dict.keys():
+                    cls.set_color(new_shape_node, shape_dict.get("color"))
+                else:
+                    cls.set_color(new_shape_node, old_color)
+
+            elif shape_dict.get("type") == "nurbsSurface":
+                new_surface = surfaceFn.Surface.create(shape_dict, transform=node)
+                new_surface = pm.rename(new_surface.partial_path, str(node) + "Shape" + str(index + 1).zfill(2))
+                # Set color values
+                if "color" in shape_dict.keys():
+                    new_color = shape_dict.get("color")
+                else:
+                    new_color = old_color
+                if "transparency" in shape_dict.keys():
+                    transparency = shape_dict.get("transparency", 0.0)
+                else:
+                    transparency = old_transparency
+
+                # Set shader
+                surfaceFn.Surface.set_shader(new_surface, color_index=new_color, transparency=transparency)
+        pm.select(node, r=1)
 
     @classmethod
-    def load_shape_data(cls, shape_name):
+    def load_shape(cls, shape_name):
         path = os.path.join(cls.SHAPES_LIB, shape_name + ".json")
-        data = fileFn.load_json(path)
+        data = fileFn.load_json(path)  # type: dict
         return data
 
     @classmethod
     def save_shape(cls, transform, name):
         transform = pm.PyNode(transform)
-        shape_list = cls.get_shapes()
+        shape_list = cls.get_shapes(transform)
         save_path = os.path.join(cls.SHAPES_LIB, name + ".json")
         for data_dict in shape_list:
             data_dict.pop("color", None)
@@ -38,10 +124,33 @@ class ShapeManager:
     @classmethod
     def set_color(cls, node, color):
         node = pm.PyNode(node)
+        if isinstance(color, enumFn.Enum):
+            color = color.value
         if isinstance(node, pm.nodetypes.Transform):
             shape_nodes = node.getShapes()
         elif isinstance(node, pm.nodetypes.Shape):
             shape_nodes = [node]
 
         for shape in shape_nodes:
-            pass
+            if isinstance(shape, pm.nodetypes.NurbsCurve):
+                shape.overrideColor.set(color)
+            elif isinstance(shape, pm.nodetypes.NurbsSurface):
+                old_transparency = surfaceFn.Surface.get_surface_shader_data(shape).get("out_transparency")
+                surfaceFn.Surface.set_shader(shape, color, old_transparency)
+
+    @classmethod
+    def get_color(cls, node):
+        node = pm.PyNode(node)
+        color = 0
+        if isinstance(node, pm.nodetypes.Transform):
+            shapes = node.getShapes()
+            if not shapes:
+                Logger.warning("No shapes found for {0}".format(node))
+                return color
+            child_shape = shapes[0]
+            if isinstance(child_shape, pm.nodetypes.NurbsCurve):
+                color = child_shape.overrideColor.get()
+            elif isinstance(child_shape, pm.nodetypes.NurbsSurface):
+                color = surfaceFn.Surface.get_surface_shader_data(child_shape).get("out_color_index")
+
+        return color

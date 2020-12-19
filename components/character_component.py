@@ -65,7 +65,12 @@ class Character(component.Component):
         """
         obj_instance = super(Character, cls).create(meta_parent, version, name=name, side="char")  # type: Character
         # Create hierarchy nodes
-        obj_instance.hierarchy.root_ctl = control.Control.create(name="character_node", side="c", offset_grp=False, attributes="trs")
+        obj_instance.hierarchy.root_ctl = control.Control.create(name="character_node",
+                                                                 side="c",
+                                                                 offset_grp=False,
+                                                                 attributes="trs",
+                                                                 shape="root",
+                                                                 tag="root")
         obj_instance.hierarchy.root_ctl.rename(index="")
         obj_instance.hierarchy.control_rig = pm.createNode('transform', n=names.Character.control_rig.value, p=obj_instance.hierarchy.root_ctl.transform)
         obj_instance.hierarchy.deformation_rig = pm.createNode('transform', n=names.Character.deformation_rig.value, p=obj_instance.hierarchy.root_ctl.transform)

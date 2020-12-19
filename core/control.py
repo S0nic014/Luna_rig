@@ -4,6 +4,8 @@ from Luna import Logger
 from Luna.static import colors
 from Luna_rig.functions import nameFn
 from Luna_rig.functions import attrFn
+from Luna_rig.core import shape_manager
+reload(shape_manager)
 
 
 class _dataStruct:
@@ -71,6 +73,7 @@ class Control():
                offset_grp=True,
                joint=False,
                shape="cube",
+               transparency=0.0,
                tag="",
                scale=1.0):
         """Control creation method
@@ -163,7 +166,7 @@ class Control():
         instance = Control(transform_node)
         instance.data.name = name
         instance.data.side = side
-        instance.set_shape(shape)
+        instance.set_shape(shape, transparency)
         instance.set_color(color)
 
         # Cleanup
@@ -249,13 +252,13 @@ class Control():
         new_offset.metaParent.connect(self.tag_node.offset, na=1)
         return new_offset
 
-    def set_shape(self, name):
+    def set_shape(self, name, transparency=0.0):
         """Set control's shape
 
         :param name: Shape name
         :type name: str
         """
-        Logger.debug("TODO: {0} - setting shape to {1}".format(self.transform, name))
+        shape_manager.ShapeManager.set_shape(self.transform, name, transparency)
 
     def set_color(self, color):
         """Set control color
@@ -266,7 +269,7 @@ class Control():
         if not color:
             color = colors.SideColor[self.data.side].value
         self.data.color = color
-        Logger.debug("TODO: {0} - setting color to {1}".format(self.transform, color))
+        shape_manager.ShapeManager.set_color(self.transform, self.data.color)
 
     def add_space(self, name, target):
         """Add new space
@@ -318,6 +321,10 @@ class Control():
 
 
 if __name__ == "__main__":
-    pm.newFile(f=1)
-    new_ctl1 = Control.create(name="leg_fk", side="r", tag="fk", joint=True)
-    new_ctl2 = Control.create(name="leg_fk", side="r", tag="fk", parent=new_ctl1)
+    # pm.newFile(f=1)
+    # new_ctl1 = Control.create(name="leg_fk", side="r", tag="fk", joint=True)
+    # new_ctl2 = Control.create(name="leg_fk", side="l", tag="fk", parent=new_ctl1)
+    ctl = Control("l_leg_fk_00_ctl")
+    ctl.set_shape("nurbsSphere")
+    # ctl.set_color(17)
+    # shape_manager.ShapeManager.save_shape("l_leg_fk_00_ctl", "NurbsCube")
