@@ -10,6 +10,7 @@ from Luna.workspace import project
 from Luna.workspace import asset
 from Luna_rig.functions import asset_files
 from Luna_rig import components
+reload(asset_files)
 
 
 class _buildSignals(QtCore.QObject):
