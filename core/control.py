@@ -213,7 +213,7 @@ class Control(object):
 
     @shape.setter
     def shape(self, name):
-        shape_manager.ShapeManager.set_shape(self.transform, name)
+        shape_manager.ShapeManager.set_shape_from_lib(self.transform, name)
 
     def set_parent(self, parent):
         """Set control parent
@@ -298,7 +298,7 @@ class Control(object):
         :param name: Shape name
         :type name: str
         """
-        shape_manager.ShapeManager.set_shape(self.transform, name, transparency)
+        shape_manager.ShapeManager.set_shape_from_lib(self.transform, name, transparency)
 
     def add_space(self, name, target):
         """Add new space

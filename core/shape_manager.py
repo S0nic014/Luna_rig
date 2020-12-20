@@ -42,9 +42,8 @@ class ShapeManager:
         return shapes_list
 
     @classmethod
-    def set_shape(cls, node, shape_name, surface_transparency=0.0):
+    def set_shape_from_lib(cls, node, shape_name, surface_transparency=0.0):
         node = pm.PyNode(node)
-
         # Store default values
         default_color = 0
         old_color = default_color
@@ -71,8 +70,14 @@ class ShapeManager:
             pm.delete(child_shapes)
 
         # Iterate over loaded shape
-        loaded_shapes = cls.load_shape(shape_name)
-        for index, shape_dict in enumerate(loaded_shapes):
+        loaded_shape_list = cls.load_shape(shape_name)
+        cls.apply_shape(node, loaded_shape_list, default_color=old_color, default_transparency=old_transparency)
+        pm.select(node, r=1)
+
+    @classmethod
+    def apply_shape(cls, node, shape_list, default_color=0, default_transparency=0.0):
+        node = pm.PyNode(node)
+        for index, shape_dict in enumerate(shape_list):
             if shape_dict.get("type") == "nurbsCurve":
                 # Create temporary curve
                 tmp_curve = pm.curve(p=shape_dict.get("points"), k=shape_dict.get("knots"), d=shape_dict.get("degree"))
@@ -87,7 +92,7 @@ class ShapeManager:
                 if "color" in shape_dict.keys():
                     cls.set_color(new_shape_node, shape_dict.get("color"))
                 else:
-                    cls.set_color(new_shape_node, old_color)
+                    cls.set_color(new_shape_node, default_color)
 
             elif shape_dict.get("type") == "nurbsSurface":
                 new_surface = surfaceFn.Surface.create(shape_dict, transform=node)
@@ -96,15 +101,14 @@ class ShapeManager:
                 if "color" in shape_dict.keys():
                     new_color = shape_dict.get("color")
                 else:
-                    new_color = old_color
+                    new_color = default_color
                 if "transparency" in shape_dict.keys():
                     transparency = shape_dict.get("transparency", 0.0)
                 else:
-                    transparency = old_transparency
+                    transparency = default_transparency
 
                 # Set shader
                 surfaceFn.Surface.set_shader(new_surface, color_index=new_color, transparency=transparency)
-        pm.select(node, r=1)
 
     @classmethod
     def load_shape(cls, shape_name):
