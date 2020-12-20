@@ -1,4 +1,5 @@
 import pymel.core as pm
+from pymel.core import nodetypes
 from PySide2 import QtCore
 
 from Luna import Logger
@@ -6,21 +7,6 @@ from Luna.utils import enumFn
 from Luna_rig.functions import nameFn
 from Luna_rig.core.meta import MetaRigNode
 from Luna_rig.core.control import Control
-
-
-class _dataStruct:
-    def __init__(self):
-        self.side = None  # type: str
-        self.name = None  # type: str
-        self.index = None  # type: str
-
-
-class _groupStruct:
-    def __init__(self):
-        self.root = None
-        self.ctls = None
-        self.joints = None
-        self.parts = None
 
 
 class _compSignals(QtCore.QObject):
@@ -38,7 +24,6 @@ class Component(MetaRigNode):
 
     def __init__(self, node):
         super(Component, self).__init__(node)
-        self.data = _dataStruct()
         self.signals = _compSignals()
 
     def __eq__(self, other):
@@ -61,23 +46,10 @@ class Component(MetaRigNode):
         """
         if isinstance(meta_parent, MetaRigNode):
             meta_parent = meta_parent.pynode
-
         obj_instance = super(Component, cls).create(meta_parent, version)  # type: Component
-
-        # Store data in a struct
         obj_instance.pynode.rename(nameFn.generate_name(name, side, suffix="meta"))
-        obj_instance.data.side = side
-        obj_instance.data.name = name
 
         return obj_instance
-
-    def get_name(self):
-        """Get component name parts
-
-        :return: Name struct with members: {side, name, index, suffix}
-        :rtype: nameStruct
-        """
-        return nameFn.deconstruct_name(self.pynode)
 
     def get_meta_children(self, of_type=None):
         """Get list of connected meta children
@@ -126,23 +98,17 @@ class Component(MetaRigNode):
 
 class AnimComponent(Component):
 
-    def __init__(self, node):
-        super(AnimComponent, self).__init__(node)
-        self.group = _groupStruct()
+    # def __init__(self, node):
+    #     super(AnimComponent, self).__init__(node)
 
-        # Having rootGroup means node is properly initialized
-        if pm.hasAttr(self.pynode, "rootGroup"):
-            # Recover data
-            # Group struct
-            self.group.root = self.pynode.rootGroup.listConnections()[0]
-            self.group.ctls = self.pynode.ctlsGroup.listConnections()[0]
-            self.group.joints = self.pynode.jointsGroup.listConnections()[0]
-            self.group.parts = self.pynode.partsGroup.listConnections()[0]
-            # Data struct
-            name_parts = nameFn.deconstruct_name(self.pynode.name())
-            self.data.name = "_".join(name_parts.name)
-            self.data.side = name_parts.side
-            self.data.index = name_parts.index
+    #     # Having rootGroup means node is properly initialized
+    #     if pm.hasAttr(self.pynode, "rootGroup"):
+    #         # Recover data
+    #         # Group struct
+    #         self.group.root = self.pynode.rootGroup.listConnections()[0]
+    #         self.group.ctls = self.pynode.ctlsGroup.listConnections()[0]
+    #         self.group.joints = self.pynode.jointsGroup.listConnections()[0]
+    #         self.group.parts = self.pynode.partsGroup.listConnections()[0]
 
     @ classmethod
     def create(cls,
@@ -169,11 +135,11 @@ class AnimComponent(Component):
 
         obj_instance = super(AnimComponent, cls).create(meta_parent, version, side, name)  # type: AnimComponent
         # Create hierarchy
-        obj_instance.group.root = pm.group(n=nameFn.generate_name(obj_instance.data.name, obj_instance.data.side, suffix="comp"), em=1)
-        obj_instance.group.ctls = pm.group(n=nameFn.generate_name(obj_instance.data.name, obj_instance.data.side, suffix="ctls"), em=1, p=obj_instance.group.root)
-        obj_instance.group.joints = pm.group(n=nameFn.generate_name(obj_instance.data.name, obj_instance.data.side, suffix="jnts"), em=1, p=obj_instance.group.root)
-        obj_instance.group.parts = pm.group(n=nameFn.generate_name(obj_instance.data.name, obj_instance.data.side, suffix="parts"), em=1, p=obj_instance.group.root)
-        for node in [obj_instance.group.root, obj_instance.group.ctls, obj_instance.group.joints, obj_instance.group.parts]:
+        root_grp = pm.group(n=nameFn.generate_name(obj_instance.name, obj_instance.side, suffix="comp"), em=1)
+        ctls_grp = pm.group(n=nameFn.generate_name(obj_instance.name, obj_instance.side, suffix="ctls"), em=1, p=root_grp)
+        joints_grp = pm.group(n=nameFn.generate_name(obj_instance.name, obj_instance.side, suffix="jnts"), em=1, p=root_grp)
+        parts_grp = pm.group(n=nameFn.generate_name(obj_instance.name, obj_instance.side, suffix="parts"), em=1, p=root_grp)
+        for node in [root_grp, ctls_grp, joints_grp, parts_grp]:
             node.addAttr("metaParent", at="message")
 
         # Add message attrs
@@ -186,39 +152,60 @@ class AnimComponent(Component):
         obj_instance.pynode.addAttr("controls", at="message", multi=1, im=0)
 
         # Connect hierarchy to meta
-        obj_instance.group.root.metaParent.connect(obj_instance.pynode.rootGroup)
-        obj_instance.group.ctls.metaParent.connect(obj_instance.pynode.ctlsGroup)
-        obj_instance.group.joints.metaParent.connect(obj_instance.pynode.jointsGroup)
-        obj_instance.group.parts.metaParent.connect(obj_instance.pynode.partsGroup)
+        root_grp.metaParent.connect(obj_instance.pynode.rootGroup)
+        ctls_grp.metaParent.connect(obj_instance.pynode.ctlsGroup)
+        joints_grp.metaParent.connect(obj_instance.pynode.jointsGroup)
+        parts_grp.metaParent.connect(obj_instance.pynode.partsGroup)
 
         return obj_instance
 
-    def remove(self):
-        """Delete component from scene"""
-        pm.delete(self.group.root)
-        self.signals.removed.emit()
+    @property
+    def root(self):
+        node = self.pynode.rootGroup.listConnections()[0]  # type: nodetypes.Transform
+        return node
 
-    def get_controls(self):
-        """Get list of component controls.
+    @property
+    def group_ctls(self):
+        node = self.pynode.ctlsGroup.listConnections()[0]  # type: nodetypes.Transform
+        return node
+
+    @property
+    def group_joints(self):
+        node = self.pynode.jointsGroup.listConnections()[0]  # type: nodetypes.Transform
+        return node
+
+    @property
+    def group_parts(self):
+        node = self.pynode.partsGroup.listConnections()[0]  # type: nodetypes.Transform
+        return node
+
+    @property
+    def controls(self):
+        connected_nodes = self.pynode.controls.listConnections()
+        all_ctls = [Control(node) for node in connected_nodes]
+        return all_ctls
+
+    @property
+    def bind_joints(self):
+        joint_list = self.pynode.bindJoints.listConnections()  # type: list[nodetypes.Joint]
+        return joint_list
+
+    def list_controls(self, tag=None):
+        """Get list of component controls. Extra attr for tag sorting.
 
         :return: List of all component controls.
         :rtype: list[Control]
         """
         connected_nodes = self.pynode.controls.listConnections()
-        return [Control(node) for node in connected_nodes]
-
-    def get_bind_joints(self):
-        """Get list of component bind joints.
-
-        :return: List of component bind joints.
-        :rtype: list[PyNode]
-        """
-        return self.pynode.bindJoints.listConnections()
+        all_ctls = [Control(node) for node in connected_nodes]
+        if tag:
+            taged_list = [ctl for ctl in all_ctls if ctl.tag_node.tag.get() == tag]
+            return taged_list
+        return all_ctls
 
     def select_controls(self):
         """Select all component controls"""
-        controls = self.get_controls()
-        for ctl in controls:
+        for ctl in self.controls:
             ctl.transform.select(add=1)
 
     def key_controls(self):
@@ -243,6 +230,11 @@ class AnimComponent(Component):
     def to_default_pose(self):
         """Override: revert all controls to default values"""
         pass
+
+    def remove(self):
+        """Delete component from scene"""
+        pm.delete(self.root)
+        self.signals.removed.emit()
 
     def add_attach_point(self, node):
         """Set given node as attach point
@@ -314,4 +306,4 @@ class AnimComponent(Component):
 
         self.pynode.message.connect(character.pynode.metaChildren, na=1)
         if parent:
-            pm.parent(self.group.root, character.hierarchy.control_rig)
+            pm.parent(self.root, character.control_rig)

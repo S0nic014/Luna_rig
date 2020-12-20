@@ -1,7 +1,9 @@
 """Based on 2015 GDC talk by David Hunt & Forrest Sderlind https://www.youtube.com/watch?v=U_4u0kbf-JE"""
 
 import pymel.core as pm
+from pymel.core import nodetypes
 from Luna import Logger
+from Luna_rig.functions import nameFn
 
 
 class MetaRigNode(object):
@@ -50,7 +52,25 @@ class MetaRigNode(object):
         node = pm.PyNode(node)
         if not node.hasAttr("metaRigType"):
             raise TypeError("{0} is not a valid meta rig node".format(str(node)))
-        self.pynode = node  # type: pm.PyNode
+        self.pynode = node  # type: nodetypes.Network
+
+    @property
+    def name(self):
+        name_parts = nameFn.deconstruct_name(self.pynode.name())
+        name = "_".join(name_parts.name)
+        return name
+
+    @property
+    def side(self):
+        return nameFn.deconstruct_name(self.pynode.name()).side
+
+    @property
+    def index(self):
+        return nameFn.deconstruct_name(self.pynode.name()).index
+
+    @property
+    def suffix(self):
+        return nameFn.deconstruct_name(self.pynode.name()).suffix
 
     @classmethod
     def create(cls, meta_parent, version):

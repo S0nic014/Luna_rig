@@ -14,7 +14,7 @@ class FKComponent(component.AnimComponent):
         fkcomp = super(FKComponent, cls).create(meta_parent, version, side, name)  # type: FKComponent
 
         # Store attach points
-        fkcomp.add_attach_point(fkcomp.group.ctls)
+        fkcomp.add_attach_point(fkcomp.group_ctls)
         # Connect to
         fkcomp.connect_to_character(parent=meta_parent is None)
         fkcomp.attach_to_component(meta_parent, attach_point)
@@ -31,5 +31,5 @@ class FKComponent(component.AnimComponent):
         if not attach_obj:
             return
         # Component specific attach logic
-        pm.parent(self.group.root, attach_obj)
+        pm.parent(self.root, attach_obj)
         Logger.debug("Attached: {0} ->> {1}({2})".format(self, other_comp, attach_obj))

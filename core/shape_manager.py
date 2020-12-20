@@ -10,6 +10,7 @@ from Luna_rig.functions import curveFn
 
 
 class ShapeManager:
+    # TODO: Write tests
     SHAPES_LIB = directories.SHAPES_LIB_PATH
 
     @classmethod

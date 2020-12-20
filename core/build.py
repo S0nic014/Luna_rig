@@ -41,10 +41,11 @@ class PyBuild(object):
         # Setup character
         Logger.info("Setting up character...")
         self.character = components.Character.create(version=version, name=asset_name)
-        Logger.info(self.character)
+        environFn.set_character_var(self.character)
 
         # Override methods
         self.run()
+        self.character.save_bind_pose()
         self.post()
 
         self.signals.done.emit()

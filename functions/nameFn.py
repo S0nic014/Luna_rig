@@ -9,16 +9,16 @@ def deconstruct_name(full_name):
 
     class _nameStruct:
         def __init__(self):
-            self.side = name_parts[0]
-            self.name = name_parts[1:-2]
-            self.index = name_parts[-2]
-            self.suffix = name_parts[-1]
+            self.side = name_parts[0]  # type :str
+            self.name = name_parts[1:-2]  # type :list
+            self.index = name_parts[-2]  # type: str
+            self.suffix = name_parts[-1]  # type: str
     try:
         name_struct = _nameStruct()
     except IndexError:
         Logger.exception("Failed to deconstruct name: {0}".format(full_name))
 
-    return name_struct
+    return name_struct  # type: _nameStruct
 
 
 def rename(node, side=None, name=None, index=None, suffix=None):

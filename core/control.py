@@ -1,5 +1,7 @@
 
+import json
 import pymel.core as pm
+from pymel.core import nodetypes
 from Luna import Logger
 from Luna.static import colors
 from Luna_rig.functions import nameFn
@@ -8,41 +10,12 @@ from Luna_rig.core import shape_manager
 reload(shape_manager)
 
 
-class _dataStruct:
-    def __init__(self):
-        self.name = None  # type: str
-        self.side = None  # type: str
-
-
-class Control():
+class Control(object):
     def __repr__(self):
         return "Control({0}), Offsets: {1}".format(self.transform, self.offset_list)
 
     def __init__(self, node):
-        self.data = _dataStruct()
-
         self.transform = pm.PyNode(node)
-        self.group = pm.PyNode(self.transform.name().replace("ctl", "grp"))
-        self.tag_node = self.transform.listConnections(t="controller")[0] or None
-        self.joint = None
-        self.offset = None
-        self.offset_list = []
-
-        # Find joint
-        child_joints = self.tag_node.joint.listConnections()
-        if child_joints:
-            self.joint = child_joints[0]
-
-        # Find offsets
-        self.offset_list = self.tag_node.offset.listConnections()
-        if self.offset_list:
-            self.offset = self.offset_list[0]
-
-        # Populate data struct
-        name_parts = nameFn.deconstruct_name(self.transform)
-        self.data.name = "_".join(name_parts.name)
-        self.data.side = name_parts.side
-
         Logger.debug("""========Control instance========
                 tree:
                 -group: {0}
@@ -56,7 +29,7 @@ class Control():
                 -side: {6}
                 -name: {7}
                         """.format(self.group, self.offset_list, self.offset, self.transform, self.joint, self.tag_node,
-                                   self.data.side, self.data.name))
+                                   self.side, self.name))
 
     @classmethod
     def create(cls,
@@ -164,15 +137,83 @@ class Control():
 
         # Create instance
         instance = Control(transform_node)
-        instance.data.name = name
-        instance.data.side = side
         instance.set_shape(shape, transparency)
-        instance.set_color(color)
+        instance.color = color
 
         # Cleanup
         instance.lock_attrib(exclude_attr=attributes, channel_box=False)
 
         return instance
+
+    @property
+    def name(self):
+        name_parts = nameFn.deconstruct_name(self.transform)
+        name = "_".join(name_parts.name)
+        return name
+
+    @property
+    def side(self):
+        return nameFn.deconstruct_name(self.transform).side
+
+    @property
+    def index(self):
+        return nameFn.deconstruct_name(self.transform).index
+
+    @property
+    def tag(self):
+        value = self.tag_node.tag.get()  # type: str
+        return value
+
+    @property
+    def tag_node(self):
+        node = self.transform.listConnections(t="controller")[0]  # type: nodetypes.Controller
+        return node
+
+    @property
+    def group(self):
+        node = self.tag_node.group.listConnections()[0]  # type: nodetypes.Transform
+        return node
+
+    @property
+    def joint(self):
+        result = None  # type: nodetypes.Joint
+        child_joints = self.tag_node.joint.listConnections()
+        if child_joints:
+            result = child_joints[0]  # type: nodetypes.Joint
+        return result
+
+    @property
+    def offset(self):
+        all_offsets = self.offset_list
+        result = None  # type: nodetypes.Transform
+        if all_offsets:
+            result = all_offsets[0]  # type: nodetypes.Transform
+        else:
+            result = None
+        return result
+
+    @property
+    def offset_list(self):
+        offsets = self.tag_node.offset.listConnections()  # type: list
+        return offsets
+
+    @property
+    def color(self):
+        return shape_manager.ShapeManager.get_color(self.transform)
+
+    @color.setter
+    def color(self, value):
+        if not value:
+            value = colors.SideColor[self.side].value
+        shape_manager.ShapeManager.set_color(self.transform, value)
+
+    @property
+    def shape(self):
+        return shape_manager.ShapeManager.get_shapes(self.transform)
+
+    @shape.setter
+    def shape(self, name):
+        shape_manager.ShapeManager.set_shape(self.transform, name)
 
     def set_parent(self, parent):
         """Set control parent
@@ -245,9 +286,8 @@ class Control():
         else:
             parent = self.group
         Logger.debug(parent)
-        new_offset = pm.createNode("transform", n=nameFn.generate_name([self.data.name, extra_name], side=self.data.side, suffix="ofs"), p=parent)
+        new_offset = pm.createNode("transform", n=nameFn.generate_name([self.name, extra_name], side=self.side, suffix="ofs"), p=parent)
         pm.parent(self.transform, new_offset)
-        self.offset_list.append(new_offset)
         new_offset.addAttr("metaParent", at="message")
         new_offset.metaParent.connect(self.tag_node.offset, na=1)
         return new_offset
@@ -259,17 +299,6 @@ class Control():
         :type name: str
         """
         shape_manager.ShapeManager.set_shape(self.transform, name, transparency)
-
-    def set_color(self, color):
-        """Set control color
-
-        :param color: New color
-        :type color: int or enumFn.Enum
-        """
-        if not color:
-            color = colors.SideColor[self.data.side].value
-        self.data.color = color
-        shape_manager.ShapeManager.set_color(self.transform, self.data.color)
 
     def add_space(self, name, target):
         """Add new space
@@ -300,10 +329,6 @@ class Control():
         """
         Logger.debug("TODO: {0} - adding wire...")
 
-    def get_color(self):
-        """Get current control color"""
-        Logger.debug("TODO: {0} - getting ctl color...")
-
     def rename(self, side=None, name=None, index=None, suffix=None):
         """Rename control member nodes
 
@@ -319,12 +344,22 @@ class Control():
         for node in [self.group, self.transform, self.joint] + self.offset_list:
             nameFn.rename(node, side, name, index, suffix)
 
+    def get_bind_pose(self):
+        if pm.hasAttr(self.transform, "bindPose"):
+            return json.loads(self.transform.bindPose.get())
 
-if __name__ == "__main__":
-    # pm.newFile(f=1)
-    # new_ctl1 = Control.create(name="leg_fk", side="r", tag="fk", joint=True)
-    # new_ctl2 = Control.create(name="leg_fk", side="l", tag="fk", parent=new_ctl1)
-    ctl = Control("l_leg_fk_00_ctl")
-    ctl.set_shape("nurbsSphere")
-    # ctl.set_color(17)
-    # shape_manager.ShapeManager.save_shape("l_leg_fk_00_ctl", "NurbsCube")
+    def write_bind_pose(self):
+        pose_dict = {}
+        attributes = pm.listAttr(self.transform, k=1, u=1) + pm.listAttr(self.transform, cb=1, u=1)
+        for attr in attributes:
+            if not pm.listConnections("{0}.{1}".format(self.transform, attr), s=1, d=0):
+                pose_dict[attr] = pm.getAttr("{0}.{1}".format(self.transform, attr))
+        if not pm.hasAttr(self.transform, "bindPose"):
+            self.transform.addAttr("bindPose", dt="string", keyable=False)
+            self.transform.bindPose.set(json.dumps(pose_dict))
+            self.transform.bindPose.lock()
+        else:
+            self.transform.bindPose.unlock()
+            self.transform.bindPose.set(json.dumps(pose_dict))
+            self.transform.bindPose.lock()
+        Logger.debug("Bind pose written for {0}".format(self))
