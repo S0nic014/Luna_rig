@@ -1,5 +1,6 @@
 import os
 import pymel.core as pm
+from pymel.core import nodetypes
 
 from Luna import Logger
 from Luna.utils import fileFn
@@ -56,7 +57,7 @@ class ShapeManager:
             node = node.getTransform()
             child_shapes = node.getShapes()
 
-        # Get old shapes colorm trasnparency data
+        # Get old shapes color and transparency data
         if child_shapes:
             if isinstance(child_shapes[0], pm.nodetypes.NurbsCurve):
                 old_color = child_shapes[0].overrideColor.get()
@@ -67,16 +68,16 @@ class ShapeManager:
                 shader_data = surfaceFn.Surface.get_surface_shader_data(child_shapes[0])
                 old_color = shader_data.get("out_color_index")
                 old_transparency = shader_data.get("out_transparency")
-            pm.delete(child_shapes)
 
         # Iterate over loaded shape
-        loaded_shape_list = cls.load_shape(shape_name)
+        loaded_shape_list = cls.load_shape_from_lib(shape_name)
         cls.apply_shape(node, loaded_shape_list, default_color=old_color, default_transparency=old_transparency)
         pm.select(node, r=1)
 
     @classmethod
     def apply_shape(cls, node, shape_list, default_color=0, default_transparency=0.0):
-        node = pm.PyNode(node)
+        node = pm.PyNode(node)  # type: nodetypes.Transform
+        pm.delete(node.getShapes())
         for index, shape_dict in enumerate(shape_list):
             if shape_dict.get("type") == "nurbsCurve":
                 # Create temporary curve
@@ -111,16 +112,18 @@ class ShapeManager:
                 surfaceFn.Surface.set_shader(new_surface, color_index=new_color, transparency=transparency)
 
     @classmethod
-    def load_shape(cls, shape_name):
+    def load_shape_from_lib(cls, shape_name):
         path = os.path.join(cls.SHAPES_LIB, shape_name + ".json")
         data = fileFn.load_json(path)  # type: dict
         return data
 
     @classmethod
-    def save_shape(cls, transform, name):
+    def save_shape(cls, transform, name, path=None):
+        if not path:
+            path = cls.SHAPES_LIB
         transform = pm.PyNode(transform)
         shape_list = cls.get_shapes(transform)
-        save_path = os.path.join(cls.SHAPES_LIB, name + ".json")
+        save_path = os.path.join(path, name + ".json")
         for data_dict in shape_list:
             data_dict.pop("color", None)
             data_dict.pop("transparency", [0.0, 0.0, 0.0])
@@ -157,5 +160,7 @@ class ShapeManager:
                 color = child_shape.overrideColor.get()
             elif isinstance(child_shape, pm.nodetypes.NurbsSurface):
                 color = surfaceFn.Surface.get_surface_shader_data(child_shape).get("out_color_index")
+        else:
+            Logger.error("Invalid transform {0}, cant't get color!".format(node))
 
         return color

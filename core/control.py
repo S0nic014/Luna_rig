@@ -7,7 +7,8 @@ from Luna.static import colors
 from Luna_rig.functions import nameFn
 from Luna_rig.functions import attrFn
 from Luna_rig.core import shape_manager
-reload(shape_manager)
+from Luna_rig.core import meta
+reload(nameFn)
 
 
 class Control(object):
@@ -107,6 +108,7 @@ class Control(object):
         # Transform
         transform_node = pm.createNode('transform', n=nameFn.generate_name(name, side, suffix="ctl"), p=temp_parent)
         transform_node.addAttr("bindPose", dt="string", keyable=False)
+        transform_node.bindPose.set(json.dumps({}))
         transform_node.bindPose.lock()
         temp_parent = transform_node
 
@@ -190,9 +192,9 @@ class Control(object):
         all_offsets = self.offset_list
         result = None  # type: nodetypes.Transform
         if all_offsets:
-            result = all_offsets[0]  # type: nodetypes.Transform
+            result = all_offsets[-1]  # type: nodetypes.Transform
         else:
-            result = None
+            result = None  # type: nodetypes.Transform
         return result
 
     @property
@@ -223,6 +225,22 @@ class Control(object):
         if pm.hasAttr(self.transform, "bindPose"):
             return json.loads(self.transform.bindPose.get())
 
+    @property
+    def connected_component(self):
+        result = None
+        connections = self.transform.metaParent.listConnections()
+        for node in connections:
+            if not meta.MetaRigNode.is_metanode(node):
+                Logger.warning("Strange connection on {0}.metaParent: {1}".format(self, node))
+                continue
+            result = meta.MetaRigNode(node)
+        return result
+
+    @classmethod
+    def is_control(cls, node):
+        result = pm.controller(node, q=1, ic=1)  # type: int
+        return result
+
     def set_parent(self, parent):
         """Set control parent
 
@@ -252,7 +270,7 @@ class Control(object):
         result = None
         conn = self.tag_node.parent.listConnections()
         if conn:
-            result = conn[0]  # type: pm.PyNode
+            result = conn[0]  # type: nodetypes.Transform
 
         return result
 
@@ -288,16 +306,18 @@ class Control(object):
         :return: Created node
         :rtype: pm.PyNode
         """
-        Logger.debug("TODO: {0} - inserting offset with extra name: {1}".format(self.transform, extra_name))
+        Logger.debug("{0} - Inserting offset with extra name: {1}".format(self.transform, extra_name))
         if self.offset_list:
             parent = self.offset_list[-1]
         else:
             parent = self.group
-        Logger.debug(parent)
-        new_offset = pm.createNode("transform", n=nameFn.generate_name([self.name, extra_name], side=self.side, suffix="ofs"), p=parent)
+        if extra_name:
+            new_name = "_".join([self.name, extra_name])
+        new_offset = pm.createNode("transform", n=nameFn.generate_name(new_name, side=self.side, suffix="ofs"), p=parent)  # type: nodetypes.Transform
         pm.parent(self.transform, new_offset)
         new_offset.addAttr("metaParent", at="message")
         new_offset.metaParent.connect(self.tag_node.offset, na=1)
+        Logger.debug("Updated {0}".format(self))
         return new_offset
 
     def set_shape(self, name, transparency=0.0):
@@ -349,7 +369,14 @@ class Control(object):
         :param suffix: New suffix, defaults to None
         :type suffix: str, optional
         """
-        for node in [self.group, self.transform, self.joint] + self.offset_list:
+        old_name = self.name
+        for node in [self.group, self.transform, self.joint]:
+            nameFn.rename(node, side, name, index, suffix)
+        for node in self.offset_list:
+            if name:
+                name_parts = nameFn.deconstruct_name(node).name
+                extra_parts = [substr for substr in name_parts if substr not in old_name.split("_")]
+                name = "_".join([name] + extra_parts)
             nameFn.rename(node, side, name, index, suffix)
 
     def write_bind_pose(self):

@@ -50,7 +50,7 @@ class MetaRigNode(object):
         :raises TypeError: If node has no metaRigType attribute
         """
         node = pm.PyNode(node)
-        if not node.hasAttr("metaRigType"):
+        if not self.is_metanode(node):
             raise TypeError("{0} is not a valid meta rig node".format(str(node)))
         self.pynode = node  # type: nodetypes.Network
 
@@ -103,6 +103,11 @@ class MetaRigNode(object):
 
     def set_meta_parent(self, parent):
         self.pynode.metaParent.connect(parent.pynode.metaChildren, na=1)
+
+    @classmethod
+    def is_metanode(cls, node):
+        node = pm.PyNode(node)
+        return node.hasAttr("metaRigType")
 
     @staticmethod
     def list_nodes(of_type=None):

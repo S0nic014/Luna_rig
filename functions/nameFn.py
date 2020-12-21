@@ -32,8 +32,8 @@ def rename(node, side=None, name=None, index=None, suffix=None):
     if name is not None:
         name_parts.name = name
     if index is not None:
-        name_parts.index = index
-    if side is not None:
+        name_parts.index = str(index)
+    if suffix is not None:
         name_parts.suffix = suffix
 
     if isinstance(name_parts.name, list):
