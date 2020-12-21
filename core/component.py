@@ -199,7 +199,7 @@ class AnimComponent(Component):
         connected_nodes = self.pynode.controls.listConnections()
         all_ctls = [Control(node) for node in connected_nodes]
         if tag:
-            taged_list = [ctl for ctl in all_ctls if ctl.tag_node.tag.get() == tag]
+            taged_list = [ctl for ctl in all_ctls if ctl.tag == tag]
             return taged_list
         return all_ctls
 

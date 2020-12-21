@@ -157,7 +157,7 @@ class Character(component.Component):
             if isinstance(comp, component.AnimComponent):
                 ctls += comp.list_controls()
         if tag:
-            taged_list = [ctl for ctl in ctls if ctl.tag_node.tag.get() == tag]
+            taged_list = [ctl for ctl in ctls if ctl.tag == tag]
             return taged_list
         return ctls
 

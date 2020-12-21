@@ -84,6 +84,7 @@ class Control(object):
         :return: Control instance
         :rtype: Control
         """
+        # TODO: Implement scaling
 
         # Group
         offset_node = None
@@ -105,6 +106,8 @@ class Control(object):
 
         # Transform
         transform_node = pm.createNode('transform', n=nameFn.generate_name(name, side, suffix="ctl"), p=temp_parent)
+        transform_node.addAttr("bindPose", dt="string", keyable=False)
+        transform_node.bindPose.lock()
         temp_parent = transform_node
 
         # Joint
@@ -214,6 +217,11 @@ class Control(object):
     @shape.setter
     def shape(self, name):
         shape_manager.ShapeManager.set_shape_from_lib(self.transform, name)
+
+    @property
+    def bind_pose(self):
+        if pm.hasAttr(self.transform, "bindPose"):
+            return json.loads(self.transform.bindPose.get())
 
     def set_parent(self, parent):
         """Set control parent
@@ -343,10 +351,6 @@ class Control(object):
         """
         for node in [self.group, self.transform, self.joint] + self.offset_list:
             nameFn.rename(node, side, name, index, suffix)
-
-    def get_bind_pose(self):
-        if pm.hasAttr(self.transform, "bindPose"):
-            return json.loads(self.transform.bindPose.get())
 
     def write_bind_pose(self):
         pose_dict = {}

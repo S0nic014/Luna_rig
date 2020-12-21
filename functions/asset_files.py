@@ -25,8 +25,6 @@ def browse_model():
 def import_model():
     current_asset = environFn.get_asset_var()
     model_path = current_asset.model_path
-    Logger.debug(current_asset.meta_data)
-    Logger.debug(model_path)
     if not os.path.isfile(model_path):
         model_path = browse_model()
     try:
@@ -47,9 +45,9 @@ def import_guides():
     return latest_guides_path
 
 
-def reference_latest_model(*args):
+def reference_model(*args):
     current_asset = environFn.get_asset_var()
     if current_asset:
-        pm.createReference(current_asset.get_model_path())
+        pm.createReference(current_asset.model_path)
     else:
         pm.warning("Asset is not set!")
