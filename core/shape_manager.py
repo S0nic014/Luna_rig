@@ -114,6 +114,9 @@ class ShapeManager:
     @classmethod
     def load_shape_from_lib(cls, shape_name):
         path = os.path.join(cls.SHAPES_LIB, shape_name + ".json")
+        if not os.path.isfile(path):
+            Logger.exception("Shape file doesn't exist {0}".format(path))
+            path = os.path.join(cls.SHAPES_LIB, "cube.json")
         data = fileFn.load_json(path)  # type: dict
         return data
 

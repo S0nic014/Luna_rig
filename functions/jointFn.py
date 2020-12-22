@@ -1,7 +1,6 @@
 import pymel.core as pm
 from Luna import Logger
 from Luna_rig.functions import nameFn
-reload(nameFn)
 
 
 def duplicate_chain(original_chain=[],

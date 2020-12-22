@@ -6,19 +6,7 @@ from Luna_rig.core import component
 from Luna_rig.core import control
 from Luna_rig.functions import attrFn
 from Luna_rig.functions import outlinerFn
-from Luna_rig.functions import nameFn
 from Luna_rig.functions import rigFn
-reload(control)
-
-
-class _hierachyStruct:
-    def __init__(self):
-        self.root_ctl = None  # type: control.Control
-        self.control_rig = None  # type: pm.PyNode
-        self.geometry_grp = None  # type: pm.PyNode
-        self.deformation_rig = None  # type: pm.PyNode
-        self.locators_grp = None  # type: pm.PyNode
-        self.world_loc = None  # type: pm.PyNode
 
 
 class Character(component.Component):
