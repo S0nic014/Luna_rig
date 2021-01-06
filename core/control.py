@@ -6,7 +6,7 @@ from Luna import Logger
 from Luna.static import colors
 from Luna_rig.functions import nameFn
 from Luna_rig.functions import attrFn
-from Luna_rig.core import shape_manager
+from Luna_rig.core.shape_manager import ShapeManager
 from Luna_rig.core import meta
 
 
@@ -239,7 +239,7 @@ class Control(object):
         :return: Control color.
         :rtype: int
         """
-        return shape_manager.ShapeManager.get_color(self.transform)
+        return ShapeManager.get_color(self.transform)
 
     @color.setter
     def color(self, value):
@@ -250,7 +250,7 @@ class Control(object):
         """
         if not value:
             value = colors.SideColor[self.side].value
-        shape_manager.ShapeManager.set_color(self.transform, value)
+        ShapeManager.set_color(self.transform, value)
 
     @property
     def shape(self):
@@ -259,7 +259,7 @@ class Control(object):
         :return: Control shape.
         :rtype: dict
         """
-        return shape_manager.ShapeManager.get_shapes(self.transform)
+        return ShapeManager.get_shapes(self.transform)
 
     @shape.setter
     def shape(self, name):
@@ -268,7 +268,7 @@ class Control(object):
         :param name: Shape name
         :type name: str
         """
-        shape_manager.ShapeManager.set_shape_from_lib(self.transform, name)
+        ShapeManager.set_shape_from_lib(self.transform, name)
 
     @property
     def bind_pose(self):
@@ -299,6 +299,16 @@ class Control(object):
                 continue
             result = meta.MetaRigNode(node)
         return result
+
+    @property
+    def character(self):
+        comp = self.connected_component
+        if not comp:
+            Logger.warning("{0}: Failed to find connected component!".format(self))
+            return None
+        if "Character" in comp.as_str():
+            return comp
+        return comp.character
 
     @classmethod
     def is_control(cls, node):
@@ -416,7 +426,7 @@ class Control(object):
         :param name: Shape name
         :type name: str
         """
-        shape_manager.ShapeManager.set_shape_from_lib(self.transform, name, transparency)
+        ShapeManager.set_shape_from_lib(self.transform, name, transparency)
 
     def mirror_shape(self):
         """Mirrors control's shape

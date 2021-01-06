@@ -27,9 +27,9 @@ def import_model():
     model_path = current_asset.model_path
     if not os.path.isfile(model_path):
         model_path = browse_model()
+        current_asset.set_data("model", model_path)
     try:
         pm.importFile(model_path)
-        current_asset.meta_data = ("model", model_path)
     except RuntimeError as e:
         Logger.exception("Failed to load model file: {0}".format(model_path))
         raise e

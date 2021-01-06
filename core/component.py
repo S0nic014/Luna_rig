@@ -92,9 +92,6 @@ class Component(MetaRigNode):
         if other_comp.pynode not in self.pynode.metaParent.listConnections():
             self.set_meta_parent(other_comp)
 
-    def connect_to_character(self, character_name):
-        pass
-
 
 class AnimComponent(Component):
 
@@ -143,6 +140,7 @@ class AnimComponent(Component):
             node.addAttr("metaParent", at="message")
 
         # Add message attrs
+        obj_instance.pynode.addAttr("character", at="message")
         obj_instance.pynode.addAttr("rootGroup", at="message")
         obj_instance.pynode.addAttr("ctlsGroup", at="message")
         obj_instance.pynode.addAttr("jointsGroup", at="message")
@@ -189,6 +187,14 @@ class AnimComponent(Component):
     def bind_joints(self):
         joint_list = self.pynode.bindJoints.listConnections()  # type: list[nodetypes.Joint]
         return joint_list
+
+    @property
+    def character(self):
+        connections = self.pynode.character.listConnections()
+        if connections:
+            return MetaRigNode(connections[0])
+        else:
+            return None
 
     def list_controls(self, tag=None):
         """Get list of component controls. Extra attr for tag sorting.
@@ -304,6 +310,6 @@ class AnimComponent(Component):
         else:
             character = all_characters[0]
 
-        self.pynode.message.connect(character.pynode.metaChildren, na=1)
+        self.pynode.character.connect(character.pynode.metaChildren, na=1)
         if parent:
             pm.parent(self.root, character.control_rig)
