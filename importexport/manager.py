@@ -1,11 +1,16 @@
 import os
-from abc import ABC, abstractmethod, abstractproperty
+import abc
 from Luna.utils import environFn
 
 
-class AbstractManager(ABC):
+class AbstractManager(object):
+    __metaclass__ = abc.ABCMeta
+
     def __init__(self, data_type, extension):
         self.current_asset = environFn.get_asset_var()
+        self.current_character = environFn.get_character_var()
+        self.data_type = data_type
+        self.extension = extension
 
 
 class DeformerManager(AbstractManager):

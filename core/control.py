@@ -32,7 +32,6 @@ class Control(object):
                offset_grp=True,
                joint=False,
                shape="cube",
-               transparency=0.0,
                tag="",
                scale=1.0):
         """Control creation method
@@ -127,7 +126,7 @@ class Control(object):
 
         # Create instance
         instance = Control(transform_node)
-        instance.set_shape(shape, transparency)
+        instance.shape = shape
         instance.color = color
 
         # Cleanup
@@ -419,14 +418,6 @@ class Control(object):
         new_offset.metaParent.connect(self.tag_node.offset, na=1)
         Logger.debug("Updated {0}".format(self))
         return new_offset
-
-    def set_shape(self, name, transparency=0.0):
-        """Set control's shape
-
-        :param name: Shape name
-        :type name: str
-        """
-        ShapeManager.set_shape_from_lib(self.transform, name, transparency)
 
     def mirror_shape(self):
         """Mirrors control's shape

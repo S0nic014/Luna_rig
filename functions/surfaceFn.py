@@ -124,7 +124,7 @@ class Surface:
             return None
 
         material = shading_engine.surfaceShader.listConnections(s=1)[0] or []
-        out_color = material.outTransparency.get()
+        out_color = material.outColor.get()
         data_dict = {"engine": shading_engine,
                      "material": material,
                      "out_color": out_color,
@@ -163,9 +163,9 @@ class Surface:
         else:
             shader = pm.PyNode(shader_name)
             engine = shader.outColor.listConnections(d=1)[0]
-
         if isinstance(transparency, float):
             transparency = [transparency, transparency, transparency]
+        Logger.debug(transparency)
 
         shader.outColor.set(rgb_color)
         shader.outTransparency.set(transparency)

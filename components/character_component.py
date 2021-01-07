@@ -88,6 +88,12 @@ class Character(component.Component):
         root_ctl.transform.Scale.connect(root_ctl.transform.scaleY)
         root_ctl.transform.Scale.connect(root_ctl.transform.scaleZ)
 
+        # Fit root control size
+        scaleF = 0.8
+        clamped_size = max(obj_instance.get_size(axis="y") * 0.1, obj_instance.get_size(axis="x"))
+        for shape in obj_instance.root_ctl.transform.getShapes():
+            pm.scale(shape + ".cv[0:1000]", [scaleF * clamped_size, scaleF * clamped_size, scaleF * clamped_size])
+
         # Visibility
         locators_grp.visibility.set(0)
         # Lock
@@ -96,31 +102,31 @@ class Character(component.Component):
         outlinerFn.set_color(root_ctl.group, rgb=[0.6, 0.8, 0.9])
         return obj_instance
 
-    @property
+    @ property
     def root_ctl(self):
         return control.Control(self.pynode.rootCtl.listConnections()[0])
 
-    @property
+    @ property
     def control_rig(self):
         node = self.pynode.controlRig.listConnections()[0]  # type: nodetypes.Transform
         return node
 
-    @property
+    @ property
     def deformation_rig(self):
         node = self.pynode.deformationRig.listConnections()[0]  # type: nodetypes.Transform
         return node
 
-    @property
+    @ property
     def geometry_grp(self):
         node = self.pynode.geometryGroup.listConnections()[0]  # type: nodetypes.Transform
         return node
 
-    @property
+    @ property
     def locators_grp(self):
         node = self.pynode.locatorsGroup.listConnections()[0]  # type: nodetypes.Transform
         return node
 
-    @property
+    @ property
     def world_locator(self):
         node = self.pynode.worldLocator.listConnections()[0]  # type:nodetypes.Locator
         return node
@@ -175,7 +181,7 @@ class Character(component.Component):
             counter += 1
         Logger.info("Written {0} bind poses.".format(counter))
 
-    @classmethod
+    @ classmethod
     def find(cls, name):
         result = []
         for character_node in cls.list_nodes(of_type=cls):
