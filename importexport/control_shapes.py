@@ -1,19 +1,44 @@
 import pymel.core as pm
 from pymel.core import nodetypes
 import os
-from Luna.utils import fileFn
 from Luna import Logger
+from Luna.utils import fileFn
+from Luna.utils import environFn
 from Luna_rig.importexport import manager
 from Luna_rig.core.shape_manager import ShapeManager
 from Luna_rig.core.control import Control
 from Luna_rig.functions import rigFn
 
 
-class CtlShapeManager(manager.DataManager):
+class CtlShapeManager(manager.AbstractManager):
 
-    def __init__(self, data_type="controls", extension="crvs"):
-        super(CtlShapeManager, self).__init__(data_type, extension)
-        self.base_file_name = "{0}_{1}".format(self.current_asset.name, self.data_type)
+    def __init__(self):
+        super(CtlShapeManager, self).__init__()
+        self.asset = environFn.get_asset_var()
+        self.character = environFn.get_character_var()
+        if not self.asset:
+            Logger.error("Asset is not set")
+            raise RuntimeError
+
+    @property
+    def data_type(self):
+        return "controls"
+
+    @property
+    def extension(self):
+        return "crvs"
+
+    @property
+    def base_file_name(self):
+        return "{0}_{1}".format(self.asset.name, self.data_type)
+
+    @property
+    def new_versioned_file(self):
+        return fileFn.get_new_versioned_file(self.base_file_name, dir_path=self.asset.controls, extension=self.extension, full_path=True)
+
+    @property
+    def latest_versioned_file(self):
+        return fileFn.get_latest_file(self.base_file_name, self.asset.controls, extension=self.extension, full_path=True)
 
     @classmethod
     def save_selection_to_lib(cls):
@@ -48,32 +73,21 @@ class CtlShapeManager(manager.DataManager):
             ctl.shape = shape_name
         Logger.info("Successfully loaded shape: " + shape_name)
 
-    @classmethod
-    def export_asset_shapes(cls):
-        manager = CtlShapeManager()
-        if not manager.current_asset:
-            Logger.error("Asset is not set!")
-            return
-
+    def export_asset_shapes(self):
         data_dict = {}
         all_controls = rigFn.list_controls()
         if not all_controls:
-            Logger.warning("No controls to save shapes for")
+            Logger.warning("No controls to save")
             return
 
         for ctl in all_controls:
             data_dict[ctl.transform.name()] = ctl.shape
-        export_path = fileFn.get_new_versioned_file(manager.base_file_name, dir_path=manager.current_asset.controls, extension=manager.extension, full_path=True)
+        export_path = self.new_versioned_file
         fileFn.write_json(export_path, data=data_dict)
-        Logger.info("Exported {0} control shapes: {1}".format(manager.current_asset.name, export_path))
+        Logger.info("Exported control shapes: " + export_path)
 
-    @classmethod
-    def import_asset_shapes(cls):
-        manager = CtlShapeManager()
-        if not manager.current_asset:
-            Logger.error("Asset is not set!")
-            return
-        latest_file = fileFn.get_latest_file(manager.base_file_name, manager.current_asset.controls, extension=manager.extension, full_path=True)
+    def import_asset_shapes(self):
+        latest_file = self.latest_versioned_file
         if not latest_file:
             return
         data_dict = fileFn.load_json(latest_file)
