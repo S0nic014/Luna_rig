@@ -4,10 +4,13 @@ import pymel.core as pm
 from pymel.core import nodetypes
 from Luna import Logger
 from Luna.static import colors
+from Luna.static import names
 from Luna_rig.functions import nameFn
 from Luna_rig.functions import attrFn
+from Luna_rig.functions import transformFn
 from Luna_rig.core.shape_manager import ShapeManager
 from Luna_rig.core import meta
+reload(transformFn)
 
 
 class Control(object):
@@ -284,6 +287,15 @@ class Control(object):
         return pose_dict
 
     @property
+    def pose(self):
+        pose_dict = {}
+        attributes = pm.listAttr(self.transform, k=1, u=1) + pm.listAttr(self.transform, cb=1, u=1)
+        for attr in attributes:
+            if not pm.listConnections("{0}.{1}".format(self.transform, attr), s=1, d=0):
+                pose_dict[attr] = pm.getAttr("{0}.{1}".format(self.transform, attr))
+        return pose_dict
+
+    @property
     def connected_component(self):
         """Get component this control is connected to via metaParent attribute of Control.transform
 
@@ -440,7 +452,7 @@ class Control(object):
         """Uses add space method to add space to hidden world locator
         """
         # TODO: Add world space
-        self.add_space("World", "world_loc")
+        self.add_space("World", names.Character.world_space.value)
 
     def add_wire(self, source):
         """Adds staight line curve connecting source object and controls' transform
@@ -475,22 +487,17 @@ class Control(object):
 
     def write_bind_pose(self):
         """Writes current control pose to bindPose attribute on Control.transform"""
-        pose_dict = {}
-        attributes = pm.listAttr(self.transform, k=1, u=1) + pm.listAttr(self.transform, cb=1, u=1)
-        for attr in attributes:
-            if not pm.listConnections("{0}.{1}".format(self.transform, attr), s=1, d=0):
-                pose_dict[attr] = pm.getAttr("{0}.{1}".format(self.transform, attr))
         if not pm.hasAttr(self.transform, "bindPose"):
             self.transform.addAttr("bindPose", dt="string", keyable=False)
-            self.transform.bindPose.set(json.dumps(pose_dict))
+            self.transform.bindPose.set(json.dumps(self.pose))
             self.transform.bindPose.lock()
         else:
             self.transform.bindPose.unlock()
-            self.transform.bindPose.set(json.dumps(pose_dict))
+            self.transform.bindPose.set(json.dumps(self.pose))
             self.transform.bindPose.lock()
         Logger.debug("Bind pose written for {0}".format(self))
 
-    def go_to_bind_pose(self):
+    def to_bind_pose(self):
         """Reset control to pose stored in bindPose attribute"""
         self.set_pose(self.bind_pose)
 
@@ -505,3 +512,27 @@ class Control(object):
                 pm.setAttr("{0}.{1}".format(self.transform, attr), value)
             else:
                 Logger.warning("Missing attribute {0}.{1}".format(self.transform, attr))
+
+    def find_opposite(self):
+        if self.side not in ["l", "r"]:
+            return None
+        opposite_transform = "{0}_{1}_{2}_{3}".format(names.OppositeSide[self.side].value, self.name, self.index, "ctl")
+        if pm.objExists(opposite_transform):
+            return Control(opposite_transform)
+        else:
+            Logger.info("{0}: No opposite control found.".format(self))
+            return None
+
+    def mirror_pose_from_opposite(self, across="YZ", space=names.Character.world_space.value, behavior=True):
+        opposite_ctl = self.find_opposite()
+        if not opposite_ctl:
+            return
+        pm.matchTransform(self.transform, opposite_ctl.transform)
+        transformFn.mirror_xform(transforms=self.transform, across=across, behaviour=behavior, space=space)
+
+    def mirror_pose_to_opposite(self, across="YZ", space=names.Character.world_space.value, behavior=True):
+        opposite_ctl = self.find_opposite()
+        if not opposite_ctl:
+            return
+        pm.matchTransform(opposite_ctl.transform, self.transform)
+        transformFn.mirror_xform(transforms=opposite_ctl.transform, across=across, behaviour=behavior, space=space)
