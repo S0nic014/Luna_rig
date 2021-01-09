@@ -10,7 +10,6 @@ from Luna_rig.functions import attrFn
 from Luna_rig.functions import transformFn
 from Luna_rig.core.shape_manager import ShapeManager
 from Luna_rig.core import meta
-reload(transformFn)
 
 
 class Control(object):
@@ -517,20 +516,26 @@ class Control(object):
         if self.side not in ["l", "r"]:
             return None
         opposite_transform = "{0}_{1}_{2}_{3}".format(names.OppositeSide[self.side].value, self.name, self.index, "ctl")
+        # Handle namespaces
+        opposite_transform = ":".join(self.transform.namespaceList() + [opposite_transform])
         if pm.objExists(opposite_transform):
             return Control(opposite_transform)
         else:
             Logger.info("{0}: No opposite control found.".format(self))
             return None
 
-    def mirror_pose_from_opposite(self, across="YZ", space=names.Character.world_space.value, behavior=True):
+    def mirror_pose_from_opposite(self, across="YZ", space="character", behavior=True):
+        if space == "character":
+            space = self.character.world_locator
         opposite_ctl = self.find_opposite()
         if not opposite_ctl:
             return
         pm.matchTransform(self.transform, opposite_ctl.transform)
         transformFn.mirror_xform(transforms=self.transform, across=across, behaviour=behavior, space=space)
 
-    def mirror_pose_to_opposite(self, across="YZ", space=names.Character.world_space.value, behavior=True):
+    def mirror_pose_to_opposite(self, across="YZ", space="character", behavior=True):
+        if space == "character":
+            space = self.character.world_locator
         opposite_ctl = self.find_opposite()
         if not opposite_ctl:
             return

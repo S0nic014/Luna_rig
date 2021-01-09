@@ -2,13 +2,14 @@ import pymel.core as pm
 from Luna import Logger
 
 
-def deconstruct_name(full_name):
-    if isinstance(full_name, pm.PyNode):
-        full_name = full_name.name()
+def deconstruct_name(node):
+    node = pm.PyNode(node)
+    full_name = node.name(stripNamespace=True)
     name_parts = full_name.split("_")
 
     class _nameStruct:
         def __init__(self):
+            self.namespaces = node.namespaceList()
             self.side = name_parts[0]  # type :str
             self.name = name_parts[1:-2]  # type :list
             self.index = name_parts[-2]  # type: str
