@@ -18,7 +18,8 @@ class FKComponent(component.AnimComponent):
                side="c",
                name="fk_component",
                chain_start=None,
-               chain_end=None):  # noqa:F821
+               chain_end=None,
+               end_jnt_ctl=False):  # noqa:F821
         fkcomp = super(FKComponent, cls).create(meta_parent, version, side, name)  # type: FKComponent
         # Joint chain
         joint_chain = jointFn.joint_chain(chain_start, chain_end)
@@ -33,7 +34,8 @@ class FKComponent(component.AnimComponent):
         # Create control
         fk_controls = []
         next_parent = fkcomp.group_ctls
-        for jnt in ctl_chain[:-1]:
+        guide_chain = ctl_chain if end_jnt_ctl else ctl_chain[:-1]
+        for jnt in guide_chain:
             ctl = control.Control.create(side=fkcomp.side,
                                          name="{0}_fk".format(fkcomp.indexed_name),
                                          object_to_match=jnt,
@@ -56,7 +58,6 @@ class FKComponent(component.AnimComponent):
         # House keeping
         if fkcomp.character:
             pm.parent(joint_chain[0], fkcomp.character.deformation_rig)
-        if not Logger.get_level() < 20:
             fkcomp.group_parts.visibility.set(0)
             fkcomp.group_joints.visibility.set(0)
         return fkcomp

@@ -10,7 +10,6 @@ from Luna.workspace import project
 from Luna.workspace import asset
 from Luna_rig.functions import asset_files
 from Luna_rig import components
-reload(asset_files)
 
 
 class _buildSignals(QtCore.QObject):
@@ -29,6 +28,7 @@ class PyBuild(object):
             return
 
         # Start build
+        pm.scriptEditorInfo(e=1, sr=1)
         self.signals.started.emit()
         pm.newFile(f=1)
         self.start_time = timeit.default_timer()
@@ -48,8 +48,17 @@ class PyBuild(object):
         Logger.info("Running post build tasks...")
         self.post()
 
+        # Adjust viewport
+        pm.select(cl=1)
+        pm.viewFit(self.character.root_ctl.group)
+        if Config.get(BuildVars.geometry_override, default=True):
+            self.character.geometry_grp.overrideEnabled.set(1)
+            self.character.geometry_grp.overrideColor.set(1)
+
+        # Report completion
         self.signals.done.emit()
         Logger.info("Build finished in {0:.2f}s".format(timeit.default_timer() - self.start_time))
+        pm.scriptEditorInfo(e=1, sr=0)
 
     def run(self):
         pass
