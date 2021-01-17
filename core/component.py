@@ -60,18 +60,6 @@ class Component(MetaRigNode):
 
 class AnimComponent(Component):
 
-    # def __init__(self, node):
-    #     super(AnimComponent, self).__init__(node)
-
-    #     # Having rootGroup means node is properly initialized
-    #     if pm.hasAttr(self.pynode, "rootGroup"):
-    #         # Recover data
-    #         # Group struct
-    #         self.group.root = self.pynode.rootGroup.listConnections()[0]
-    #         self.group.ctls = self.pynode.ctlsGroup.listConnections()[0]
-    #         self.group.joints = self.pynode.jointsGroup.listConnections()[0]
-    #         self.group.parts = self.pynode.partsGroup.listConnections()[0]
-
     @ classmethod
     def create(cls,
                meta_parent=None,
@@ -111,6 +99,7 @@ class AnimComponent(Component):
         obj_instance.pynode.addAttr("jointsGroup", at="message")
         obj_instance.pynode.addAttr("partsGroup", at="message")
         obj_instance.pynode.addAttr("bindJoints", at="message", multi=1, im=0)
+        obj_instance.pynode.addAttr("ctlChain", at="message", multi=1, im=0)
         obj_instance.pynode.addAttr("attachPoints", at="message", multi=1, im=0)
         obj_instance.pynode.addAttr("controls", at="message", multi=1, im=0)
 
@@ -154,12 +143,29 @@ class AnimComponent(Component):
         return joint_list
 
     @property
+    def ctl_chain(self):
+        ctl_chain = self.pynode.ctlChain.listConnections()  # type: list[nodetypes.Joint]
+        return ctl_chain
+
+    @property
     def character(self):
         connections = self.pynode.character.listConnections()
         if connections:
             return MetaRigNode(connections[0])
         else:
             return None
+
+    def _store_bind_joints(self, joint_chain):
+        for jnt in joint_chain:
+            jnt.metaParent.connect(self.pynode.bindJoints, na=1)
+
+    def _store_ctl_chain(self, joint_chain):
+        for jnt in joint_chain:
+            jnt.metaParent.connect(self.pynode.ctlChain, na=1)
+
+    def _store_controls(self, ctl_list):
+        for ctl in ctl_list:
+            ctl.transform.metaParent.connect(self.pynode.controls, na=1)
 
     def list_controls(self, tag=None):
         """Get list of component controls. Extra attr for tag sorting.

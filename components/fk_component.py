@@ -1,24 +1,58 @@
 import pymel.core as pm
+from pymel.core import nodetypes
 from Luna import Logger
-from Luna_rig.core import component
 from Luna.utils import enumFn
+from Luna_rig.core import component
+from Luna_rig.core import control
+from Luna_rig.functions import jointFn
+from Luna_rig.functions import nameFn
 
 
 class FKComponent(component.AnimComponent):
 
-    def __init__(self, node):
-        super(FKComponent, self).__init__(node)
-
     @classmethod
-    def create(cls, meta_parent=None, version=1, side="c", name="fk_component", attach_point=0):  # noqa:F821
+    def create(cls,
+               meta_parent=None,
+               attach_point=0,
+               version=1,
+               side="c",
+               name="fk_component",
+               chain_start=None,
+               chain_end=None):  # noqa:F821
         fkcomp = super(FKComponent, cls).create(meta_parent, version, side, name)  # type: FKComponent
+        # Joint chain
+        joint_chain = jointFn.joint_chain(chain_start, chain_end)
+        jointFn.validate_rotations(joint_chain)
+        for jnt in joint_chain:
+            jnt.addAttr("metaParent", at="message")
+        pm.parent(joint_chain[0], fkcomp.group_joints)
+        ctl_chain = jointFn.duplicate_chain(original_chain=joint_chain, add_name="ctl")
+        for jnt, ctl_jnt in zip(joint_chain, ctl_chain):
+            pm.parentConstraint(ctl_chain, jnt)
 
-        # Store attach points
-        fkcomp.add_attach_point(fkcomp.group_ctls)
-        # Connect to
+        # Create control
+        fk_controls = []
+        next_parent = fkcomp.group_ctls
+        for jnt in ctl_chain[:-1]:
+            ctl = control.Control.create(side=fkcomp.side,
+                                         name="{0}_fk".format(fkcomp.indexed_name),
+                                         object_to_match=jnt,
+                                         parent=next_parent,
+                                         tag="fk")
+            pm.parentConstraint(ctl.transform, jnt, mo=1)
+            next_parent = ctl
+            fk_controls.append(ctl)
+
+        # # Store joint chains
+        fkcomp._store_bind_joints(joint_chain)
+        fkcomp._store_ctl_chain(ctl_chain)
+        fkcomp._store_controls(fk_controls)
+        # # Store attach points
+        for each in fk_controls:
+            fkcomp.add_attach_point(each.transform)
+        # Connect to character, parent
         fkcomp.connect_to_character(parent=meta_parent is None)
         fkcomp.attach_to_component(meta_parent, attach_point)
-
         return fkcomp
 
     def attach_to_component(self, other_comp, attach_point=0):

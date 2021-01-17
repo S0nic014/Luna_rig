@@ -1,4 +1,5 @@
 import pymel.core as pm
+from pymel.core import nodetypes
 from Luna import Logger
 from Luna_rig.functions import nameFn
 
@@ -21,7 +22,7 @@ def duplicate_chain(original_chain=[],
         if replace_name:
             original_name.name = replace_name
         if add_name:
-            original_name.name += add_name
+            original_name.name.append(add_name)
         if replace_side:
             original_name.side = replace_side
         if replace_suffix:
@@ -49,8 +50,9 @@ def joint_chain(start_joint, end_joint=None):
     :return: Joint chain as a list
     :rtype: list
     """
-    assert pm.nodeType(start_joint) == 'joint', "{0} is not a joint".format(start_joint)
     start_joint = pm.PyNode(start_joint)
+    assert isinstance(start_joint, nodetypes.Joint), "{0} is not a joint".format(start_joint)
+    start_joint = pm.PyNode(start_joint)  # type: nodetypes.Joint
     chain = start_joint.getChildren(type="joint", ad=1) + [start_joint]
     chain.reverse()
     if not end_joint:
@@ -60,5 +62,34 @@ def joint_chain(start_joint, end_joint=None):
     assert pm.nodeType(end_joint) == 'joint', "{0} is not a joint".format(end_joint)
     end_joint = pm.PyNode(end_joint)
     chain = chain[:chain.index(end_joint) + 1]
-
     return chain
+
+
+def rotToOrient(jnt):
+    jnt = pm.PyNode(jnt)  # type: nodetypes.Joint
+    newOrient = []
+    for rot, orient in zip(jnt.rotate.get(), jnt.jointOrient.get()):
+        newOrient.append(orient + rot)
+        jnt.jointOrientX.set(newOrient[0])
+        jnt.jointOrientY.set(newOrient[1])
+        jnt.jointOrientZ.set(newOrient[2])
+        jnt.rotateX.set(0)
+        jnt.rotateY.set(0)
+        jnt.rotateZ.set(0)
+    return newOrient
+
+
+def validate_rotations(joint_chain):
+    is_valid = True
+    for jnt in joint_chain:
+        jnt = pm.PyNode(jnt)  # type: nodetypes.Joint
+        if jnt.rotateX.get() > 0:
+            Logger.warning("Non zero rotationX on joint {0}".format(jnt))
+            is_valid = False
+        if jnt.rotateY.get() > 0:
+            Logger.warning("Non zero rotationX on joint {0}".format(jnt))
+            is_valid = False
+        if jnt.rotateZ.get() > 0:
+            Logger.warning("Non zero rotationX on joint {0}".format(jnt))
+            is_valid = False
+    return is_valid
