@@ -44,6 +44,7 @@ class Component(MetaRigNode):
         :return: New component instance.
         :rtype: Component
         """
+        Logger.info("Building {0}({1}_{2})...".format(cls.as_str(name_only=True), side, name))
         if isinstance(meta_parent, MetaRigNode):
             meta_parent = meta_parent.pynode
         obj_instance = super(Component, cls).create(meta_parent, version)  # type: Component

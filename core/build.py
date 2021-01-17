@@ -35,18 +35,14 @@ class PyBuild(object):
         Logger.info("Initiating new build...")
 
         self.asset = asset.Asset(asset_name, asset_type)
-        Logger.info(self.asset)
         # Import model and componets files
         asset_files.import_model()
         asset_files.import_guides()
         # Setup character
-        Logger.info("Setting up character...")
         self.character = components.Character.create(version=version, name=asset_name)
-        Logger.info(self.character)
         environFn.set_character_var(self.character)
 
         # Override methods
-        Logger.info("Building rig...")
         self.run()
         self.character.save_bind_pose()
         Logger.info("Running post build tasks...")

@@ -28,17 +28,14 @@ class CtlShapeManager(manager.AbstractManager):
     def extension(self):
         return "crvs"
 
-    @property
-    def base_file_name(self):
+    def get_base_name(self):
         return "{0}_{1}".format(self.asset.name, self.data_type)
 
-    @property
-    def new_versioned_file(self):
-        return fileFn.get_new_versioned_file(self.base_file_name, dir_path=self.asset.controls, extension=self.extension, full_path=True)
+    def get_new_file(self):
+        return fileFn.get_new_versioned_file(self.get_base_name(), dir_path=self.asset.controls, extension=self.extension, full_path=True)
 
-    @property
-    def latest_versioned_file(self):
-        return fileFn.get_latest_file(self.base_file_name, self.asset.controls, extension=self.extension, full_path=True)
+    def get_latest_file(self):
+        return fileFn.get_latest_file(self.get_base_name(), self.asset.controls, extension=self.extension, full_path=True)
 
     @classmethod
     def save_selection_to_lib(cls):
@@ -82,12 +79,12 @@ class CtlShapeManager(manager.AbstractManager):
 
         for ctl in all_controls:
             data_dict[ctl.transform.name()] = ctl.shape
-        export_path = self.new_versioned_file
+        export_path = self.get_new_file()
         fileFn.write_json(export_path, data=data_dict)
         Logger.info("Exported control shapes: " + export_path)
 
     def import_asset_shapes(self):
-        latest_file = self.latest_versioned_file
+        latest_file = self.get_latest_file()
         if not latest_file:
             return
         data_dict = fileFn.load_json(latest_file)
@@ -96,4 +93,4 @@ class CtlShapeManager(manager.AbstractManager):
             success = ShapeManager.apply_shape(transform, shape_list=shape_data)
             if success:
                 success_count += 1
-        Logger.info("Imported {0}/{1} control shapes: {2}".format(success_count, len(data_dict.keys()), latest_file))
+        Logger.info("Imported control shapes: {0}".format(latest_file))

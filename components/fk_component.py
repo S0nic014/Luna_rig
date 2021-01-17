@@ -28,7 +28,7 @@ class FKComponent(component.AnimComponent):
         pm.parent(joint_chain[0], fkcomp.group_joints)
         ctl_chain = jointFn.duplicate_chain(original_chain=joint_chain, add_name="ctl")
         for jnt, ctl_jnt in zip(joint_chain, ctl_chain):
-            pm.parentConstraint(ctl_chain, jnt)
+            pm.parentConstraint(ctl_jnt, jnt, mo=1)
 
         # Create control
         fk_controls = []
@@ -53,6 +53,12 @@ class FKComponent(component.AnimComponent):
         # Connect to character, parent
         fkcomp.connect_to_character(parent=meta_parent is None)
         fkcomp.attach_to_component(meta_parent, attach_point)
+        # House keeping
+        if fkcomp.character:
+            pm.parent(joint_chain[0], fkcomp.character.deformation_rig)
+        if not Logger.get_level() < 20:
+            fkcomp.group_parts.visibility.set(0)
+            fkcomp.group_joints.visibility.set(0)
         return fkcomp
 
     def attach_to_component(self, other_comp, attach_point=0):
