@@ -51,41 +51,6 @@ class Component(MetaRigNode):
 
         return obj_instance
 
-    def get_meta_children(self, of_type=None):
-        """Get list of connected meta children
-
-        :param of_type: Only list children of specific type, defaults to None
-        :type of_type: class, optional
-        :return: List of meta children instances
-        :rtype: list[MetaRigNode]
-        """
-        result = []
-        if self.pynode.hasAttr("metaChildren"):
-            connections = self.pynode.metaChildren.listConnections()
-            if connections:
-                children = [MetaRigNode(connection_node) for connection_node in connections if pm.hasAttr(connection_node, "metaRigType")]
-                if not of_type:
-                    result = children
-                else:
-                    if isinstance(of_type, str):
-                        result = [child for child in children if of_type in child.as_str()]
-                    else:
-                        result = [child for child in children if isinstance(child, of_type)]
-
-        return result
-
-    def get_meta_parent(self):
-        """Get instance of meta parent
-
-        :return: Meta parent Component instance.
-        :rtype: Component
-        """
-        result = None
-        connections = self.pynode.metaParent.listConnections()
-        if connections:
-            result = MetaRigNode(connections[0])
-        return result
-
     def attach_to_component(self, other_comp):
         if not isinstance(other_comp, Component):
             other_comp = MetaRigNode(other_comp)

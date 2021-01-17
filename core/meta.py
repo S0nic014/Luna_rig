@@ -12,7 +12,7 @@ class MetaRigNode(object):
     def as_str(cls, name_only=False):
         """Get a string representation of class path.
 
-        :return: Class string
+        :return: Class string e.g Luna_rig.components.fk_component.FKComponent
         :rtype: str
         """
         meta_module = cls.__module__
@@ -67,6 +67,12 @@ class MetaRigNode(object):
     @property
     def index(self):
         return nameFn.deconstruct_name(self.pynode.name()).index
+
+    @property
+    def indexed_name(self):
+        name_parts = nameFn.deconstruct_name(self.pynode.name())
+        name = "_".join(name_parts.name)
+        return "_".join((name, name_parts.index))
 
     @property
     def suffix(self):
@@ -127,5 +133,40 @@ class MetaRigNode(object):
                 result = [node for node in all_nodes if isinstance(node, of_type)]
         else:
             result = all_nodes
+        return result
 
+    def get_meta_parent(self):
+        """Get instance of meta parent
+
+        :return: Meta parent node instance.
+        :rtype: MetaRigNode
+        """
+        result = None
+        connections = self.pynode.metaParent.listConnections()
+        if connections:
+            result = MetaRigNode(connections[0])
+        return result
+
+    def get_meta_children(self, of_type=None):
+        """Get list of connected meta children
+
+        :param of_type: Only list children of specific type, defaults to None
+        :type of_type: class, optional
+        :return: List of meta children instances
+        :rtype: list[MetaRigNode]
+        """
+        result = []
+        if self.pynode.hasAttr("metaChildren"):
+            connections = self.pynode.metaChildren.listConnections()
+            if connections:
+                children = [MetaRigNode(connection_node) for connection_node in connections if pm.hasAttr(connection_node, "metaRigType")]
+                if not of_type:
+                    result = children
+                else:
+                    if isinstance(of_type, str):
+                        result = [child for child in children if of_type in child.as_str()]
+                    else:
+                        result = [child for child in children if isinstance(child, of_type)]
+        else:
+            Logger.warning("{0}: Missing metaChildren attribute.")
         return result
