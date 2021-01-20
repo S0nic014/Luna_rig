@@ -1,4 +1,5 @@
 import pymel.core as pm
+import pymel.api as pma
 from pymel.core import nodetypes
 from Luna import Logger
 from Luna_rig.functions import nameFn
@@ -93,3 +94,25 @@ def validate_rotations(joint_chain):
             Logger.warning("Non zero rotationX on joint {0}".format(jnt))
             is_valid = False
     return is_valid
+
+
+def get_pole_vector(root_jnt, mid_jnt, end_jnt):
+    root_jnt_vec = root_jnt.getTranslation(space="world")  # type:pma.MVector
+    mid_jnt_vec = mid_jnt.getTranslation(space="world")  # type:pma.MVector
+    end_jnt_vec = end_jnt.getTranslation(space="world")  # type:pma.MVector
+
+    # Get projection vector
+    line = (end_jnt_vec - root_jnt_vec)
+    point = (mid_jnt_vec - root_jnt_vec)
+    scale_value = (line * point) / (line * line)
+    project_vec = line * scale_value + root_jnt_vec
+
+    # Get chain length
+    rootToMidLen = (mid_jnt_vec - root_jnt_vec).length()
+    midToEndLen = (end_jnt_vec - mid_jnt_vec).length()
+    totalLen = rootToMidLen + midToEndLen
+
+    pol_vec_pos = (mid_jnt_vec - project_vec).normal() * totalLen + mid_jnt_vec
+    pole_locator = pm.spaceLocator(n="polevector_loc")
+    pole_locator.translate.set(pol_vec_pos)
+    return pole_locator
