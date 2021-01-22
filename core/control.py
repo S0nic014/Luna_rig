@@ -378,8 +378,10 @@ class Control(object):
         """
         if isinstance(parent, Control):
             pm.parent(self.group, parent.transform)
-            self.tag_node.parent.connect(parent.tag_node.children, na=1)
-        parent.message.connect(self.tag_node.parent, f=1)
+            connect_index = len(parent.tag_node.children.listConnections(d=1))
+            self.tag_node.parent.connect(parent.tag_node.children[connect_index])
+        else:
+            parent.message.connect(self.tag_node.parent, f=1)
 
     def get_parent(self, generations=1):
         """Get current parent
@@ -387,7 +389,7 @@ class Control(object):
         :return: Parent node
         :rtype: pm.PyNode
         """
-        self.group.getParent(generations=str(generations))
+        return self.group.getParent(generations=generations)
 
     def lock_attrib(self, exclude_attr, channel_box=False):
         """Lock attributes on transform node
@@ -529,9 +531,9 @@ class Control(object):
         mult_mtx.matrixSum.connect(blend_mtx.target[index].targetMatrix)
         if not self.transform.offsetParentMatrix.isConnected():
             blend_mtx.outputMatrix.connect(self.transform.offsetParentMatrix)
-        self.transform.spaceUseTranslate.connect((blend_mtx.target[index].useTranslate))
-        self.transform.spaceUseRotate.connect((blend_mtx.target[index].useRotate))
-        self.transform.spaceUseScale.connect((blend_mtx.target[index].useScale))
+        self.transform.spaceUseTranslate.connect(blend_mtx.target[index].useTranslate)
+        self.transform.spaceUseRotate.connect(blend_mtx.target[index].useRotate)
+        self.transform.spaceUseScale.connect(blend_mtx.target[index].useScale)
 
     def __add_constr_space(self, target, name):
         # Space offset
