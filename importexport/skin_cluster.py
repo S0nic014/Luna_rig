@@ -1,8 +1,14 @@
+import os
+from itertools import izip
 import pymel.core as pm
+from pymel.core import nodetypes
+import pymel.api as pma
+
 from Luna import Logger
 from Luna.static import names
 from Luna.utils import fileFn
 from Luna_rig.importexport import manager
+from Luna_rig.functions import nameFn
 reload(manager)
 
 
@@ -28,6 +34,18 @@ class SkinClusterManager(manager.DeformerManager):
 
     def get_latest_file(self, node):
         return fileFn.get_latest_file(self.get_base_name(node), self.path, extension=self.extension, full_path=True)
+
+    @classmethod
+    def get_deformer_data(cls, node):
+        skin_data = {
+            "name": str(node),
+            "weights": node.getWeights(node.getGeometry()[0]),
+            # "blendWeights": node.getBlendWeights(node.getGeometry()[0]), #TODO: Add blend weights
+            "skinMethod": node.getSkinMethod(),
+            "normalizeWeights": node.getNormalizeWeights(),
+            "influenceObjects": [str(obj) for obj in node.influenceObjects()]
+        }
+        return skin_data
 
     def export_all(self, under_group=names.Character.geometry.value):
         for deformer_node in self.list_deformers(under_group):
@@ -55,19 +73,28 @@ class SkinClusterManager(manager.DeformerManager):
             Logger.warning("{0} on {1} has no weights initialized, nothing to export.")
             return
         new_file = self.get_new_file(node)
-        # pm.deformerWeights()
+        # Write json
+        skin_data = self.get_deformer_data(deformer)
+        weight_list = [row for row in skin_data.get("weights")]
+        skin_data["weights"] = weight_list
+        print skin_data.get("influenceObjects")
+        fileFn.write_json(new_file, skin_data)
         Logger.info("Exported {0} weights: {1}".format(deformer, new_file))
 
-    def import_single(self, node):
-        latest_file = self.get_latest_file(node)
+    def import_single(self, geo_name):
+        latest_file = self.get_latest_file(geo_name)
         if not latest_file:
-            Logger.warning("No saved skinCluster weights found found for {0}".format(node))
+            Logger.warning("No saved skinCluster weights found found for {0}".format(geo_name))
             return
-        # TODO: parse saved json
-        deformer = self.get_deformer(node)
+
+        skin_data = fileFn.load_json(latest_file)
+        # TODO: Handle not existing influences
+        deformer = self.get_deformer(geo_name)
         if not deformer:
-            pass  # TODO: Create skinCluster and bind to joints
-        Logger.info("Imported {0} skinCluster weights from: {1}".format(node, latest_file))
+            deformer = pm.skinCluster(skin_data.get("influenceObjects"), geo_name, n=geo_name + "_skin")  # type: nodetypes.SkinCluster
+        weights = deformer.getWeights(deformer.getGeometry()[0])
+        deformer.setWeights(geo_name, [pm.PyNode(name) for name in skin_data.get("influenceObjects")], weights, skin_data.get("normalizeWeights"))
+        Logger.info("Imported {0} skinCluster weights: {1}".format(geo_name, latest_file))
 
 
 if __name__ == "__main__":

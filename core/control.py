@@ -17,7 +17,11 @@ class Control(object):
         return "Control({0})".format(self.transform)
 
     def __init__(self, node):
-        self.transform = pm.PyNode(node)
+        node = pm.PyNode(node)
+        if isinstance(node, nodetypes.Controller):
+            self.transform = node.controllerObject.listConnections()[0]  # type: nodetypes.Transform
+        elif isinstance(node, nodetypes.Transform):
+            self.transform = pm.PyNode(node)  # type: nodetypes.Transform
 
     @classmethod
     def create(cls,
@@ -77,8 +81,9 @@ class Control(object):
         offset_node = None
         ctl_joint = None
         if isinstance(parent, Control):
-            parent = parent.transform
-        temp_parent = parent
+            temp_parent = parent.transform
+        else:
+            temp_parent = parent
 
         group_node = pm.createNode('transform', n=nameFn.generate_name(name, side, suffix="grp"), p=temp_parent)
         temp_parent = group_node
@@ -119,12 +124,13 @@ class Control(object):
 
         # Connect to tag node
         group_node.metaParent.connect(tag_node.group)
-        if parent:
-            parent.message.connect(tag_node.parent)
         if offset_node:
             offset_node.metaParent.connect(tag_node.offset, na=1)
         if ctl_joint:
             ctl_joint.metaParent.connect(tag_node.joint)
+        if isinstance(parent, Control):
+            child_index = len(parent.tag_node.children.listConnections())
+            tag_node.parent.connect(parent.tag_node.children[child_index])
 
         # Create instance
         instance = Control(transform_node)
@@ -146,6 +152,12 @@ class Control(object):
         name_parts = nameFn.deconstruct_name(self.transform)
         name = "_".join(name_parts.name)
         return name
+
+    @property
+    def unsuffixed_name(self):
+        name_parts = nameFn.deconstruct_name(self.transform)
+        name = "_".join(name_parts.name)
+        return "_".join([name_parts.side, name, name_parts.index])
 
     @property
     def side(self):
@@ -357,32 +369,18 @@ class Control(object):
         :param parent: Parent to set, if None - will be parented to world.
         :type parent: pm.PyNode
         """
-        if not parent:
-            self.tag_node.parent.disconnect()
-            pm.parent(self.group, w=1)
-            return
-
-        if isinstance(parent, str):
-            parent = pm.PyNode(parent)
-
         if isinstance(parent, Control):
-            parent = parent.transform
-
-        pm.parent(self.group, parent)
+            pm.parent(self.group, parent.transform)
+            self.tag_node.parent.connect(parent.tag_node.children, na=1)
         parent.message.connect(self.tag_node.parent, f=1)
 
-    def get_parent(self):
+    def get_parent(self, generations=1):
         """Get current parent
 
         :return: Parent node
         :rtype: pm.PyNode
         """
-        result = None
-        conn = self.tag_node.parent.listConnections()
-        if conn:
-            result = conn[0]  # type: nodetypes.Transform
-
-        return result
+        self.group.getParent(generations=str(generations))
 
     def lock_attrib(self, exclude_attr, channel_box=False):
         """Lock attributes on transform node
@@ -416,9 +414,9 @@ class Control(object):
         :return: Created node
         :rtype: pm.PyNode
         """
-        Logger.debug("{0} - Inserting offset with extra name: {1}".format(self.transform, extra_name))
+        Logger.debug("{0} - Inserting offset with extra name: {1}".format(self, extra_name))
         if self.offset_list:
-            parent = self.offset_list[-1]
+            parent = self.offset
         else:
             parent = self.group
         if extra_name:
@@ -430,28 +428,85 @@ class Control(object):
         Logger.debug("Updated {0}".format(self))
         return new_offset
 
+    def find_offet(self, extra_name):
+        result = None
+        for offset_node in self.offset_list:
+            if extra_name in nameFn.deconstruct_name(offset_node).name:
+                result = offset_node  # type: nodetypes.Transform
+                break
+        return result
+
     def mirror_shape(self):
         """Mirrors control's shape
         """
         # TODO: Mirror control shape
         Logger.debug("{0} - mirroing shape...")
 
-    def add_space(self, name, target):
-        """Add new space
+    def add_space(self, target, name, method="matrix"):
+        # Process inputs
+        if method not in ["constr", "matrix"]:
+            raise ValueError("Invalid space method, should be constraint or matrix")
 
-        :param name: Space name (will be used by enum attribute)
-        :type name: str
-        :param target: target space
-        :type target: str or pm.nodetypes.Transform
-        """
-        # TODO: Addspace
-        Logger.debug("{0} - adding {1} space with named {2}".format(self, target, name))
+        if isinstance(target, Control):
+            target = target.transform
+        else:
+            target = pm.PyNode(target)
+        if not isinstance(target, nodetypes.Transform):
+            Logger.error("{0}: Can't add space to not transform {1}".format(self, target))
+            raise ValueError
 
-    def add_world_space(self):
+        # Add space attribute
+        if not self.transform.hasAttr("space"):
+            self.transform.addAttr("space", at="enum", keyable=True, en=["NONE"])
+
+        # Check if enum name already exists
+        existing_enums = attrFn.get_enums(self.transform.space)
+        enum_names = [enum[0] for enum in existing_enums]
+        if name in enum_names:
+            Logger.exception("{0}: space with name {1} already exists.".format(self, name))
+            return
+        if "NONE" in enum_names:
+            enum_names.remove("NONE")
+
+        # Add enum value
+        enum_names.append(name)
+        pm.setEnums(self.transform.attr("space"), enum_names)
+
+        # Space offset
+        space_offset = self.find_offet("space")
+        if not space_offset:
+            space_offset = self.insert_offset(extra_name="space")
+
+        # Create switch logic
+        if method == "matrix":
+            self.__add_matrix_space(target, name)
+        elif method == "constr":
+            self.__add_constr_space(target, name)
+        Logger.info("{0}: added space {1}".format(self, target))
+
+    def __add_matrix_space(self, target, name):
+        pass
+
+    def __add_constr_space(self, target, name):
+        # Create space transforms
+        space_node = pm.createNode("transform", n="{0}_{1}_space".format(self.unsuffixed_name, name.lower()), p=self.transform)
+        space_offset = self.find_offet("space")
+        pm.parent(space_node, world=True)
+        parent_constr = pm.parentConstraint(space_node, space_offset)
+        # Condition node
+        condition = pm.createNode("condition", n="{0}_{1}_cond".format(self.unsuffixed_name, name.lower()))
+        self.transform.space.connect(condition.firstTerm)
+        condition.secondTerm.set(len(parent_constr.getTargetList()) - 1)
+        condition.colorIfTrueR.set(1)
+        condition.colorIfFalseR.set(0)
+        condition.outColorR.connect(parent_constr.getWeightAliasList()[-1])
+        pm.parent(space_node, target)
+
+    def add_world_space(self, method="matrix"):
         """Uses add space method to add space to hidden world locator
         """
         # TODO: Add world space
-        self.add_space("World", names.Character.world_space.value)
+        self.add_space(self.character.world_locator, "World", method)
 
     def add_wire(self, source):
         """Adds staight line curve connecting source object and controls' transform
@@ -513,6 +568,11 @@ class Control(object):
                 Logger.warning("Missing attribute {0}.{1}".format(self.transform, attr))
 
     def find_opposite(self):
+        """Finds opposite control in the scene
+
+        :return: [description]
+        :rtype: [type]
+        """
         if self.side not in ["l", "r"]:
             return None
         opposite_transform = "{0}_{1}_{2}_{3}".format(names.OppositeSide[self.side].value, self.name, self.index, "ctl")
@@ -525,6 +585,15 @@ class Control(object):
             return None
 
     def mirror_pose_from_opposite(self, across="YZ", space="character", behavior=True):
+        """Mirror control attributes from opposite control.
+
+        :param across: Mirror plan. Valid values: "YZ", "XY", "XZ", , defaults to "YZ"
+        :type across: str, optional
+        :param space: Mirror space, takes any transform or str values: "world", "character", defaults to "character"
+        :type space: str, optional
+        :param behavior: If behaviour should be mirrored, defaults to True
+        :type behavior: bool, optional
+        """
         if space == "character":
             space = self.character.world_locator
         opposite_ctl = self.find_opposite()
@@ -534,6 +603,15 @@ class Control(object):
         transformFn.mirror_xform(transforms=self.transform, across=across, behaviour=behavior, space=space)
 
     def mirror_pose_to_opposite(self, across="YZ", space="character", behavior=True):
+        """Mirror control attributes to control on opposite side.
+
+        :param across: Mirror plan. Valid values: "YZ", "XY", "XZ", , defaults to "YZ"
+        :type across: str, optional
+        :param space: Mirror space, takes any transform or str values: "world", "character", defaults to "character"
+        :type space: str, optional
+        :param behavior: If behaviour should be mirrored, defaults to True
+        :type behavior: bool, optional
+        """
         if space == "character":
             space = self.character.world_locator
         opposite_ctl = self.find_opposite()

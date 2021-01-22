@@ -3,6 +3,13 @@ from Luna import Logger
 
 
 def deconstruct_name(node):
+    """Deconstruct node name
+
+    :param node: Node to deconstruct name for.
+    :type node: str or PyNode
+    :return: Name struct {namespaces, side, name, index, suffix}
+    :rtype: nameStruct
+    """
     node = pm.PyNode(node)
     full_name = node.name(stripNamespace=True)
     name_parts = full_name.split("_")
@@ -23,6 +30,19 @@ def deconstruct_name(node):
 
 
 def rename(node, side=None, name=None, index=None, suffix=None):
+    """Rename node
+
+    :param node: Node to rename
+    :type node: str or PyNode
+    :param side: New side prefix, defaults to None
+    :type side: str, optional
+    :param name: New name, defaults to None
+    :type name: str, (str, list), optional
+    :param index: New index, defaults to None
+    :type index: str or int, optional
+    :param suffix: New suffix, defaults to None
+    :type suffix: str, optional
+    """
     if node is None:
         return
 
@@ -44,6 +64,17 @@ def rename(node, side=None, name=None, index=None, suffix=None):
 
 
 def generate_name(name, side="", suffix=""):
+    """Generate unique node name using format "side_name_index_suffix".
+
+    :param name: Node name
+    :type name: str or (str, list)
+    :param side: Side prefix, defaults to ""
+    :type side: str, optional
+    :param suffix: Name suffix, defaults to ""
+    :type suffix: str, optional
+    :return: Unique node name
+    :rtype: str
+    """
     if side:
         side += "_"
     if suffix:
@@ -61,3 +92,19 @@ def generate_name(name, side="", suffix=""):
         full_name = side + name + version + suffix
 
     return full_name
+
+
+def get_namespace(node):
+    """Get node namespace
+
+    :param node: Node to get namepspace for.
+    :type node: str or PyNode
+    :return: Namespace string
+    :rtype: str
+    """
+    node = pm.PyNode(node)
+    namespaces = node.namespaceList()
+    if not namespaces:
+        return ""
+    else:
+        return ":".join(namespaces) + ":"
