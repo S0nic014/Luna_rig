@@ -24,3 +24,10 @@ def get_enums(attribute):
     except TypeError:
         return []
     return enum_list
+
+
+def add_divider(node, attr_name="divider"):
+    node = pm.PyNode(node)
+    node.addAttr(attr_name, at="enum", en=["--------------"])
+    node.attr(attr_name).set(channelBox=True)
+    node.attr(attr_name).lock()

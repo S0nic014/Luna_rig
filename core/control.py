@@ -446,6 +446,9 @@ class Control(object):
         # Process inputs
         if method not in ["constr", "matrix"]:
             raise ValueError("Invalid space method, should be constraint or matrix")
+        # Add divider if matrix
+        if method == "matrix" and not self.transform.hasAttr("SPACE_SWITCHING"):
+            attrFn.add_divider(self.transform, "SPACE_SWITCHING")
 
         if isinstance(target, Control):
             target = target.transform
@@ -472,11 +475,6 @@ class Control(object):
         enum_names.append(name)
         pm.setEnums(self.transform.attr("space"), enum_names)
 
-        # Space offset
-        space_offset = self.find_offet("space")
-        if not space_offset:
-            space_offset = self.insert_offset(extra_name="space")
-
         # Create switch logic
         if method == "matrix":
             self.__add_matrix_space(target, name)
@@ -485,12 +483,56 @@ class Control(object):
         Logger.info("{0}: added space {1}".format(self, target))
 
     def __add_matrix_space(self, target, name):
-        pass
+        """Add space using matrix method\n
+        Based on https://www.chadvernon.com/blog/space-switching-offset-parent-matrix/
+        :param target: target space
+        :type target: PyNode
+        :param name: Space name
+        :type name: str
+        """
+        # Add ctl attrs
+        if not self.transform.hasAttr("spaceUseTranslate"):
+            self.transform.addAttr("spaceUseTranslate", at="bool", dv=True, k=1)
+        if not self.transform.hasAttr("spaceUseRotate"):
+            self.transform.addAttr("spaceUseRotate", at="bool", dv=True, k=1)
+        if not self.transform.hasAttr("spaceUseScale"):
+            self.transform.addAttr("spaceUseScale", at="bool", dv=True, k=1)
+
+        # Get offset matrix
+        mult_mtx = pm.createNode("multMatrix", n="{0}_{1}_mmtx".format(self.unsuffixed_name, name.lower()))
+        offset_mtx = transformFn.matrix_to_list(self.transform.worldMatrix.get() * self.transform.matrix.get().inverse() * target.worldInverseMatrix.get())
+        mult_mtx.matrixIn[0].set(offset_mtx)
+        target.worldMatrix.connect(mult_mtx.matrixIn[1])
+        self.transform.getParent().worldInverseMatrix.connect(mult_mtx.matrixIn[2])
+        index = len(attrFn.get_enums(self.transform.space)) - 1
+        # Condition
+        condition = pm.createNode("condition", n="{0}_{1}_cond".format(self.unsuffixed_name, name.lower()))
+        condition.secondTerm.set(index)
+        condition.colorIfTrueR.set(1)
+        condition.colorIfFalseR.set(0)
+        self.transform.space.connect(condition.firstTerm)
+        # Blend matrix
+        blend_name = "{0}_space_blend".format(self.unsuffixed_name)
+        if not pm.objExists(blend_name):
+            blend_mtx = pm.createNode("blendMatrix", n=blend_name)
+        else:
+            blend_mtx = pm.PyNode(blend_name)
+
+        condition.outColorR.connect(blend_mtx.target[index].weight)
+        mult_mtx.matrixSum.connect(blend_mtx.target[index].targetMatrix)
+        if not self.transform.offsetParentMatrix.isConnected():
+            blend_mtx.outputMatrix.connect(self.transform.offsetParentMatrix)
+        self.transform.spaceUseTranslate.connect((blend_mtx.target[index].useTranslate))
+        self.transform.spaceUseRotate.connect((blend_mtx.target[index].useRotate))
+        self.transform.spaceUseScale.connect((blend_mtx.target[index].useScale))
 
     def __add_constr_space(self, target, name):
+        # Space offset
+        space_offset = self.find_offet("space")
+        if not space_offset:
+            space_offset = self.insert_offset(extra_name="space")
         # Create space transforms
         space_node = pm.createNode("transform", n="{0}_{1}_space".format(self.unsuffixed_name, name.lower()), p=self.transform)
-        space_offset = self.find_offet("space")
         pm.parent(space_node, world=True)
         parent_constr = pm.parentConstraint(space_node, space_offset)
         # Condition node
