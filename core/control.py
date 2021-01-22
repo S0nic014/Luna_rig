@@ -307,6 +307,13 @@ class Control(object):
         return pose_dict
 
     @property
+    def spaces(self):
+        result = []
+        if self.transform.hasAttr("space"):
+            result = attrFn.get_enums(self.transform.space)
+        return result
+
+    @property
     def connected_component(self):
         """Get component this control is connected to via metaParent attribute of Control.transform
 
@@ -504,7 +511,7 @@ class Control(object):
         mult_mtx.matrixIn[0].set(offset_mtx)
         target.worldMatrix.connect(mult_mtx.matrixIn[1])
         self.transform.getParent().worldInverseMatrix.connect(mult_mtx.matrixIn[2])
-        index = len(attrFn.get_enums(self.transform.space)) - 1
+        index = len(self.spaces) - 1
         # Condition
         condition = pm.createNode("condition", n="{0}_{1}_cond".format(self.unsuffixed_name, name.lower()))
         condition.secondTerm.set(index)
