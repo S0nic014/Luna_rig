@@ -559,6 +559,17 @@ class Control(object):
         # TODO: Add world space
         self.add_space(self.character.world_locator, "World", method)
 
+    def switch_space(self, index, matching=True):
+        if not self.transform.hasAttr("space"):
+            return
+        if index > len(self.spaces) - 1:
+            Logger.warning("Space index {0} out of bounds.")
+            return
+        mtx = self.transform.getMatrix(worldSpace=True)
+        self.transform.space.set(index)
+        if matching:
+            self.transform.setMatrix(mtx, worldSpace=True)
+
     def add_wire(self, source):
         """Adds staight line curve connecting source object and controls' transform
 
