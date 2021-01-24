@@ -563,7 +563,7 @@ class Control(object):
         if not self.transform.hasAttr("space"):
             return
         if index > len(self.spaces) - 1:
-            Logger.warning("Space index {0} out of bounds.")
+            Logger.warning("{0} - Space index {1} out of bounds.".format(self, index))
             return
         mtx = self.transform.getMatrix(worldSpace=True)
         self.transform.space.set(index)
