@@ -147,10 +147,7 @@ class Character(component.Component):
         comp_list = self.get_meta_children()
         for comp in comp_list:
             if isinstance(comp, component.AnimComponent):
-                ctls += comp.list_controls()
-        if tag:
-            taged_list = [ctl for ctl in ctls if ctl.tag == tag]
-            return taged_list
+                ctls += comp.list_controls(tag)
         return ctls
 
     def list_bind_joints(self):
@@ -158,7 +155,7 @@ class Character(component.Component):
         comp_list = self.get_meta_children()
         for comp in comp_list:
             if isinstance(comp, component.AnimComponent):
-                joint_list += comp.list_bind_joints()
+                joint_list += comp.bind_joints
         return joint_list
 
     def get_size(self, axis="y"):
@@ -178,6 +175,14 @@ class Character(component.Component):
             each.write_bind_pose()
             counter += 1
         Logger.info("Written {0} bind poses.".format(counter))
+
+    def create_controls_set(self, name="controls_set", tag=None):
+        result = pm.sets([ctl.transform for ctl in self.list_controls(tag)], n=name)  # type: nodetypes.ObjectSet
+        return result
+
+    def create_joints_set(self, name="bind_joints_set"):
+        result = pm.sets(self.list_bind_joints(), n=name)  # type: nodetypes.ObjectSet
+        return result
 
     @ classmethod
     def find(cls, name):
