@@ -11,6 +11,8 @@ from Luna_rig.functions import curveFn
 
 class ShapeManager:
     SHAPES_LIB = directories.SHAPES_LIB_PATH
+    COPIED_SHAPE_FILE = "luna_copied_shape.json"
+    COPIED_COLOR_FILE = "luna_copied_color.json"
 
     @classmethod
     def get_shapes(cls, node):
@@ -96,6 +98,53 @@ class ShapeManager:
         for data_dict in shape_list:
             data_dict.pop("color", None)
         fileFn.write_json(save_path, shape_list)
+
+    @classmethod
+    def copy_shape(cls, transform=None):
+        if not transform:
+            if not pm.selected():
+                pm.warning("Select transform to copy shape.")
+                return
+            transform = pm.selected()[-1]
+        cls.save_shape(transform, cls.COPIED_SHAPE_FILE, path=directories.TMP_PATH)
+        Logger.info("Copied shape {0}".format(transform))
+
+    @classmethod
+    def paste_shape(cls, object_list):
+        saved_path = os.path.join(directories.TMP_PATH, cls.COPIED_SHAPE_FILE)
+        if not os.path.isfile(saved_path):
+            Logger.warning("Shape clipboard is empty")
+            return
+        if not object_list:
+            object_list = pm.selected()
+
+        shape_list = fileFn.load_json(saved_path)
+        for obj in object_list:
+            if isinstance(obj, nodetypes.Transform):
+                old_color = cls.get_color(obj)
+                cls.apply_shape(obj, shape_list, default_color=old_color)
+
+    @classmethod
+    def copy_color(cls, transform):
+        if not transform:
+            if not pm.selected():
+                pm.warning("Select transform to copy color.")
+                return
+            transform = pm.selected()[-1]
+        save_path = os.path.join(directories.TMP_PATH, cls.COPIED_COLOR_FILE)
+        data = {"color": cls.get_color(transform)}
+        fileFn.write_json(save_path, data)
+        Logger.info("Copied color {0}".format(transform))
+
+    @classmethod
+    def paste_color(cls, transform):
+        saved_path = os.path.join(directories.TMP_PATH, cls.COPIED_COLOR_FILE)
+        if not os.path.isfile(saved_path):
+            Logger.warning("Color clipboard is empty")
+            return
+        color_int = fileFn.load_json(saved_path).get("color", 0)
+        for obj in pm.selected():
+            cls.set_color(obj, color_int)
 
     @classmethod
     def set_color(cls, node, color):
