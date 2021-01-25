@@ -18,7 +18,7 @@ class _buildSignals(QtCore.QObject):
 
 
 class PyBuild(object):
-    def __init__(self, asset_type, asset_name, version=1):
+    def __init__(self, asset_type, asset_name):
         self.signals = _buildSignals()
 
         # Get project instance
@@ -39,7 +39,7 @@ class PyBuild(object):
         asset_files.import_model()
         asset_files.import_guides()
         # Setup character
-        self.character = components.Character.create(version=version, name=asset_name)
+        self.character = components.Character.create(name=asset_name)
         environFn.set_character_var(self.character)
 
         # Override methods

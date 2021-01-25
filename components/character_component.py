@@ -11,7 +11,7 @@ from Luna_rig.functions import rigFn
 
 class Character(component.Component):
     def __repr__(self):
-        return "Character component: ({0}, version: {1})".format(self.pynode.characterName.get(), self.pynode.version.get())
+        return "Character component: ({0})".format(self.pynode.characterName.get())
 
     def __init__(self, node):
         """Character constructor.
@@ -25,19 +25,17 @@ class Character(component.Component):
         self.signals.created.emit()
 
     @classmethod
-    def create(cls, meta_parent=None, version=1, name="character"):
+    def create(cls, meta_parent=None, name="character"):
         """Creation method.
 
         :param meta_parent: Not used, defaults to None
         :type meta_parent: Component, optional
-        :param version: Character version, defaults to 1
-        :type version: int, optional
         :param name: Character name, defaults to "character"
         :type name: str, optional
         :return: New character instance.
         :rtype: Character
         """
-        obj_instance = super(Character, cls).create(meta_parent, version, name=name, side="char")  # type: Character
+        obj_instance = super(Character, cls).create(meta_parent, name=name, side="char")  # type: Character
         # Create main members
         root_ctl = control.Control.create(name="character_node",
                                           side="c",

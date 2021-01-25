@@ -14,13 +14,12 @@ class FKComponent(component.AnimComponent):
     def create(cls,
                meta_parent=None,
                attach_point=0,
-               version=1,
                side="c",
                name="fk_component",
                chain_start=None,
                chain_end=None,
                end_jnt_ctl=False):  # noqa:F821
-        fkcomp = super(FKComponent, cls).create(meta_parent, version, side, name)  # type: FKComponent
+        fkcomp = super(FKComponent, cls).create(meta_parent, side, name)  # type: FKComponent
         # Joint chain
         joint_chain = jointFn.joint_chain(chain_start, chain_end)
         jointFn.validate_rotations(joint_chain)

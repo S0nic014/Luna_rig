@@ -78,14 +78,22 @@ class MetaRigNode(object):
     def suffix(self):
         return nameFn.deconstruct_name(self.pynode.name()).suffix
 
+    @property
+    def meta_type(self):
+        attr_val = self.pynode.metaRigType.get()  # type: str
+        return attr_val
+
     @classmethod
-    def create(cls, meta_parent, version):
+    def is_metanode(cls, node):
+        node = pm.PyNode(node)
+        return node.hasAttr("metaRigType")
+
+    @classmethod
+    def create(cls, meta_parent):
         """Creates meta node and calls constructor for MetaRigNode using meta_type.
 
         :param meta_parent: Meta parent node to connect to
         :type meta_parent: str or PyNode
-        :param version: meta version
-        :type version: int
         :return: Instance of meta_type class
         :rtype: MetaRigNode
         """
@@ -96,11 +104,9 @@ class MetaRigNode(object):
         node = pm.createNode("network")
 
         # Add attributes
-        node.addAttr("version", at="long")
         node.addAttr("metaRigType", dt="string")
         node.addAttr("metaChildren", at="message", multi=1, im=0)
         node.addAttr("metaParent", at="message")
-        node.version.set(version)
         node.metaRigType.set(cls.as_str())
         meta_node = MetaRigNode(node)
         if meta_parent:
@@ -109,11 +115,6 @@ class MetaRigNode(object):
 
     def set_meta_parent(self, parent):
         self.pynode.metaParent.connect(parent.pynode.metaChildren, na=1)
-
-    @classmethod
-    def is_metanode(cls, node):
-        node = pm.PyNode(node)
-        return node.hasAttr("metaRigType")
 
     @staticmethod
     def list_nodes(of_type=None):

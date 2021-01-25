@@ -30,13 +30,11 @@ class Component(MetaRigNode):
         return self.pynode == other.pynode
 
     @ classmethod
-    def create(cls, meta_parent, version, side="c", name="component"):
+    def create(cls, meta_parent, side="c", name="component"):
         """Creates instance of component
 
         :param meta_parent: Other Component to parent to.
         :type meta_parent: Component
-        :param version: Component version.
-        :type version: int
         :param side: Component side, defaults to "c"
         :type side: str, optional
         :param name: Component name, defaults to "component"
@@ -47,7 +45,7 @@ class Component(MetaRigNode):
         Logger.info("Building {0}({1}_{2})...".format(cls.as_str(name_only=True), side, name))
         if isinstance(meta_parent, MetaRigNode):
             meta_parent = meta_parent.pynode
-        obj_instance = super(Component, cls).create(meta_parent, version)  # type: Component
+        obj_instance = super(Component, cls).create(meta_parent)  # type: Component
         obj_instance.pynode.rename(nameFn.generate_name(name, side, suffix="meta"))
 
         return obj_instance
@@ -64,7 +62,6 @@ class AnimComponent(Component):
     @ classmethod
     def create(cls,
                meta_parent=None,
-               version=1,
                side="c",
                name="anim_component",
                attach_point=0):  # noqa:F821
@@ -72,8 +69,6 @@ class AnimComponent(Component):
 
         :param meta_parent: Other Rig element to connect to, defaults to None
         :type meta_parent: AnimComponent, optional
-        :param version: Component version, defaults to 1
-        :type version: int, optional
         :param side: Component side, used for naming, defaults to "c"
         :type side: str, optional
         :param name: Component name. If list - items will be connected by underscore, defaults to "anim_component"
@@ -84,7 +79,7 @@ class AnimComponent(Component):
         :rtype: AnimComponent
         """
 
-        obj_instance = super(AnimComponent, cls).create(meta_parent, version, side, name)  # type: AnimComponent
+        obj_instance = super(AnimComponent, cls).create(meta_parent, side, name)  # type: AnimComponent
         # Create hierarchy
         root_grp = pm.group(n=nameFn.generate_name(obj_instance.name, obj_instance.side, suffix="comp"), em=1)
         ctls_grp = pm.group(n=nameFn.generate_name(obj_instance.name, obj_instance.side, suffix="ctls"), em=1, p=root_grp)
