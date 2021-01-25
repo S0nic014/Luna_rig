@@ -455,6 +455,11 @@ class Control(object):
         # Process inputs
         if method not in ["constr", "matrix"]:
             raise ValueError("Invalid space method, should be constraint or matrix")
+
+        if pm.about(api=1) < 20200100 and method == "matrix":
+            Logger.warning("Matrix space method requires Maya 2020+. Using constraint method instead.")
+            method = "constr"
+
         # Add divider if matrix
         if method == "matrix" and not self.transform.hasAttr("SPACE_SWITCHING"):
             attrFn.add_divider(self.transform, "SPACE_SWITCHING")
