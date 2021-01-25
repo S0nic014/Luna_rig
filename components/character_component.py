@@ -176,6 +176,10 @@ class Character(component.Component):
             counter += 1
         Logger.info("Written {0} bind poses.".format(counter))
 
+    def to_bind_pose(self):
+        for ctl in self.list_controls():
+            ctl.to_bind_pose()
+
     def create_controls_set(self, name="controls_set", tag=None):
         result = pm.sets([ctl.transform for ctl in self.list_controls(tag)], n=name)  # type: nodetypes.ObjectSet
         return result

@@ -200,9 +200,10 @@ class AnimComponent(Component):
         """Override: reverse bake to rig"""
         pass
 
-    def to_default_pose(self):
+    def to_bind_pose(self):
         """Override: revert all controls to default values"""
-        pass
+        for ctl in self.controls:
+            ctl.to_bind_pose()
 
     def remove(self):
         """Delete component from scene"""
