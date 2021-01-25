@@ -62,7 +62,7 @@ class IKComponent(component.AnimComponent):
 
         # Pole vector
         if add_pv_control:
-            pole_locator = jointFn.get_pole_vector(joint_chain[0], joint_chain[1], joint_chain[2])
+            pole_locator = jointFn.get_pole_vector(joint_chain)
             pv_control = control.Control.create(side=ikcomp.side,
                                                 name="{0}_pvec".format(ikcomp.indexed_name),
                                                 object_to_match=pole_locator,
@@ -86,7 +86,7 @@ class IKComponent(component.AnimComponent):
             ikcomp.add_attach_point(ik_control.transform)
             ikcomp.add_attach_point(pv_control.transform)
             # Connect to character, parent
-            ikcomp.connect_to_character(parent=meta_parent is None)
+            ikcomp.connect_to_character(parent=True)
             ikcomp.attach_to_component(meta_parent, attach_point)
             # House keeping
             if ikcomp.character:
@@ -105,5 +105,5 @@ class IKComponent(component.AnimComponent):
         if not attach_obj:
             return
         # Component specific attach logic
-        pm.parent(self.root, attach_obj)
+        pm.parentConstraint(attach_obj, self.group_joints, mo=1)
         Logger.debug("Attached: {0} ->> {1}({2})".format(self, other_comp, attach_obj))

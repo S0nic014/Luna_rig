@@ -1,3 +1,4 @@
+import math
 import pymel.core as pm
 import pymel.api as pma
 from pymel.core import nodetypes
@@ -96,10 +97,19 @@ def validate_rotations(joint_chain):
     return is_valid
 
 
-def get_pole_vector(root_jnt, mid_jnt, end_jnt):
-    root_jnt_vec = root_jnt.getTranslation(space="world")  # type:pma.MVector
-    mid_jnt_vec = mid_jnt.getTranslation(space="world")  # type:pma.MVector
-    end_jnt_vec = end_jnt.getTranslation(space="world")  # type:pma.MVector
+def get_pole_vector(joint_chain):
+    root_jnt_vec = joint_chain[0].getTranslation(space="world")  # type:pma.MVector
+    end_jnt_vec = joint_chain[-1].getTranslation(space="world")  # type:pma.MVector
+
+    if len(joint_chain) % 2:
+        mid_index = (len(joint_chain) - 1) / 2
+        mid_jnt_vec = joint_chain[mid_index].getTranslation(space="world")  # type:pma.MVector
+    else:
+        prev_jnt_index = len(joint_chain) // 2
+        next_jnt_index = prev_jnt_index + 1
+        prev_jnt_vec = joint_chain[prev_jnt_index].getTranslation(space="world")  # type:pma.MVector
+        next_jnt_vec = joint_chain[next_jnt_index].getTranslation(space="world")  # type:pma.MVector
+        mid_jnt_vec = (next_jnt_vec + prev_jnt_vec) * 0.5  # Find mid point between joints with close to mid
 
     # Get projection vector
     line = (end_jnt_vec - root_jnt_vec)
