@@ -39,6 +39,7 @@ class FKComponent(component.AnimComponent):
                                          name="{0}_fk".format(fkcomp.indexed_name),
                                          object_to_match=jnt,
                                          parent=next_parent,
+                                         shape="circleCrossed",
                                          tag="fk")
             pm.parentConstraint(ctl.transform, jnt, mo=1)
             next_parent = ctl
