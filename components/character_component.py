@@ -41,7 +41,7 @@ class Character(component.Component):
                                           side="c",
                                           offset_grp=False,
                                           attributes="trs",
-                                          shape="root",
+                                          shape="character_node",
                                           tag="root")
         root_ctl.rename(index="")
         control_rig = pm.createNode('transform', n=names.Character.control_rig.value, p=root_ctl.transform)  # type: nodetypes.Transform

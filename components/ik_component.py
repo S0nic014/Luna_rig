@@ -89,6 +89,7 @@ class IKComponent(component.AnimComponent):
             ikcomp.connect_to_character(parent=True)
             ikcomp.attach_to_component(meta_parent, attach_point)
             # House keeping
+            ik_handle.visibility.set(0)
             if ikcomp.character:
                 pm.parent(joint_chain[0], ikcomp.character.deformation_rig)
                 ikcomp.group_parts.visibility.set(0)

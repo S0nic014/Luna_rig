@@ -92,7 +92,7 @@ class ShapeManager:
             path = cls.SHAPES_LIB
         transform = pm.PyNode(transform)
         shape_list = cls.get_shapes(transform)
-        save_path = os.path.join(path, name + ".json")
+        save_path = os.path.join(path, name)
         for data_dict in shape_list:
             data_dict.pop("color", None)
         fileFn.write_json(save_path, shape_list)

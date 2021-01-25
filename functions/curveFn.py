@@ -15,7 +15,6 @@ def get_curve_data(curve):
         point_xyz = list(curve.controlPoints[i].get())
         points.append(point_xyz)
 
-    data_dict["type"] = curve.nodeType()
     data_dict["points"] = points
     data_dict["knots"] = curve.getKnots()
     data_dict["form"] = curve.form().index
