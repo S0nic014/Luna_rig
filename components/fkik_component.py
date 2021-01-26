@@ -115,6 +115,12 @@ class FKIKComponent(component.AnimComponent):
                                             attributes="tr",
                                             shape="poleVector")
         pm.poleVectorConstraint(pv_control.transform, ik_handle)
+        # Add wire
+        if len(ik_chain) % 2:
+            wire_source = ik_chain[(len(ik_chain) - 1) / 2]
+        else:
+            wire_source = ik_chain[len(ik_chain) / 2]
+        pv_control.add_wire(wire_source)
 
         # Params control
         if not param_locator:

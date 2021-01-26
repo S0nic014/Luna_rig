@@ -1,4 +1,5 @@
 import pymel.core as pm
+from pymel.core import nodetypes
 from Luna import Logger
 
 
@@ -22,3 +23,12 @@ def get_curve_data(curve):
     data_dict["color"] = curve.overrideColor.get()
 
     return data_dict
+
+
+def curve_from_points(name, degree=1, points=[]):
+    knot_len = len(points) + degree - 1
+    if degree == 1:
+        knot_vecs = [v for v in range(knot_len)]
+
+    newCurve = pm.curve(n=name, p=points, d=degree, k=knot_vecs)  # type: nodetypes.NurbsCurve
+    return newCurve

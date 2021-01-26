@@ -71,6 +71,12 @@ class IKComponent(component.AnimComponent):
                                             attributes="tr",
                                             shape="poleVector")
         pm.poleVectorConstraint(pv_control.transform, ik_handle)
+        # Add wire
+        if len(ctl_chain) % 2:
+            wire_source = ctl_chain[(len(ctl_chain) - 1) / 2]
+        else:
+            wire_source = ctl_chain[len(ctl_chain) / 2]
+        pv_control.add_wire(wire_source)
 
         # Store default items
         ikcomp._store_bind_joints(joint_chain)

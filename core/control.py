@@ -7,6 +7,7 @@ from Luna.static import colors
 from Luna.static import names
 from Luna_rig.functions import nameFn
 from Luna_rig.functions import attrFn
+from Luna_rig.functions import curveFn
 from Luna_rig.functions import transformFn
 from Luna_rig.core.shape_manager import ShapeManager
 from Luna_rig.core import meta
@@ -590,8 +591,25 @@ class Control(object):
         :param source: Wire source object
         :type source: str or pm.nodetypes.Transform
         """
-        # TODO: Add wire
-        Logger.debug("{0} - adding wire line to {1}".format(self, source))
+        # Curve
+        curve_points = [source.getTranslation(space="world"), self.transform.getTranslation(space="world")]
+        wire_curve = curveFn.curve_from_points(name="{0}_wire_crv".format(self.unsuffixed_name), degree=1, points=curve_points)
+        wire_curve.inheritsTransform.set(0)
+        # Clusters
+        src_cluster = pm.cluster(wire_curve.getShape().controlPoints[0], n="{0}_wire_src_clst".format(self.unsuffixed_name))
+        dest_cluster = pm.cluster(wire_curve.getShape().controlPoints[1], n="{0}_wire_dest_clst".format(self.unsuffixed_name))
+        pm.pointConstraint(source, src_cluster, n="{0}_wire_src_pconstr".format(self.unsuffixed_name))
+        pm.pointConstraint(self.transform, dest_cluster, n="{0}_wire_dest_pconstr".format(self.unsuffixed_name))
+        # Grouping
+        wire_grp = pm.group(src_cluster, dest_cluster, n="{0}_wire_grp".format(self.unsuffixed_name))
+        pm.parent(wire_curve, wire_grp)
+        pm.parent(wire_grp, self.group)
+        # Housekeeping
+        Logger.debug(src_cluster)
+        src_cluster[1].visibility.set(0)
+        dest_cluster[1].visibility.set(0)
+        wire_curve.getShape().overrideEnabled.set(1)
+        wire_curve.getShape().overrideDisplayType.set(2)
 
     def rename(self, side=None, name=None, index=None, suffix=None):
         """Rename control member nodes
