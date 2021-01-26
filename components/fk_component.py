@@ -6,6 +6,7 @@ from Luna_rig.core import component
 from Luna_rig.core import control
 from Luna_rig.functions import jointFn
 from Luna_rig.functions import nameFn
+from Luna_rig.functions import rigFn
 
 
 class FKComponent(component.AnimComponent):
@@ -18,8 +19,10 @@ class FKComponent(component.AnimComponent):
                name="fk_component",
                chain_start=None,
                chain_end=None,
-               end_jnt_ctl=False):  # noqa:F821
+               end_jnt_ctl=False,
+               lock_translate=True):  # noqa:F821
         fkcomp = super(FKComponent, cls).create(meta_parent, side, name)  # type: FKComponent
+        character = rigFn.get_build_character()
         # Joint chain
         joint_chain = jointFn.joint_chain(chain_start, chain_end)
         jointFn.validate_rotations(joint_chain)
@@ -34,16 +37,26 @@ class FKComponent(component.AnimComponent):
         fk_controls = []
         next_parent = fkcomp.group_ctls
         guide_chain = ctl_chain if end_jnt_ctl else ctl_chain[:-1]
+        free_attrs = "r" if lock_translate else "tr"
         for jnt in guide_chain:
             ctl = control.Control.create(side=fkcomp.side,
                                          name="{0}_fk".format(fkcomp.indexed_name),
                                          object_to_match=jnt,
                                          parent=next_parent,
+                                         attributes=free_attrs,
                                          shape="circleCrossed",
                                          tag="fk")
             pm.parentConstraint(ctl.transform, jnt, mo=1)
             next_parent = ctl
             fk_controls.append(ctl)
+
+        # Scale controls
+        if not character:
+            clamped_size = 1.0
+        else:
+            clamped_size = character.clamped_size
+        for ctl in fk_controls:
+            ctl.scale(clamped_size, factor=0.2)
 
         # # Store joint chains
         fkcomp._store_bind_joints(joint_chain)
@@ -53,7 +66,7 @@ class FKComponent(component.AnimComponent):
         for each in fk_controls:
             fkcomp.add_attach_point(each.transform)
         # Connect to character, parent
-        fkcomp.connect_to_character(parent=meta_parent is None)
+        fkcomp.connect_to_character(parent=True)
         fkcomp.attach_to_component(meta_parent, attach_point)
         # House keeping
         if fkcomp.character:
@@ -72,5 +85,5 @@ class FKComponent(component.AnimComponent):
         if not attach_obj:
             return
         # Component specific attach logic
-        pm.parent(self.root, attach_obj)
+        pm.parentConstraint(attach_obj, self.root, mo=1)
         Logger.debug("Attached: {0} ->> {1}({2})".format(self, other_comp, attach_obj))

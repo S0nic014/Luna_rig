@@ -1,5 +1,19 @@
-from Luna import Logger
 import pymel.core as pm
+from Luna import Logger
+
+
+def add_meta_attr(node):
+    """Add metaParent attribute to node.
+
+    :param node: Node to add attribute to
+    :type node: str or PyNode
+    :return: Added attribute
+    :rtype: pm.Attribute
+    """
+    node = pm.PyNode(node)
+    if not node.hasAttr("metaParent"):
+        node.addAttr("metaParent", at="message")
+    return node.metaParent  # type: pm.Attribute
 
 
 def lock(node, attributes, channelBox=False, key=False):

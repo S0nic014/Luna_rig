@@ -87,10 +87,7 @@ class Character(component.Component):
         root_ctl.transform.Scale.connect(root_ctl.transform.scaleZ)
 
         # Fit root control size
-        scaleF = 0.8
-        clamped_size = max(obj_instance.get_size(axis="y") * 0.1, obj_instance.get_size(axis="x"))
-        for shape in obj_instance.root_ctl.transform.getShapes():
-            pm.scale(shape + ".cv[0:1000]", [scaleF * clamped_size, scaleF * clamped_size, scaleF * clamped_size])
+        obj_instance.root_ctl.scale(obj_instance.clamped_size, factor=1.0)
 
         # Visibility
         locators_grp.visibility.set(0)
@@ -129,6 +126,11 @@ class Character(component.Component):
         node = self.pynode.worldLocator.listConnections()[0]  # type:nodetypes.Locator
         return node
 
+    @property
+    def clamped_size(self):
+        size = max(self.get_size(axis="y") * 0.1, self.get_size(axis="x") * 0.1)
+        return size
+
     def list_geometry(self):
         """List geometry nodes under geometry group.
 
@@ -160,7 +162,7 @@ class Character(component.Component):
 
     def get_size(self, axis="y"):
         bounding_box = pm.exactWorldBoundingBox(self.geometry_grp, ii=True)
-        if axis == "z":
+        if axis == "x":
             return bounding_box[3] - bounding_box[0]
         elif axis == "y":
             return bounding_box[4] - bounding_box[1]

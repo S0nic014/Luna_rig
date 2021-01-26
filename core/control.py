@@ -140,6 +140,9 @@ class Control(object):
         # Cleanup
         instance.lock_attrib(exclude_attr=attributes, channel_box=False)
 
+        # Scale shape
+        instance.scale(scale, factor=0.8)
+
         return instance
 
     @property
@@ -369,6 +372,12 @@ class Control(object):
                 -name: {9}
                         """.format(self.group, self.offset_list, self.offset, self.transform, self.joint, self.tag_node, self.shape, self.bind_pose,
                                    self.side, self.name))
+
+    def scale(self, scale, factor=0.8):
+        if scale == 1.0 and factor == 1.0:
+            return
+        for each in self.transform.getShapes():
+            pm.scale(each + ".cv[0:1000]", [factor * scale, factor * scale, factor * scale])
 
     def set_parent(self, parent):
         """Set control parent
