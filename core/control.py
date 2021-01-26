@@ -447,7 +447,7 @@ class Control(object):
         Logger.debug("Updated {0}".format(self))
         return new_offset
 
-    def find_offet(self, extra_name):
+    def find_offset(self, extra_name):
         result = None
         for offset_node in self.offset_list:
             if extra_name in nameFn.deconstruct_name(offset_node).name:
@@ -552,7 +552,7 @@ class Control(object):
 
     def __add_constr_space(self, target, name):
         # Space offset
-        space_offset = self.find_offet("space")
+        space_offset = self.find_offset("space")
         if not space_offset:
             space_offset = self.insert_offset(extra_name="space")
         # Create space transforms
@@ -571,7 +571,6 @@ class Control(object):
     def add_world_space(self, method="matrix"):
         """Uses add space method to add space to hidden world locator
         """
-        # TODO: Add world space
         self.add_space(self.character.world_locator, "World", method)
 
     def switch_space(self, index, matching=True):
