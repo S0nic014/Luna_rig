@@ -56,6 +56,7 @@ class Character(component.Component):
         else:
             geometry_grp = pm.PyNode(names.Character.geometry.value)
             pm.parent(geometry_grp, root_ctl.transform)
+            geometry_grp.inheritsTransform.set(0)
 
         # Add message attrs to meta node
         obj_instance.pynode.addAttr("characterName", dt="string")

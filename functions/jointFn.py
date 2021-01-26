@@ -63,8 +63,11 @@ def joint_chain(start_joint, end_joint=None):
     # Handle end joint
     assert pm.nodeType(end_joint) == 'joint', "{0} is not a joint".format(end_joint)
     end_joint = pm.PyNode(end_joint)
-    chain = chain[:chain.index(end_joint) + 1]
-    return chain
+    cut_chain = []
+    for jnt in chain:
+        if str(jnt) in end_joint.fullPath().split("|"):
+            cut_chain.append(jnt)
+    return cut_chain
 
 
 def rotToOrient(jnt):

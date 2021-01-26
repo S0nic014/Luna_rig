@@ -7,6 +7,7 @@ from Luna_rig.core import control
 from Luna_rig.functions import jointFn
 from Luna_rig.functions import nameFn
 from Luna_rig.functions import rigFn
+from Luna_rig.functions import attrFn
 
 
 class FKComponent(component.AnimComponent):
@@ -19,19 +20,16 @@ class FKComponent(component.AnimComponent):
                name="fk_component",
                chain_start=None,
                chain_end=None,
-               end_jnt_ctl=False,
-               lock_translate=True):  # noqa:F821
+               end_jnt_ctl=True,
+               lock_translate=True):
         fkcomp = super(FKComponent, cls).create(meta_parent, side, name)  # type: FKComponent
         character = rigFn.get_build_character()
         # Joint chain
         joint_chain = jointFn.joint_chain(chain_start, chain_end)
         jointFn.validate_rotations(joint_chain)
         for jnt in joint_chain:
-            jnt.addAttr("metaParent", at="message")
-        pm.parent(joint_chain[0], fkcomp.group_joints)
-        ctl_chain = jointFn.duplicate_chain(original_chain=joint_chain, add_name="ctl")
-        for jnt, ctl_jnt in zip(joint_chain, ctl_chain):
-            pm.parentConstraint(ctl_jnt, jnt, mo=1)
+            attrFn.add_meta_attr(jnt)
+        ctl_chain = jointFn.duplicate_chain(original_chain=joint_chain, add_name="ctl", new_parent=fkcomp.group_joints)
 
         # Create control
         fk_controls = []
@@ -70,7 +68,6 @@ class FKComponent(component.AnimComponent):
         fkcomp.attach_to_component(meta_parent, attach_point)
         # House keeping
         if fkcomp.character:
-            pm.parent(joint_chain[0], fkcomp.character.deformation_rig)
             fkcomp.group_parts.visibility.set(0)
             fkcomp.group_joints.visibility.set(0)
         return fkcomp

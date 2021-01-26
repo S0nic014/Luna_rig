@@ -5,6 +5,7 @@ from Luna import Logger
 from Luna.utils import environFn
 from Luna_rig.core import control
 from Luna_rig.core.meta import MetaRigNode
+from Luna.static import names
 
 
 def list_controls():
@@ -48,11 +49,12 @@ def get_param_ctl_locator(side, joint_chain, move_axis="x"):
 
     locator = pm.spaceLocator(n="param_loc")  # type: nodetypes.Transform
     end_jnt_vec = joint_chain[-1].getTranslation(space="world")  # type:pma.MVector
+    side_mult = -1 if side == "r" else 1
     if move_axis == "x":
-        end_jnt_vec.x += clamped_size * 20
+        end_jnt_vec.x += clamped_size * 20 * side_mult
     elif move_axis == "y":
-        end_jnt_vec.y += clamped_size * 20
+        end_jnt_vec.y += clamped_size * 20 * side_mult
     elif move_axis == "z":
-        end_jnt_vec.z += clamped_size * 20
+        end_jnt_vec.z += clamped_size * 20 * side_mult
     locator.translate.set(end_jnt_vec)
     return locator

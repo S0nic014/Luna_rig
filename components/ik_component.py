@@ -6,6 +6,7 @@ from Luna_rig.core import component
 from Luna_rig.core import control
 from Luna_rig.functions import jointFn
 from Luna_rig.functions import rigFn
+from Luna_rig.functions import attrFn
 
 
 class IKComponent(component.AnimComponent):
@@ -40,16 +41,15 @@ class IKComponent(component.AnimComponent):
 
         # Create control chain
         for jnt in joint_chain:
-            jnt.addAttr("metaParent", at="message")
-        pm.parent(joint_chain[0], ikcomp.group_joints)
-        ctl_chain = jointFn.duplicate_chain(original_chain=joint_chain, add_name="ctl")
+            attrFn.add_meta_attr(jnt)
+        ctl_chain = jointFn.duplicate_chain(original_chain=joint_chain, add_name="ctl", new_parent=ikcomp.group_joints)
         for jnt, ctl_jnt in zip(joint_chain, ctl_chain):
             pm.parentConstraint(ctl_jnt, jnt, mo=1)
 
         # Create ik control
         ik_control = control.Control.create(side=ikcomp.side,
                                             name="{0}_ik".format(ikcomp.indexed_name),
-                                            object_to_match=joint_chain[-1],
+                                            object_to_match=ctl_chain[-1],
                                             delete_match_object=False,
                                             attributes="tr",
                                             parent=ikcomp.group_ctls,
@@ -62,7 +62,7 @@ class IKComponent(component.AnimComponent):
         pm.parent(ik_handle, ik_control.transform)
 
         # Pole vector
-        pole_locator = jointFn.get_pole_vector(joint_chain)
+        pole_locator = jointFn.get_pole_vector(ctl_chain)
         pv_control = control.Control.create(side=ikcomp.side,
                                             name="{0}_pvec".format(ikcomp.indexed_name),
                                             object_to_match=pole_locator,
@@ -99,7 +99,6 @@ class IKComponent(component.AnimComponent):
         # House keeping
         ik_handle.visibility.set(0)
         if ikcomp.character:
-            pm.parent(joint_chain[0], ikcomp.character.deformation_rig)
             ikcomp.group_parts.visibility.set(0)
             ikcomp.group_joints.visibility.set(0)
         return ikcomp

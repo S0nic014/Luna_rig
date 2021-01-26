@@ -71,14 +71,10 @@ class FKIKComponent(component.AnimComponent):
         # Create control chain
         for jnt in joint_chain:
             attrFn.add_meta_attr(jnt)
-        pm.parent(joint_chain[0], instance.group_joints)
-        ctl_chain = jointFn.duplicate_chain(original_chain=joint_chain, add_name="ctl")
-        for jnt, ctl_jnt in zip(joint_chain, ctl_chain):
-            pm.parentConstraint(ctl_jnt, jnt, mo=1)
-
+        ctl_chain = jointFn.duplicate_chain(original_chain=joint_chain, add_name="ctl", new_parent=instance.group_joints)
         # Create FK, Ik chains
-        fk_chain = jointFn.duplicate_chain(original_chain=joint_chain, add_name="fk")
-        ik_chain = jointFn.duplicate_chain(original_chain=joint_chain, add_name="ik")
+        fk_chain = jointFn.duplicate_chain(original_chain=joint_chain, add_name="fk", new_parent=instance.group_joints)
+        ik_chain = jointFn.duplicate_chain(original_chain=joint_chain, add_name="ik", new_parent=instance.group_joints)
 
         # Create FK setup
         fk_controls = []
@@ -98,7 +94,7 @@ class FKIKComponent(component.AnimComponent):
         # Create IK setup
         ik_control = control.Control.create(side=instance.side,
                                             name="{0}_ik".format(instance.indexed_name),
-                                            object_to_match=joint_chain[-1],
+                                            object_to_match=ik_chain[-1],
                                             delete_match_object=False,
                                             attributes="tr",
                                             parent=instance.group_ctls,
@@ -110,7 +106,7 @@ class FKIKComponent(component.AnimComponent):
                                 sol="ikRPsolver")[0]
         pm.parent(ik_handle, ik_control.transform)
         # Pole vector
-        pole_locator = jointFn.get_pole_vector(joint_chain)
+        pole_locator = jointFn.get_pole_vector(ik_chain)
         pv_control = control.Control.create(side=instance.side,
                                             name="{0}_pvec".format(instance.indexed_name),
                                             object_to_match=pole_locator,
@@ -188,7 +184,6 @@ class FKIKComponent(component.AnimComponent):
         # House keeping
         ik_handle.visibility.set(0)
         if instance.character:
-            pm.parent(joint_chain[0], instance.character.deformation_rig)
             instance.group_parts.visibility.set(0)
             instance.group_joints.visibility.set(0)
         return instance

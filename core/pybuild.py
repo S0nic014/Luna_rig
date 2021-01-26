@@ -6,6 +6,7 @@ from Luna import Logger
 from Luna import Config
 from Luna import BuildVars
 from Luna.utils import environFn
+from Luna.utils import maya_utils
 from Luna.workspace import project
 from Luna.workspace import asset
 from Luna_rig.functions import asset_files
@@ -50,6 +51,7 @@ class PyBuild(object):
 
         # Adjust viewport
         pm.select(cl=1)
+        maya_utils.switch_xray_joints()
         pm.viewFit(self.character.root_ctl.group)
         if Config.get(BuildVars.geometry_override, default=True):
             self.character.geometry_grp.overrideEnabled.set(1)
