@@ -187,6 +187,8 @@ class FKIKComponent(component.AnimComponent):
         # Connect to character, parent
         instance.connect_to_character(parent=True)
         instance.attach_to_component(meta_parent, attach_point)
+        # Store settings
+        instance._store_settings(param_control.transform.fkik)
         # House keeping
         ik_handle.visibility.set(0)
         if instance.character:

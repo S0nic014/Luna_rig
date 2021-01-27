@@ -2,3 +2,4 @@ from Luna_rig.components.character_component import Character
 from Luna_rig.components.fk_component import FKComponent
 from Luna_rig.components.ik_component import IKComponent
 from Luna_rig.components.fkik_component import FKIKComponent
+from Luna_rig.components.fk_dynamics_component import FKDynamicsComponent

@@ -25,10 +25,12 @@ def get_curve_data(curve):
     return data_dict
 
 
-def curve_from_points(name, degree=1, points=[]):
+def curve_from_points(name, degree=1, points=[], parent=None):
     knot_len = len(points) + degree - 1
     if degree == 1:
         knot_vecs = [v for v in range(knot_len)]
 
-    newCurve = pm.curve(n=name, p=points, d=degree, k=knot_vecs)  # type: nodetypes.NurbsCurve
-    return newCurve
+    new_curve = pm.curve(n=name, p=points, d=degree, k=knot_vecs)  # type: nodetypes.NurbsCurve
+    if parent:
+        pm.parent(new_curve, parent)
+    return new_curve

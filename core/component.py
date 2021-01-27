@@ -29,6 +29,18 @@ class Component(MetaRigNode):
     def __eq__(self, other):
         return self.pynode == other.pynode
 
+    @property
+    def settings(self):
+        """Component controls attrs to export/import
+
+        :return: Dictionary of {attr: value}
+        :rtype: dict
+        """
+        attr_dict = {}
+        for connected_attr in self.pynode.settings.listConnections(d=1, plugs=1):
+            attr_dict[str(connected_attr)] = connected_attr.get()
+        return attr_dict
+
     @ classmethod
     def create(cls, meta_parent, side="c", name="component"):
         """Creates instance of component
@@ -47,14 +59,30 @@ class Component(MetaRigNode):
             meta_parent = meta_parent.pynode
         obj_instance = super(Component, cls).create(meta_parent)  # type: Component
         obj_instance.pynode.rename(nameFn.generate_name(name, side, suffix="meta"))
+        obj_instance.pynode.addAttr("settings", at="message", multi=1, im=0)
 
         return obj_instance
 
     def attach_to_component(self, other_comp):
+        """Attach to other component
+
+        :param other_comp: Other component
+        :type other_comp: Component
+        """
         if not isinstance(other_comp, Component):
             other_comp = MetaRigNode(other_comp)
         if other_comp.pynode not in self.pynode.metaParent.listConnections():
             self.set_meta_parent(other_comp)
+
+    def _store_settings(self, attr):
+        """Store given attribute as component setting
+
+        :param attr: Node attribute
+        :type attr: pymel.core.Attribute
+        """
+        # if not attr.isConnectedTo(self.pynode.settings, checkLocalArray=True, checkOtherArray=True):
+        if attr not in self.pynode.settings.listConnections(d=1, plugs=1):
+            attr.connect(self.pynode.settings, na=1)
 
 
 class AnimComponent(Component):

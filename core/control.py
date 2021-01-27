@@ -147,6 +147,11 @@ class Control(object):
         return instance
 
     @property
+    def namespace_list(self):
+        name_parts = nameFn.deconstruct_name(self.transform)
+        return name_parts.namespaces
+
+    @property
     def name(self):
         """Name part of control's name
 
@@ -423,7 +428,6 @@ class Control(object):
                 to_lock.remove(attr)
 
         attrFn.lock(self.transform, to_lock, channel_box)
-        Logger.debug("{0} - locked attributes: {1}".format(self.transform, to_lock))
 
     def insert_offset(self, extra_name="extra"):
         """Inserts extra ofset node and inbetween transform and last offset node present.
@@ -504,6 +508,13 @@ class Control(object):
             self.__add_matrix_space(target, name)
         elif method == "constr":
             self.__add_constr_space(target, name)
+        # Store as component setting
+        if self.connected_component:
+            self.connected_component._store_settings(self.transform.space)
+            if method == "matrix":
+                self.connected_component._store_settings(self.transform.spaceUseTranslate)
+                self.connected_component._store_settings(self.transform.spaceUseRotate)
+                self.connected_component._store_settings(self.transform.spaceUseScale)
         Logger.info("{0}: added space {1}".format(self, target))
 
     def __add_matrix_space(self, target, name):
@@ -604,7 +615,6 @@ class Control(object):
         pm.parent(wire_curve, wire_grp)
         pm.parent(wire_grp, self.group)
         # Housekeeping
-        Logger.debug(src_cluster)
         src_cluster[1].visibility.set(0)
         dest_cluster[1].visibility.set(0)
         wire_curve.getShape().overrideEnabled.set(1)

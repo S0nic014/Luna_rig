@@ -45,3 +45,46 @@ def add_divider(node, attr_name="divider"):
     node.addAttr(attr_name, at="enum", en=["--------------"])
     node.attr(attr_name).set(channelBox=True)
     node.attr(attr_name).lock()
+
+
+def transfer_attr(source, destination, attr_list=[], connect=False, ** kwargs):
+    attr_alias = {}
+    if not attr_list:
+        transfer_list = source.listAttr(k=1, r=1, s=1, **kwargs)
+    else:
+        transfer_list = attr_list
+    for attr in transfer_list:
+        if not attr.exists() or attr.isCompound() or attr in source.listAttr(ra=1):
+            continue
+        try:
+            if attr.type() == "enum":
+                enum_names = [enum[0] for enum in get_enums(attr)]
+                destination.addAttr(attr.attrName(longName=True), at="enum", en=enum_names, dv=attr.get(), k=1)
+            else:
+                min_value = attr.getMin()
+                max_value = attr.getMax()
+                default_val = attr.get()
+                # Solve default value
+                if not (default_val > min_value and default_val < max_value):
+                    if default_val > max_value:
+                        default_val = max_value
+                    else:
+                        default_val = min_value
+                # Add attr depending if min max exists
+                if min_value is None and max_value is None:
+                    destination.addAttr(attr.attrName(longName=True), at=attr.type(), k=1, dv=attr.get())
+                elif min_value is None and max_value is not None:
+                    destination.addAttr(attr.attrName(longName=True), at=attr.type(), k=1, max=attr.getMax(), dv=attr.get())
+                else:
+                    destination.addAttr(attr.attrName(longName=True), at=attr.type(), k=1, min=attr.getMin(), dv=attr.get())
+            # Store attr aliases
+            attr_alias[attr] = destination.attr(attr.attrName(longName=True))
+        except Exception:
+            Logger.exception("Failed to transfer attr: {0}".format(attr))
+
+    if connect:
+        for orig_attr, copied_attr in attr_alias.items():
+            if orig_attr.isConnected():
+                continue
+            copied_attr.connect(orig_attr)
+    return attr_alias

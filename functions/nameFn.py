@@ -16,7 +16,7 @@ def deconstruct_name(node):
 
     class _nameStruct:
         def __init__(self):
-            self.namespaces = node.namespaceList()
+            self.namespaces = node.namespaceList()  # type :list
             self.side = name_parts[0]  # type :str
             self.name = name_parts[1:-2]  # type :list
             self.index = name_parts[-2]  # type: str

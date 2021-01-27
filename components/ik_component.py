@@ -102,6 +102,8 @@ class IKComponent(component.AnimComponent):
         # Connect to character, parent
         ikcomp.connect_to_character(parent=True)
         ikcomp.attach_to_component(meta_parent, attach_point)
+        # Store settings
+        ikcomp._store_settings()
         # House keeping
         ik_handle.visibility.set(0)
         if ikcomp.character:

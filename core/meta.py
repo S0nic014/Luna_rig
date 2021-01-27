@@ -55,6 +55,11 @@ class MetaRigNode(object):
         self.pynode = node  # type: nodetypes.Network
 
     @property
+    def namespace_list(self):
+        name_parts = nameFn.deconstruct_name(self.pynode.name())
+        return name_parts.namespaces
+
+    @property
     def name(self):
         name_parts = nameFn.deconstruct_name(self.pynode.name())
         name = "_".join(name_parts.name)
@@ -82,6 +87,23 @@ class MetaRigNode(object):
     def meta_type(self):
         attr_val = self.pynode.metaRigType.get()  # type: str
         return attr_val
+
+    @property
+    def meta_parent(self):
+        """Get instance of meta parent
+
+        :return: Meta parent node instance.
+        :rtype: MetaRigNode
+        """
+        result = None
+        connections = self.pynode.metaParent.listConnections()
+        if connections:
+            result = MetaRigNode(connections[0])
+        return result
+
+    @property
+    def meta_children(self):
+        return self.get_meta_children()
 
     @classmethod
     def is_metanode(cls, node):
@@ -134,18 +156,6 @@ class MetaRigNode(object):
                 result = [node for node in all_nodes if isinstance(node, of_type)]
         else:
             result = all_nodes
-        return result
-
-    def get_meta_parent(self):
-        """Get instance of meta parent
-
-        :return: Meta parent node instance.
-        :rtype: MetaRigNode
-        """
-        result = None
-        connections = self.pynode.metaParent.listConnections()
-        if connections:
-            result = MetaRigNode(connections[0])
         return result
 
     def get_meta_children(self, of_type=None):

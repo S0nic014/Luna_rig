@@ -40,7 +40,7 @@ def get_build_character():
     Logger.error("Failed to find build character!")
 
 
-def get_param_ctl_locator(side, joint_chain, move_axis="x"):
+def get_param_ctl_locator(side, joint_chain, move_axis="x", align_index=-1):
     current_char = get_build_character()
     if not current_char:
         clamped_size = current_char.clamped_size
@@ -48,7 +48,7 @@ def get_param_ctl_locator(side, joint_chain, move_axis="x"):
         clamped_size = 1.0
 
     locator = pm.spaceLocator(n="param_loc")  # type: nodetypes.Transform
-    end_jnt_vec = joint_chain[-1].getTranslation(space="world")  # type:pma.MVector
+    end_jnt_vec = joint_chain[align_index].getTranslation(space="world")  # type:pma.MVector
     side_mult = -1 if side == "r" else 1
     if move_axis == "x":
         end_jnt_vec.x += clamped_size * 20 * side_mult

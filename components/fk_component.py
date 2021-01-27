@@ -84,3 +84,40 @@ class FKComponent(component.AnimComponent):
         # Component specific attach logic
         pm.parentConstraint(attach_obj, self.root, mo=1)
         Logger.debug("Attached: {0} ->> {1}({2})".format(self, other_comp, attach_obj))
+
+    def add_auto_aim(self, follow_control, mirrored_chain=False):
+        if not isinstance(follow_control, control.Control):
+            raise ValueError("{0}: {1} is not a Control instance".format(self, follow_control))
+        # Create aim transforms
+        aim_grp = pm.createNode("transform", n=nameFn.generate_name([self.indexed_name, "aim"], side=self.side,
+                                                                    suffix="grp"), p=self.controls[0].group)  # type: nodetypes.Transform
+        no_aim_grp = pm.createNode("transform", n=nameFn.generate_name([self.indexed_name, "noaim"],
+                                                                       side=self.side, suffix="grp"), p=self.controls[0].group)  # type: nodetypes.Transform
+        constr_grp = pm.createNode("transform", n=nameFn.generate_name([self.indexed_name, "aim_constr"],
+                                                                       side=self.side, suffix="grp"), p=self.controls[0].group)  # type: nodetypes.Transform
+        target_grp = pm.createNode("transform", n=nameFn.generate_name([self.indexed_name, "target"],
+                                                                       side=self.side, suffix="grp"), p=follow_control.transform)  # type: nodetypes.Transform
+
+        # Set aim vector to X or -X
+        if mirrored_chain:
+            aim_vector = [-1, 0, 0]
+        else:
+            aim_vector = [1, 0, 0]
+
+        # Create aim setup
+        pm.aimConstraint(target_grp, aim_grp, wut="object", wuo=self.controls[0].group, aim=aim_vector)
+        pm.delete(pm.aimConstraint(target_grp, no_aim_grp, wut="object", wuo=self.controls[0].group, aim=aim_vector))
+        orient_constr = pm.orientConstraint(aim_grp, no_aim_grp, constr_grp)  # type: nodetypes.OrientConstraint
+        pm.parent(self.controls[0].offset_list[0], constr_grp)
+        # Add attr to control
+        self.controls[0].transform.addAttr("autoAim", at="float", dv=3.0, min=0.0, max=10.0, k=1)
+        mdl_node = pm.createNode("multDoubleLinear", n=nameFn.generate_name([self.indexed_name, "auto_aim"], side=self.side, suffix="mdl"))
+        rev_node = pm.createNode("reverse", n=nameFn.generate_name([self.indexed_name, "auto_aim"], side=self.side, suffix="rev"))
+        mdl_node.input2.set(0.1)
+        # Attr connections
+        self.controls[0].transform.autoAim.connect(mdl_node.input1)
+        mdl_node.output.connect(rev_node.inputX)
+        mdl_node.output.connect(orient_constr.getWeightAliasList()[0])
+        rev_node.outputX.connect(orient_constr.getWeightAliasList()[1])
+        # Store settings
+        self._store_settings(self.controls[0].transform.autoAim)

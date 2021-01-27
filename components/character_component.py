@@ -24,6 +24,50 @@ class Character(component.Component):
         # Signals
         self.signals.created.emit()
 
+    @ property
+    def root_ctl(self):
+        return control.Control(self.pynode.rootCtl.listConnections()[0])
+
+    @ property
+    def control_rig(self):
+        node = self.pynode.controlRig.listConnections()[0]  # type: nodetypes.Transform
+        return node
+
+    @ property
+    def deformation_rig(self):
+        node = self.pynode.deformationRig.listConnections()[0]  # type: nodetypes.Transform
+        return node
+
+    @ property
+    def geometry_grp(self):
+        node = self.pynode.geometryGroup.listConnections()[0]  # type: nodetypes.Transform
+        return node
+
+    @ property
+    def locators_grp(self):
+        node = self.pynode.locatorsGroup.listConnections()[0]  # type: nodetypes.Transform
+        return node
+
+    @ property
+    def world_locator(self):
+        node = self.pynode.worldLocator.listConnections()[0]  # type:nodetypes.Locator
+        return node
+
+    @property
+    def clamped_size(self):
+        size = max(self.get_size(axis="y") * 0.1, self.get_size(axis="x") * 0.1)
+        return size
+
+    @ classmethod
+    def find(cls, name):
+        result = []
+        for character_node in cls.list_nodes(of_type=cls):
+            if character_node.pynode.characterName.get() == name:
+                result.append(character_node)
+        if len(result) == 1:
+            return result[0]
+        return result
+
     @classmethod
     def create(cls, meta_parent=None, name="character"):
         """Creation method.
@@ -98,40 +142,6 @@ class Character(component.Component):
         outlinerFn.set_color(root_ctl.group, rgb=[0.6, 0.8, 0.9])
         return obj_instance
 
-    @ property
-    def root_ctl(self):
-        return control.Control(self.pynode.rootCtl.listConnections()[0])
-
-    @ property
-    def control_rig(self):
-        node = self.pynode.controlRig.listConnections()[0]  # type: nodetypes.Transform
-        return node
-
-    @ property
-    def deformation_rig(self):
-        node = self.pynode.deformationRig.listConnections()[0]  # type: nodetypes.Transform
-        return node
-
-    @ property
-    def geometry_grp(self):
-        node = self.pynode.geometryGroup.listConnections()[0]  # type: nodetypes.Transform
-        return node
-
-    @ property
-    def locators_grp(self):
-        node = self.pynode.locatorsGroup.listConnections()[0]  # type: nodetypes.Transform
-        return node
-
-    @ property
-    def world_locator(self):
-        node = self.pynode.worldLocator.listConnections()[0]  # type:nodetypes.Locator
-        return node
-
-    @property
-    def clamped_size(self):
-        size = max(self.get_size(axis="y") * 0.1, self.get_size(axis="x") * 0.1)
-        return size
-
     def list_geometry(self):
         """List geometry nodes under geometry group.
 
@@ -191,12 +201,10 @@ class Character(component.Component):
         result = pm.sets(self.list_bind_joints(), n=name)  # type: nodetypes.ObjectSet
         return result
 
-    @ classmethod
-    def find(cls, name):
-        result = []
-        for character_node in cls.list_nodes(of_type=cls):
-            if character_node.pynode.characterName.get() == name:
-                result.append(character_node)
-        if len(result) == 1:
-            return result[0]
-        return result
+    def get_nucleus(self):
+        node = None
+        nucleus_name = "{0}_nucl".format(self.name)
+        nucleus_name = ":".join(self.namespace_list + [nucleus_name])
+        if pm.objExists(nucleus_name):
+            node = pm.PyNode(nucleus_name)  # type: nodetypes.Nucleus
+        return node
