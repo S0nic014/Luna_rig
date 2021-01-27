@@ -37,6 +37,14 @@ def import_model():
     return model_path
 
 
+def reference_model(*args):
+    current_asset = environFn.get_asset_var()
+    if current_asset:
+        pm.createReference(current_asset.model_path)
+    else:
+        pm.warning("Asset is not set!")
+
+
 def import_guides():
     current_asset = environFn.get_asset_var()
     latest_guides_path = current_asset.latest_guides_path
@@ -45,9 +53,21 @@ def import_guides():
     return latest_guides_path
 
 
-def reference_model(*args):
+def increment_save_file(typ="guides"):
     current_asset = environFn.get_asset_var()
-    if current_asset:
-        pm.createReference(current_asset.model_path)
-    else:
+    if not current_asset:
         pm.warning("Asset is not set!")
+    new_file = getattr(current_asset, "new_{0}_path".format(typ))
+    pm.saveAs(new_file)
+    Logger.info("Saved {0}: {1}".format(typ, new_file))
+
+
+def save_file_as(typ="guides"):
+    current_asset = environFn.get_asset_var()
+    if not current_asset:
+        pm.warning("Asset is not set!")
+    start_dir = getattr(current_asset, typ)
+    file_path, filters = QtWidgets.QFileDialog.getSaveFileName(None, "Save guides as", start_dir)
+    if file_path:
+        pm.saveAs(file_path)
+        Logger.info("Saved {0}: {1}".format(typ, file_path))
