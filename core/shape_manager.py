@@ -2,11 +2,11 @@ import os
 import pymel.core as pm
 from pymel.core import nodetypes
 
-from Luna import Logger
-from Luna.utils import fileFn
-from Luna.utils import enumFn
-from Luna.static import directories
-from Luna_rig.functions import curveFn
+from luna import Logger
+from luna.utils import fileFn
+from luna.utils import enumFn
+from luna.static import directories
+from luna_rig.functions import curveFn
 
 
 class ShapeManager:

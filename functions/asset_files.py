@@ -1,7 +1,7 @@
 import pymel.core as pm
 import os
-from Luna import Logger
-from Luna.utils import environFn
+from luna import Logger
+from luna.utils import environFn
 from PySide2 import QtWidgets
 
 

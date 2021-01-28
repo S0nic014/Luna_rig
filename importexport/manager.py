@@ -1,7 +1,7 @@
 import abc
 import pymel.core as pm
-from Luna import Logger
-from Luna.utils import environFn
+from luna import Logger
+from luna.utils import environFn
 
 
 class AbstractManager(object):

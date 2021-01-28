@@ -2,8 +2,8 @@
 
 import pymel.core as pm
 from pymel.core import nodetypes
-from Luna import Logger
-from Luna_rig.functions import nameFn
+from luna import Logger
+from luna_rig.functions import nameFn
 
 
 class MetaRigNode(object):
@@ -12,7 +12,7 @@ class MetaRigNode(object):
     def as_str(cls, name_only=False):
         """Get a string representation of class path.
 
-        :return: Class string e.g Luna_rig.components.fk_component.FKComponent
+        :return: Class string e.g luna_rig.components.fk_component.FKComponent
         :rtype: str
         """
         meta_module = cls.__module__
@@ -36,7 +36,7 @@ class MetaRigNode(object):
         :return: Evaluated meta class
         :rtype: Meta rig node class instance
         """
-        import Luna_rig  # noqa: F401
+        import luna_rig  # noqa: F401
         result = None
         if node:
             node = pm.PyNode(node)

@@ -1,13 +1,13 @@
 import pymel.core as pm
 from pymel.core import nodetypes
 import os
-from Luna import Logger
-from Luna.utils import fileFn
-from Luna.utils import environFn
-from Luna_rig.importexport import manager
-from Luna_rig.core.shape_manager import ShapeManager
-from Luna_rig.core.control import Control
-from Luna_rig.functions import rigFn
+from luna import Logger
+from luna.utils import fileFn
+from luna.utils import environFn
+from luna_rig.importexport import manager
+from luna_rig.core.shape_manager import ShapeManager
+from luna_rig.core.control import Control
+from luna_rig.functions import rigFn
 
 
 class CtlShapeManager(manager.AbstractManager):

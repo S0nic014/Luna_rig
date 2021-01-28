@@ -1,16 +1,16 @@
 import pymel.core as pm
 from pymel.core import nodetypes
-from Luna import Logger
-from Luna.utils import enumFn
-from Luna_rig.core import component
-from Luna_rig.core import control
-from Luna_rig.functions import jointFn
-from Luna_rig.functions import nameFn
-from Luna_rig.functions import rigFn
-from Luna_rig.functions import attrFn
-from Luna_rig.functions import curveFn
+from luna import Logger
+from luna.utils import enumFn
+from luna_rig.core import component
+from luna_rig.core import control
+from luna_rig.functions import jointFn
+from luna_rig.functions import nameFn
+from luna_rig.functions import rigFn
+from luna_rig.functions import attrFn
+from luna_rig.functions import curveFn
 
-from Luna_rig.components import fk_component
+from luna_rig.components import fk_component
 
 
 class FKDynamicsComponent(component.AnimComponent):

@@ -4,11 +4,11 @@ import pymel.core as pm
 from pymel.core import nodetypes
 import pymel.api as pma
 
-from Luna import Logger
-from Luna.static import names
-from Luna.utils import fileFn
-from Luna_rig.importexport import manager
-from Luna_rig.functions import nameFn
+from luna import Logger
+from luna.static import names
+from luna.utils import fileFn
+from luna_rig.importexport import manager
+from luna_rig.functions import nameFn
 reload(manager)
 
 

@@ -1,8 +1,8 @@
 import pymel.core as pm
 import pymel.api as pma
-from Luna import Logger
-from Luna.static import colors
-from Luna_rig.functions import apiFn
+from luna import Logger
+from luna.static import colors
+from luna_rig.functions import apiFn
 
 
 class Surface:

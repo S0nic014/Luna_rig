@@ -1,6 +1,6 @@
 import pymel.core as pm
 from pymel.core import nodetypes
-from Luna import Logger
+from luna import Logger
 
 
 def get_curve_data(curve):

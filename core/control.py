@@ -2,15 +2,15 @@
 import json
 import pymel.core as pm
 from pymel.core import nodetypes
-from Luna import Logger
-from Luna.static import colors
-from Luna.static import names
-from Luna_rig.functions import nameFn
-from Luna_rig.functions import attrFn
-from Luna_rig.functions import curveFn
-from Luna_rig.functions import transformFn
-from Luna_rig.core.shape_manager import ShapeManager
-from Luna_rig.core import meta
+from luna import Logger
+from luna.static import colors
+from luna.static import names
+from luna_rig.functions import nameFn
+from luna_rig.functions import attrFn
+from luna_rig.functions import curveFn
+from luna_rig.functions import transformFn
+from luna_rig.core.shape_manager import ShapeManager
+from luna_rig.core import meta
 
 
 class Control(object):

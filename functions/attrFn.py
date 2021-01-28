@@ -1,5 +1,5 @@
 import pymel.core as pm
-from Luna import Logger
+from luna import Logger
 
 
 def add_meta_attr(node):

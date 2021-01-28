@@ -2,11 +2,11 @@ import pymel.core as pm
 from pymel.core import nodetypes
 from PySide2 import QtCore
 
-from Luna import Logger
-from Luna.utils import enumFn
-from Luna_rig.functions import nameFn
-from Luna_rig.core.meta import MetaRigNode
-from Luna_rig.core.control import Control
+from luna import Logger
+from luna.utils import enumFn
+from luna_rig.functions import nameFn
+from luna_rig.core.meta import MetaRigNode
+from luna_rig.core.control import Control
 
 
 class _compSignals(QtCore.QObject):

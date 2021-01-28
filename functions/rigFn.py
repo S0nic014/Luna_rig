@@ -1,11 +1,11 @@
 import pymel.core as pm
 import pymel.api as pma
 from pymel.core import nodetypes
-from Luna import Logger
-from Luna.utils import environFn
-from Luna_rig.core import control
-from Luna_rig.core.meta import MetaRigNode
-from Luna.static import names
+from luna import Logger
+from luna.utils import environFn
+from luna_rig.core import control
+from luna_rig.core.meta import MetaRigNode
+from luna.static import names
 
 
 def list_controls():

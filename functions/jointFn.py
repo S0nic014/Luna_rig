@@ -2,8 +2,8 @@ import math
 import pymel.core as pm
 import pymel.api as pma
 from pymel.core import nodetypes
-from Luna import Logger
-from Luna_rig.functions import nameFn
+from luna import Logger
+from luna_rig.functions import nameFn
 
 
 def duplicate_chain(original_chain=[],

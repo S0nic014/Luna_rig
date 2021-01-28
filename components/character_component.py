@@ -1,12 +1,12 @@
 import pymel.core as pm
 from pymel.core import nodetypes
-from Luna import Logger
-from Luna.static import names
-from Luna_rig.core import component
-from Luna_rig.core import control
-from Luna_rig.functions import attrFn
-from Luna_rig.functions import outlinerFn
-from Luna_rig.functions import rigFn
+from luna import Logger
+from luna.static import names
+from luna_rig.core import component
+from luna_rig.core import control
+from luna_rig.functions import attrFn
+from luna_rig.functions import outlinerFn
+from luna_rig.functions import rigFn
 
 
 class Character(component.Component):
