@@ -1,12 +1,10 @@
 import pymel.core as pm
 from pymel.core import nodetypes
 from luna import Logger
-from luna.utils import enumFn
 from luna_rig.core import component
 from luna_rig.core import control
 from luna_rig.functions import jointFn
 from luna_rig.functions import nameFn
-from luna_rig.functions import rigFn
 from luna_rig.functions import attrFn
 
 
@@ -18,14 +16,13 @@ class FKComponent(component.AnimComponent):
                attach_point=0,
                side="c",
                name="fk_component",
-               chain_start=None,
-               chain_end=None,
-               end_jnt_ctl=True,
+               start_joint=None,
+               end_joint=None,
+               add_end_ctl=True,
                lock_translate=True):
         fkcomp = super(FKComponent, cls).create(meta_parent, side, name)  # type: FKComponent
-        character = rigFn.get_build_character()
         # Joint chain
-        joint_chain = jointFn.joint_chain(chain_start, chain_end)
+        joint_chain = jointFn.joint_chain(start_joint, end_joint)
         jointFn.validate_rotations(joint_chain)
         for jnt in joint_chain:
             attrFn.add_meta_attr(jnt)
@@ -34,7 +31,7 @@ class FKComponent(component.AnimComponent):
         # Create control
         fk_controls = []
         next_parent = fkcomp.group_ctls
-        guide_chain = ctl_chain if end_jnt_ctl else ctl_chain[:-1]
+        guide_chain = ctl_chain if add_end_ctl else ctl_chain[:-1]
         free_attrs = "r" if lock_translate else "tr"
         for jnt in guide_chain:
             ctl = control.Control.create(side=fkcomp.side,
@@ -48,24 +45,25 @@ class FKComponent(component.AnimComponent):
             next_parent = ctl
             fk_controls.append(ctl)
 
-        # Scale controls
-        if not character:
-            clamped_size = 1.0
-        else:
-            clamped_size = character.clamped_size
-        for ctl in fk_controls:
-            ctl.scale(clamped_size, factor=0.2)
-
-        # # Store joint chains
+        # Store joint chains
         fkcomp._store_bind_joints(joint_chain)
         fkcomp._store_ctl_chain(ctl_chain)
         fkcomp._store_controls(fk_controls)
-        # # Store attach points
+
+        # Store attach points
         for each in fk_controls:
             fkcomp.add_attach_point(each.transform)
+
         # Connect to character, parent
         fkcomp.connect_to_character(parent=True)
         fkcomp.attach_to_component(meta_parent, attach_point)
+
+        # Scale controls
+        scale_dict = {}
+        for ctl in fk_controls:
+            scale_dict[ctl] = 0.2
+        fkcomp.scale_controls(scale_dict)
+
         # House keeping
         if fkcomp.character:
             fkcomp.group_parts.visibility.set(0)

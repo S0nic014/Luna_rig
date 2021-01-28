@@ -1,7 +1,6 @@
 import pymel.core as pm
 from pymel.core import nodetypes
 from luna import Logger
-from luna.utils import enumFn
 from luna_rig.core import component
 from luna_rig.core import control
 from luna_rig.functions import jointFn
@@ -9,7 +8,6 @@ from luna_rig.functions import nameFn
 from luna_rig.functions import rigFn
 from luna_rig.functions import attrFn
 from luna_rig.functions import curveFn
-
 from luna_rig.components import fk_component
 
 
@@ -96,9 +94,6 @@ class FKDynamicsComponent(component.AnimComponent):
                                 ccv=0,
                                 scv=0)[0]  # type: nodetypes.IkHandle
         ik_handle.setParent(instance.group_parts)
-        # for fk_ctl, jnt in zip(meta_parent.controls, ctl_chain):
-        #     dynam_offset = fk_ctl.insert_offset("dynamics")
-        #     jnt.rotate.connect(dynam_offset.rotate)
 
         # Create param control
         param_locator = rigFn.get_param_ctl_locator(side=instance.side, joint_chain=ctl_chain, move_axis="x", align_index=0)
@@ -124,11 +119,7 @@ class FKDynamicsComponent(component.AnimComponent):
         instance.attach_to_component(meta_parent)
 
         # Scale controls
-        if not instance.character:
-            clamped_size = 1.0
-        else:
-            clamped_size = instance.character.clamped_size
-        param_control.scale(clamped_size, factor=0.2)
+        instance.scale_controls({param_control: 0.2})
 
         # # House keeping
         if instance.character:

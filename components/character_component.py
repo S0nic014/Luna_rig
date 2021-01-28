@@ -86,7 +86,8 @@ class Character(component.Component):
                                           offset_grp=False,
                                           attributes="trs",
                                           shape="character_node",
-                                          tag="root")
+                                          tag="root",
+                                          orient_axis="y")
         root_ctl.rename(index="")
         control_rig = pm.createNode('transform', n=names.Character.control_rig.value, p=root_ctl.transform)  # type: nodetypes.Transform
         deformation_rig = pm.createNode('transform', n=names.Character.deformation_rig.value, p=root_ctl.transform)  # type: nodetypes.Transform

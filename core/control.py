@@ -40,6 +40,8 @@ class Control(object):
                joint=False,
                shape="cube",
                tag="",
+               component=None,
+               orient_axis="x",
                scale=1.0):
         """Control creation method
 
@@ -117,7 +119,6 @@ class Control(object):
         tag_node.addAttr("joint", at="message")
         tag_node.addAttr("tag", dt="string")
         tag_node.tag.set(tag)
-
         # Add meta parent attribs
         for node in [group_node, offset_node, transform_node, ctl_joint]:
             if node:
@@ -137,12 +138,15 @@ class Control(object):
         instance = Control(transform_node)
         instance.shape = shape
         instance.color = color
-
-        # Cleanup
+        # Attributes
         instance.lock_attrib(exclude_attr=attributes, channel_box=False)
 
-        # Scale shape
+        # Adjust shape
         instance.scale(scale, factor=0.8)
+        instance.orient_shape(direction=orient_axis)
+        # Connect to component
+        if component:
+            component._store_controls((instance))
 
         return instance
 
@@ -722,3 +726,35 @@ class Control(object):
             return
         pm.matchTransform(opposite_ctl.transform, self.transform)
         transformFn.mirror_xform(transforms=opposite_ctl.transform, across=across, behaviour=behavior, space=space)
+
+    def orient_shape(self, direction="x"):
+        if direction.lower() not in "xyz" and direction.lower() not in ["-x", "-y", "-z"]:
+            Logger.exception("Invalid orient direction: {0}".format(direction))
+            return
+        if direction == "y":
+            return
+
+        # Create temp transform and parent shapes to it
+        temp_transform = pm.createNode("transform", n="temp_transform", p=self.transform)  # type: nodetypes.Transform
+        for each in self.transform.getShapes():
+            pm.parent(each, temp_transform, s=1, r=1)
+
+        # Apply rotation
+        if direction == "x":
+            temp_transform.rotateX.set(-90)
+            temp_transform.rotateY.set(-90)
+        elif direction == "-x":
+            temp_transform.rotateX.set(90)
+            temp_transform.rotateY.set(-90)
+        elif direction == "-y":
+            temp_transform.rotateZ.set(180)
+        elif direction == "z":
+            temp_transform.rotateX.set(90)
+        elif direction == "-z":
+            temp_transform.rotateX.set(-90)
+
+        # Reparent shapes and delete temp transform
+        pm.makeIdentity(temp_transform, rotate=True, apply=True)
+        for each in temp_transform.getShapes():
+            pm.parent(each, self.transform, s=1, r=1)
+        pm.delete(temp_transform)

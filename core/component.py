@@ -175,15 +175,18 @@ class AnimComponent(Component):
 
     def _store_bind_joints(self, joint_chain):
         for jnt in joint_chain:
-            jnt.metaParent.connect(self.pynode.bindJoints, na=1)
+            if jnt not in self.pynode.bindJoints.listConnections(d=1):
+                jnt.metaParent.connect(self.pynode.bindJoints, na=1)
 
     def _store_ctl_chain(self, joint_chain):
         for jnt in joint_chain:
-            jnt.metaParent.connect(self.pynode.ctlChain, na=1)
+            if jnt not in self.pynode.ctlChain.listConnections(d=1):
+                jnt.metaParent.connect(self.pynode.ctlChain, na=1)
 
     def _store_controls(self, ctl_list):
         for ctl in ctl_list:
-            ctl.transform.metaParent.connect(self.pynode.controls, na=1)
+            if ctl.transform not in self.pynode.controls.listConnections(d=1):
+                ctl.transform.metaParent.connect(self.pynode.controls, na=1)
 
     def list_controls(self, tag=None):
         """Get list of component controls. Extra attr for tag sorting.
@@ -271,11 +274,20 @@ class AnimComponent(Component):
         :return: Attach object to use in derived method.
         :rtype: pm.PyNode
         """
+        if not other_comp:
+            return
         super(AnimComponent, self).attach_to_component(other_comp)
-        attach_obj = other_comp.get_attach_point(index=attach_point)
+        # Fetch attach point from component if int
+        if isinstance(attach_point, str):
+            attach_obj = pm.PyNode(attach_point)
+        elif isinstance(attach_point, Control):
+            attach_obj = attach_point.transform
+        elif isinstance(attach_point, pm.PyNode):
+            attach_obj = attach_point
+        else:
+            attach_obj = other_comp.get_attach_point(index=attach_point)
         if not attach_obj:
             Logger.error("Failed to connect {0} to {1} at point {2}".format(self, other_comp, attach_point))
-
         return attach_obj
 
     def connect_to_character(self, character_name="", parent=False):
@@ -304,3 +316,12 @@ class AnimComponent(Component):
         self.pynode.character.connect(character.pynode.metaChildren, na=1)
         if parent:
             pm.parent(self.root, character.control_rig)
+
+    def scale_controls(self, scale_dict):
+        if self.character:
+            clamped_size = self.character.clamped_size
+        else:
+            clamped_size = 1.0
+
+        for ctl, factor in scale_dict.items():
+            ctl.scale(clamped_size, factor=factor)

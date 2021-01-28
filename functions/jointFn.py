@@ -70,17 +70,17 @@ def joint_chain(start_joint, end_joint=None):
     return cut_chain
 
 
-def rotToOrient(jnt):
+def rot_to_orient(jnt):
     jnt = pm.PyNode(jnt)  # type: nodetypes.Joint
     newOrient = []
     for rot, orient in zip(jnt.rotate.get(), jnt.jointOrient.get()):
         newOrient.append(orient + rot)
-        jnt.jointOrientX.set(newOrient[0])
-        jnt.jointOrientY.set(newOrient[1])
-        jnt.jointOrientZ.set(newOrient[2])
-        jnt.rotateX.set(0)
-        jnt.rotateY.set(0)
-        jnt.rotateZ.set(0)
+    jnt.jointOrientX.set(newOrient[0])
+    jnt.jointOrientY.set(newOrient[1])
+    jnt.jointOrientZ.set(newOrient[2])
+    jnt.rotateX.set(0)
+    jnt.rotateY.set(0)
+    jnt.rotateZ.set(0)
     return newOrient
 
 

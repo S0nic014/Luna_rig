@@ -6,6 +6,7 @@ from luna import Logger
 from luna.utils import fileFn
 from luna.utils import enumFn
 from luna.static import directories
+from luna.static import colors
 from luna_rig.functions import curveFn
 
 
@@ -151,6 +152,9 @@ class ShapeManager:
         node = pm.PyNode(node)
         if isinstance(color, enumFn.Enum):
             color = color.value
+        elif isinstance(color, str):
+            color = colors.ColorIndex[color].value
+
         if isinstance(node, pm.nodetypes.Transform):
             shape_nodes = node.getShapes()
         elif isinstance(node, pm.nodetypes.Shape):

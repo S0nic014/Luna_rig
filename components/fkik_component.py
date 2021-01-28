@@ -13,8 +13,8 @@ from luna_rig.functions import nameFn
 class FKIKComponent(component.AnimComponent):
 
     class AttachPoints(enumFn.Enum):
-        HIP_JNT = 0
-        ANKLE_JNT = 1
+        START_JNT = 0
+        END_JNT = 1
 
     @property
     def ik_control(self):
@@ -58,14 +58,13 @@ class FKIKComponent(component.AnimComponent):
                attach_point=0,
                side="c",
                name="fkik_component",
-               chain_start=None,
-               chain_end=None,
+               start_joint=None,
+               end_joint=None,
                default_state=1,
                param_locator=None):
         instance = super(FKIKComponent, cls).create(meta_parent, side, name)  # type: FKIKComponent
-        character = rigFn.get_build_character()
         # Joint chain
-        joint_chain = jointFn.joint_chain(chain_start, chain_end)
+        joint_chain = jointFn.joint_chain(start_joint, end_joint)
         jointFn.validate_rotations(joint_chain)
 
         # Create control chain
@@ -133,7 +132,8 @@ class FKIKComponent(component.AnimComponent):
                                                parent=instance.group_ctls,
                                                match_orient=False,
                                                offset_grp=False,
-                                               shape="small_cog")
+                                               shape="small_cog",
+                                               orient_axis="y")
         pm.pointConstraint(joint_chain[-1], param_control.group, mo=1)
 
         # Create blend
@@ -148,22 +148,12 @@ class FKIKComponent(component.AnimComponent):
             revese_fkik.outputX.connect(parent_constr.getWeightAliasList()[0])
             param_control.transform.fkik.connect(parent_constr.getWeightAliasList()[1])
 
-        # Scale controls
-        if not character:
-            clamped_size = 1.0
-        else:
-            clamped_size = character.clamped_size
-        for ctl in fk_controls:
-            ctl.scale(clamped_size, factor=0.2)
-        param_control.scale(clamped_size, factor=0.2)
-        ik_control.scale(clamped_size, factor=0.8)
-        pv_control.scale(clamped_size, factor=0.1)
-
         # Store default items
         instance._store_bind_joints(joint_chain)
         instance._store_ctl_chain(ctl_chain)
         instance._store_controls(fk_controls)
         instance._store_controls([ik_control, pv_control])
+
         # Store indiviual items
         instance.pynode.addAttr("fkChain", at="message", multi=1, im=0)
         instance.pynode.addAttr("ikChain", at="message", multi=1, im=0)
@@ -184,11 +174,22 @@ class FKIKComponent(component.AnimComponent):
         # Store attach points
         instance.add_attach_point(ctl_chain[0])
         instance.add_attach_point(ctl_chain[-1])
+
         # Connect to character, parent
         instance.connect_to_character(parent=True)
         instance.attach_to_component(meta_parent, attach_point)
+
+        # Scale controls
+        scale_dict = {ik_control: 0.8,
+                      pv_control: 0.1,
+                      param_control: 0.2}
+        for ctl in fk_controls:
+            scale_dict[ctl] = 0.2
+        instance.scale_controls(scale_dict)
+
         # Store settings
         instance._store_settings(param_control.transform.fkik)
+
         # House keeping
         ik_handle.visibility.set(0)
         if instance.character:

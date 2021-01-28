@@ -5,7 +5,6 @@ from luna.utils import enumFn
 from luna_rig.core import component
 from luna_rig.core import control
 from luna_rig.functions import jointFn
-from luna_rig.functions import rigFn
 from luna_rig.functions import attrFn
 
 
@@ -31,12 +30,11 @@ class IKComponent(component.AnimComponent):
                attach_point=0,
                side="c",
                name="ik_component",
-               chain_start=None,
-               chain_end=None):
+               start_joint=None,
+               end_joint=None):
         ikcomp = super(IKComponent, cls).create(meta_parent, side, name)  # type: IKComponent
-        character = rigFn.get_build_character()
         # Joint chain
-        joint_chain = jointFn.joint_chain(chain_start, chain_end)
+        joint_chain = jointFn.joint_chain(start_joint, end_joint)
         jointFn.validate_rotations(joint_chain)
 
         # Create control chain
@@ -88,14 +86,6 @@ class IKComponent(component.AnimComponent):
         ik_control.transform.metaParent.connect(ikcomp.pynode.ikControl)
         pv_control.transform.metaParent.connect(ikcomp.pynode.poleVectorControl)
 
-        # Scale controls
-        if not character:
-            clamped_size = 1.0
-        else:
-            clamped_size = character.clamped_size
-        ik_control.scale(clamped_size, factor=0.8)
-        pv_control.scale(clamped_size, factor=0.1)
-
         # Store attach points
         ikcomp.add_attach_point(ik_control.transform)
         ikcomp.add_attach_point(pv_control.transform)
@@ -104,6 +94,11 @@ class IKComponent(component.AnimComponent):
         ikcomp.attach_to_component(meta_parent, attach_point)
         # Store settings
         ikcomp._store_settings()
+        # Scale controls
+        scale_dict = {ik_control: 0.8,
+                      pv_control: 0.1}
+        ikcomp.scale_controls(scale_dict)
+
         # House keeping
         ik_handle.visibility.set(0)
         if ikcomp.character:
