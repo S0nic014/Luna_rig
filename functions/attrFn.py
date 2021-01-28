@@ -72,11 +72,13 @@ def transfer_attr(source, destination, attr_list=[], connect=False, ** kwargs):
                         default_val = min_value
                 # Add attr depending if min max exists
                 if min_value is None and max_value is None:
-                    destination.addAttr(attr.attrName(longName=True), at=attr.type(), k=1, dv=attr.get())
+                    destination.addAttr(attr.attrName(longName=True), at=attr.type(), k=1, dv=default_val)
                 elif min_value is None and max_value is not None:
-                    destination.addAttr(attr.attrName(longName=True), at=attr.type(), k=1, max=attr.getMax(), dv=attr.get())
+                    destination.addAttr(attr.attrName(longName=True), at=attr.type(), k=1, max=max_value, dv=default_val)
+                elif min_value is not None and max_value is None:
+                    destination.addAttr(attr.attrName(longName=True), at=attr.type(), k=1, min=min_value, dv=default_val)
                 else:
-                    destination.addAttr(attr.attrName(longName=True), at=attr.type(), k=1, min=attr.getMin(), dv=attr.get())
+                    destination.addAttr(attr.attrName(longName=True), at=attr.type(), k=1, min=min_value, max=max_value, dv=default_val)
             # Store attr aliases
             attr_alias[attr] = destination.attr(attr.attrName(longName=True))
         except Exception:

@@ -22,6 +22,12 @@ class MetaRigNode(object):
         meta_type_str = ".".join([meta_module, meta_name])
         return meta_type_str
 
+    def __repr__(self):
+        return "{0}({1})".format(self.as_str(name_only=True), self.pynode.name())
+
+    def __eq__(self, other):
+        return self.pynode == other.pynode
+
     def __new__(cls, node=None):
         """Initialize class stored in metaRigType attribute and return a intance of it.
 

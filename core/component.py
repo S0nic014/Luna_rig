@@ -16,18 +16,12 @@ class _compSignals(QtCore.QObject):
 
 class Component(MetaRigNode):
 
-    def __repr__(self):
-        return "{0}({1})".format(self.as_str(name_only=True), self.pynode.name())
-
     def __new__(cls, node=None):
         return object.__new__(cls, node)
 
     def __init__(self, node):
         super(Component, self).__init__(node)
         self.signals = _compSignals()
-
-    def __eq__(self, other):
-        return self.pynode == other.pynode
 
     @property
     def settings(self):
