@@ -126,19 +126,20 @@ class ShapeManager:
                 cls.apply_shape(obj, shape_list, default_color=old_color)
 
     @classmethod
-    def copy_color(cls, transform):
-        if not transform:
-            if not pm.selected():
-                pm.warning("Select transform to copy color.")
-                return
-            transform = pm.selected()[-1]
+    def copy_color(cls):
+        sel = pm.selected()
+        if not sel:
+            Logger.warning("Select transform to get color from.")
+            return
+        else:
+            transform = sel[-1]
         save_path = os.path.join(directories.TMP_PATH, cls.COPIED_COLOR_FILE)
         data = {"color": cls.get_color(transform)}
         fileFn.write_json(save_path, data)
         Logger.info("Copied color {0}".format(transform))
 
     @classmethod
-    def paste_color(cls, transform):
+    def paste_color(cls):
         saved_path = os.path.join(directories.TMP_PATH, cls.COPIED_COLOR_FILE)
         if not os.path.isfile(saved_path):
             Logger.warning("Color clipboard is empty")
@@ -148,19 +149,28 @@ class ShapeManager:
             cls.set_color(obj, color_int)
 
     @classmethod
-    def set_color(cls, node, color):
-        node = pm.PyNode(node)
+    def set_color(cls, nodes, color):
+        # Handle nodes
+        if not nodes:
+            nodes = pm.selected()
+        if not isinstance(nodes, list):
+            nodes = [nodes]
+            nodes = [pm.PyNode(node) for node in nodes]
+        # Handle color
         if isinstance(color, enumFn.Enum):
             color = color.value
         elif isinstance(color, str):
             color = colors.ColorIndex[color].value
-
-        if isinstance(node, pm.nodetypes.Transform):
-            shape_nodes = node.getShapes()
-        elif isinstance(node, pm.nodetypes.Shape):
-            shape_nodes = [node]
-
+        # Get shape nodes
+        shape_nodes = []
+        for node in nodes:
+            if isinstance(node, pm.nodetypes.Transform):
+                shape_nodes += node.getShapes()
+            elif isinstance(node, pm.nodetypes.Shape):
+                shape_nodes.append(node)
+        # Apply color
         for shape in shape_nodes:
+            shape.overrideEnabled.set(1)
             shape.overrideColor.set(color)
 
     @classmethod

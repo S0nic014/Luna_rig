@@ -51,11 +51,11 @@ class SkinClusterManager(manager.DeformerManager):
     def import_all(self):
         Logger.info("Importing skinCluster weights...")
         count = 0
-        for geo in self.versioned_files.keys():
-            if not pm.objExists(geo):
-                Logger.warning("Object {0} no longer exists, skipping...")
+        for geo_name in self.versioned_files.keys():
+            if not pm.objExists(geo_name):
+                Logger.warning("Object {0} no longer exists, skipping...".format(geo_name))
                 continue
-            self.import_single(geo)
+            self.import_single(geo_name)
             count += 1
         Logger.info("Imported {0} skinClusters.".format(count))
 
@@ -90,6 +90,18 @@ class SkinClusterManager(manager.DeformerManager):
         weights = deformer.getWeights(deformer.getGeometry()[0])
         deformer.setWeights(geo_name, [pm.PyNode(name) for name in skin_data.get("influenceObjects")], weights, skin_data.get("normalizeWeights"))
         Logger.info("Imported {0} skinCluster weights: {1}".format(geo_name, latest_file))
+
+    @classmethod
+    def export_selected(cls):
+        instance = cls()
+        for node in pm.selected():
+            instance.export_single(node)
+
+    @classmethod
+    def import_selected(cls):
+        instance = cls()
+        for node in pm.selected():
+            instance.import_single(node.stripNamespace())
 
 
 if __name__ == "__main__":
