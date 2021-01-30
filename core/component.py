@@ -5,13 +5,14 @@ from PySide2 import QtCore
 from luna import Logger
 from luna.utils import enumFn
 from luna_rig.functions import nameFn
+from luna_rig.functions import outlinerFn
 from luna_rig.core.meta import MetaRigNode
 from luna_rig.core.control import Control
 
 
 class _compSignals(QtCore.QObject):
-    created = QtCore.Signal()
     removed = QtCore.Signal()
+    attached = QtCore.Signal(object)
 
 
 class Component(MetaRigNode):
@@ -54,8 +55,10 @@ class Component(MetaRigNode):
         obj_instance = super(Component, cls).create(meta_parent)  # type: Component
         obj_instance.pynode.rename(nameFn.generate_name(name, side, suffix="meta"))
         obj_instance.pynode.addAttr("settings", at="message", multi=1, im=0)
-
         return obj_instance
+
+    def set_outliner_color(self, color):
+        raise NotImplementedError
 
     def attach_to_component(self, other_comp):
         """Attach to other component
@@ -126,6 +129,7 @@ class AnimComponent(Component):
         ctls_grp.metaParent.connect(obj_instance.pynode.ctlsGroup)
         joints_grp.metaParent.connect(obj_instance.pynode.jointsGroup)
         parts_grp.metaParent.connect(obj_instance.pynode.partsGroup)
+        obj_instance.set_outliner_color(17)
 
         return obj_instance
 
@@ -172,6 +176,9 @@ class AnimComponent(Component):
             return MetaRigNode(connections[0])
         else:
             return None
+
+    def set_outliner_color(self, color):
+        outlinerFn.set_color(self.root, color)
 
     def _store_bind_joints(self, joint_chain):
         for jnt in joint_chain:
@@ -288,6 +295,7 @@ class AnimComponent(Component):
             attach_obj = other_comp.get_attach_point(index=attach_point)
         if not attach_obj:
             Logger.error("Failed to connect {0} to {1} at point {2}".format(self, other_comp, attach_point))
+        self.signals.attached.emit(other_comp)
         return attach_obj
 
     def connect_to_character(self, character_name="", parent=False):

@@ -109,7 +109,6 @@ class FKIKSpineComponent(component.AnimComponent):
                                               attributes="tr",
                                               shape="hips",
                                               orient_axis="y")
-        # hips_control.orient_shape(direction="x")
         # Mid
         ctl_locator.translate.set(pm.pointOnCurve(ik_curve, pr=0.5, top=1))
         mid_control = control.Control.create(side=instance.side,

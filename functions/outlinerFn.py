@@ -1,4 +1,6 @@
 import pymel.core as pm
+from luna import Logger
+from luna.static import ColorIndex
 
 
 def hide(node, visibility=False):
@@ -24,7 +26,7 @@ def fade(node):
     pm.setAttr(node + '.outlinerColor', 0.5, 0.5, 0.5)
 
 
-def set_color(node, rgb=[0, 0, 0]):
+def set_color(node, color=[0, 0, 0]):
     """Set color in outliner.
 
     :param node: Node to set color for.
@@ -32,10 +34,16 @@ def set_color(node, rgb=[0, 0, 0]):
     :param rgb: RGB values, defaults to []
     :type rgb: list, optional
     """
-    if isinstance(rgb, list) or isinstance(rgb, tuple):
-        while len(rgb) < 3:
-            rgb.append(0.0)
-
-        # Apply colors
-        pm.setAttr(node + '.useOutlinerColor', True)
-        pm.setAttr(node + '.outlinerColor', rgb[0], rgb[1], rgb[2])
+    if isinstance(color, list) or isinstance(color, tuple):
+        while len(color) < 3:
+            color.append(0.0)
+    elif isinstance(color, int):
+        color = ColorIndex.index_to_rgb(color)
+    elif isinstance(color, str):
+        color = ColorIndex.index_to_rgb(ColorIndex[color].value)
+    else:
+        Logger.exception("Failed to set outliner color: {0}".format(color))
+        return
+    # Apply colors
+    pm.setAttr(node + '.useOutlinerColor', True)
+    pm.setAttr(node + '.outlinerColor', color[0], color[1], color[2])

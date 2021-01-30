@@ -9,11 +9,13 @@ from luna_rig.functions import nameFn
 from luna_rig.functions import attrFn
 from luna_rig.functions import curveFn
 from luna_rig.functions import transformFn
+from luna_rig.functions import outlinerFn
 from luna_rig.core.shape_manager import ShapeManager
 from luna_rig.core import meta
 
 
 class Control(object):
+
     def __repr__(self):
         return "Control({0})".format(self.transform)
 
@@ -138,6 +140,7 @@ class Control(object):
         instance = Control(transform_node)
         instance.shape = shape
         instance.color = color
+        instance.set_outliner_color(27)
         # Attributes
         instance.lock_attrib(exclude_attr=attributes, channel_box=False)
 
@@ -382,6 +385,9 @@ class Control(object):
                 -name: {9}
                         """.format(self.group, self.offset_list, self.offset, self.transform, self.joint, self.tag_node, self.shape, self.bind_pose,
                                    self.side, self.name))
+
+    def set_outliner_color(self, color):
+        outlinerFn.set_color(self.transform, color)
 
     def scale(self, scale, factor=0.8):
         if scale == 1.0 and factor == 1.0:

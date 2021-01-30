@@ -5,7 +5,6 @@ from luna import Logger
 from luna.utils import environFn
 from luna_rig.core import control
 from luna_rig.core.meta import MetaRigNode
-from luna.static import names
 
 
 def list_controls():

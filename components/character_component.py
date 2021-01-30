@@ -13,17 +13,6 @@ class Character(component.Component):
     def __repr__(self):
         return "Character component: ({0})".format(self.pynode.characterName.get())
 
-    def __init__(self, node):
-        """Character constructor.
-        Can be used to instansiate Character object from meta network node.
-
-        :param node: Node to instansiate from.
-        :type node: str, PyNode
-        """
-        super(Character, self).__init__(node)
-        # Signals
-        self.signals.created.emit()
-
     @ property
     def root_ctl(self):
         return control.Control(self.pynode.rootCtl.listConnections()[0])
@@ -139,8 +128,7 @@ class Character(component.Component):
         locators_grp.visibility.set(0)
         # Lock
         attrFn.lock(root_ctl.transform, ["sx", "sy", "sz"])
-        # Colors
-        outlinerFn.set_color(root_ctl.group, rgb=[0.6, 0.8, 0.9])
+        obj_instance.set_outliner_color(18)
         return obj_instance
 
     def list_geometry(self):
@@ -171,6 +159,9 @@ class Character(component.Component):
             if isinstance(comp, component.AnimComponent):
                 joint_list += comp.bind_joints
         return joint_list
+
+    def set_outliner_color(self, color):
+        outlinerFn.set_color(self.root_ctl.group, color)
 
     def get_size(self, axis="y"):
         bounding_box = pm.exactWorldBoundingBox(self.geometry_grp, ii=True)

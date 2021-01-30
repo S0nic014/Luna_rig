@@ -1,4 +1,4 @@
-import math
+from __future__ import division
 import pymel.core as pm
 import pymel.api as pma
 from pymel.core import nodetypes
@@ -68,6 +68,19 @@ def joint_chain(start_joint, end_joint=None):
         if str(jnt) in end_joint.fullPath().split("|"):
             cut_chain.append(jnt)
     return cut_chain
+
+
+def along_curve(curve, amount, joint_name="joint", joint_side="c", joint_suffix="jnt", delete_curve=False):
+    joints = []
+    for index in range(amount + 1):
+        param = index / amount
+        point = pm.pointOnCurve(curve, pr=param, top=1)
+        jnt = pm.createNode("joint", n=nameFn.generate_name(joint_name, joint_side, joint_suffix))  # type: nodetypes.Joint
+        jnt.setTranslation(point, space="world")
+        joints.append(jnt)
+    if delete_curve:
+        pm.delete(curve)
+    return joints
 
 
 def rot_to_orient(jnt):
