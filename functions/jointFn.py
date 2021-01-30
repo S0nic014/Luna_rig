@@ -118,7 +118,7 @@ def get_pole_vector(joint_chain):
     end_jnt_vec = joint_chain[-1].getTranslation(space="world")  # type:pma.MVector
 
     if len(joint_chain) % 2:
-        mid_index = (len(joint_chain) - 1) / 2
+        mid_index = (len(joint_chain) - 1) // 2
         mid_jnt_vec = joint_chain[mid_index].getTranslation(space="world")  # type:pma.MVector
     else:
         prev_jnt_index = len(joint_chain) // 2

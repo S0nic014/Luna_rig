@@ -13,29 +13,20 @@ from luna_rig.functions import rigFn
 class CtlShapeManager(manager.AbstractManager):
 
     def __init__(self):
-        super(CtlShapeManager, self).__init__()
-        self.asset = environFn.get_asset_var()
-        self.character = environFn.get_character_var()
-        if not self.asset:
-            Logger.error("Asset is not set")
-            raise RuntimeError
+        super(CtlShapeManager, self).__init__("controls", "crvs")
 
     @property
-    def data_type(self):
-        return "controls"
-
-    @property
-    def extension(self):
-        return "crvs"
+    def path(self):
+        return self.asset.controls
 
     def get_base_name(self):
         return "{0}_{1}".format(self.asset.name, self.data_type)
 
     def get_new_file(self):
-        return fileFn.get_new_versioned_file(self.get_base_name(), dir_path=self.asset.controls, extension=self.extension, full_path=True)
+        return fileFn.get_new_versioned_file(self.get_base_name(), dir_path=self.path, extension=self.extension, full_path=True)
 
     def get_latest_file(self):
-        return fileFn.get_latest_file(self.get_base_name(), self.asset.controls, extension=self.extension, full_path=True)
+        return fileFn.get_latest_file(self.get_base_name(), self.path, extension=self.extension, full_path=True)
 
     @classmethod
     def save_selection_to_lib(cls):

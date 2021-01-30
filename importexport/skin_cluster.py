@@ -14,17 +14,12 @@ reload(manager)
 
 class SkinClusterManager(manager.DeformerManager):
     def __init__(self):
-        super(SkinClusterManager, self).__init__()
-        self.path = self.asset.weights.skin_cluster
+        super(SkinClusterManager, self).__init__("skinCluster", "skin")
         self.versioned_files = fileFn.get_versioned_files(self.path, extension=self.extension)
 
     @property
-    def data_type(self):
-        return "skinCluster"
-
-    @property
-    def extension(self):
-        return "skin"
+    def path(self):
+        return self.asset.weights.skin_cluster
 
     def get_base_name(self, node):
         return str(node)
