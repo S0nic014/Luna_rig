@@ -99,7 +99,7 @@ class FKIKComponent(component.AnimComponent):
                                             parent=instance.group_ctls,
                                             shape="cube",
                                             tag="ik")
-        ik_handle = pm.ikHandle(n="{0}_ikh".format(instance.indexed_name),
+        ik_handle = pm.ikHandle(n=nameFn.generate_name(instance.indexed_name, side=instance.side, suffix="ikh"),
                                 sj=ik_chain[0],
                                 ee=ik_chain[-1],
                                 sol="ikRPsolver")[0]

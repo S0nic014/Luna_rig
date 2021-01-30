@@ -52,10 +52,10 @@ class Component(MetaRigNode):
         Logger.info("Building {0}({1}_{2})...".format(cls.as_str(name_only=True), side, name))
         if isinstance(meta_parent, MetaRigNode):
             meta_parent = meta_parent.pynode
-        obj_instance = super(Component, cls).create(meta_parent)  # type: Component
-        obj_instance.pynode.rename(nameFn.generate_name(name, side, suffix="meta"))
-        obj_instance.pynode.addAttr("settings", at="message", multi=1, im=0)
-        return obj_instance
+        instance = super(Component, cls).create(meta_parent)  # type: Component
+        instance.pynode.rename(nameFn.generate_name(name, side, suffix="meta"))
+        instance.pynode.addAttr("settings", at="message", multi=1, im=0)
+        return instance
 
     def set_outliner_color(self, color):
         raise NotImplementedError
@@ -104,34 +104,34 @@ class AnimComponent(Component):
         :rtype: AnimComponent
         """
 
-        obj_instance = super(AnimComponent, cls).create(meta_parent, side, name)  # type: AnimComponent
+        instance = super(AnimComponent, cls).create(meta_parent, side, name)  # type: AnimComponent
         # Create hierarchy
-        root_grp = pm.group(n=nameFn.generate_name(obj_instance.name, obj_instance.side, suffix="comp"), em=1)
-        ctls_grp = pm.group(n=nameFn.generate_name(obj_instance.name, obj_instance.side, suffix="ctls"), em=1, p=root_grp)
-        joints_grp = pm.group(n=nameFn.generate_name(obj_instance.name, obj_instance.side, suffix="jnts"), em=1, p=root_grp)
-        parts_grp = pm.group(n=nameFn.generate_name(obj_instance.name, obj_instance.side, suffix="parts"), em=1, p=root_grp)
+        root_grp = pm.group(n=nameFn.generate_name(instance.name, instance.side, suffix="comp"), em=1)
+        ctls_grp = pm.group(n=nameFn.generate_name(instance.name, instance.side, suffix="ctls"), em=1, p=root_grp)
+        joints_grp = pm.group(n=nameFn.generate_name(instance.name, instance.side, suffix="jnts"), em=1, p=root_grp)
+        parts_grp = pm.group(n=nameFn.generate_name(instance.name, instance.side, suffix="parts"), em=1, p=root_grp)
         for node in [root_grp, ctls_grp, joints_grp, parts_grp]:
             node.addAttr("metaParent", at="message")
 
         # Add message attrs
-        obj_instance.pynode.addAttr("character", at="message")
-        obj_instance.pynode.addAttr("rootGroup", at="message")
-        obj_instance.pynode.addAttr("ctlsGroup", at="message")
-        obj_instance.pynode.addAttr("jointsGroup", at="message")
-        obj_instance.pynode.addAttr("partsGroup", at="message")
-        obj_instance.pynode.addAttr("bindJoints", at="message", multi=1, im=0)
-        obj_instance.pynode.addAttr("ctlChain", at="message", multi=1, im=0)
-        obj_instance.pynode.addAttr("attachPoints", at="message", multi=1, im=0)
-        obj_instance.pynode.addAttr("controls", at="message", multi=1, im=0)
+        instance.pynode.addAttr("character", at="message")
+        instance.pynode.addAttr("rootGroup", at="message")
+        instance.pynode.addAttr("ctlsGroup", at="message")
+        instance.pynode.addAttr("jointsGroup", at="message")
+        instance.pynode.addAttr("partsGroup", at="message")
+        instance.pynode.addAttr("bindJoints", at="message", multi=1, im=0)
+        instance.pynode.addAttr("ctlChain", at="message", multi=1, im=0)
+        instance.pynode.addAttr("attachPoints", at="message", multi=1, im=0)
+        instance.pynode.addAttr("controls", at="message", multi=1, im=0)
 
         # Connect hierarchy to meta
-        root_grp.metaParent.connect(obj_instance.pynode.rootGroup)
-        ctls_grp.metaParent.connect(obj_instance.pynode.ctlsGroup)
-        joints_grp.metaParent.connect(obj_instance.pynode.jointsGroup)
-        parts_grp.metaParent.connect(obj_instance.pynode.partsGroup)
-        obj_instance.set_outliner_color(17)
+        root_grp.metaParent.connect(instance.pynode.rootGroup)
+        ctls_grp.metaParent.connect(instance.pynode.ctlsGroup)
+        joints_grp.metaParent.connect(instance.pynode.jointsGroup)
+        parts_grp.metaParent.connect(instance.pynode.partsGroup)
+        instance.set_outliner_color(17)
 
-        return obj_instance
+        return instance
 
     @property
     def root(self):

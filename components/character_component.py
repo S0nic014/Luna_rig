@@ -7,6 +7,7 @@ from luna_rig.core import control
 from luna_rig.functions import attrFn
 from luna_rig.functions import outlinerFn
 from luna_rig.functions import rigFn
+from luna_rig.functions import nameFn
 
 
 class Character(component.Component):
@@ -68,7 +69,7 @@ class Character(component.Component):
         :return: New character instance.
         :rtype: Character
         """
-        obj_instance = super(Character, cls).create(meta_parent, name=name, side="char")  # type: Character
+        instance = super(Character, cls).create(meta_parent, name=name, side="char")  # type: Character
         # Create main members
         root_ctl = control.Control.create(name="character_node",
                                           side="c",
@@ -93,26 +94,26 @@ class Character(component.Component):
             geometry_grp.inheritsTransform.set(0)
 
         # Add message attrs to meta node
-        obj_instance.pynode.addAttr("characterName", dt="string")
-        obj_instance.pynode.addAttr("rootCtl", at="message")
-        obj_instance.pynode.addAttr("controlRig", at="message")
-        obj_instance.pynode.addAttr("deformationRig", at="message")
-        obj_instance.pynode.addAttr("geometryGroup", at="message")
-        obj_instance.pynode.addAttr("locatorsGroup", at="message")
-        obj_instance.pynode.addAttr("worldLocator", at="message")
+        instance.pynode.addAttr("characterName", dt="string")
+        instance.pynode.addAttr("rootCtl", at="message")
+        instance.pynode.addAttr("controlRig", at="message")
+        instance.pynode.addAttr("deformationRig", at="message")
+        instance.pynode.addAttr("geometryGroup", at="message")
+        instance.pynode.addAttr("locatorsGroup", at="message")
+        instance.pynode.addAttr("worldLocator", at="message")
 
         # Add meta parent attrs to nodes
         for node in [control_rig, deformation_rig, geometry_grp, locators_grp, world_locator]:
             node.addAttr("metaParent", at="message")
 
         # Connect to meta node
-        obj_instance.pynode.characterName.set(name)
-        root_ctl.transform.metaParent.connect(obj_instance.pynode.rootCtl)
-        control_rig.metaParent.connect(obj_instance.pynode.controlRig)
-        deformation_rig.metaParent.connect(obj_instance.pynode.deformationRig)
-        geometry_grp.metaParent.connect(obj_instance.pynode.geometryGroup)
-        locators_grp.metaParent.connect(obj_instance.pynode.locatorsGroup)
-        world_locator.metaParent.connect(obj_instance.pynode.worldLocator)
+        instance.pynode.characterName.set(name)
+        root_ctl.transform.metaParent.connect(instance.pynode.rootCtl)
+        control_rig.metaParent.connect(instance.pynode.controlRig)
+        deformation_rig.metaParent.connect(instance.pynode.deformationRig)
+        geometry_grp.metaParent.connect(instance.pynode.geometryGroup)
+        locators_grp.metaParent.connect(instance.pynode.locatorsGroup)
+        world_locator.metaParent.connect(instance.pynode.worldLocator)
 
         # Edit attributes
         # Merge scale to make uniform
@@ -122,14 +123,14 @@ class Character(component.Component):
         root_ctl.transform.Scale.connect(root_ctl.transform.scaleZ)
 
         # Fit root control size
-        obj_instance.root_ctl.scale(obj_instance.clamped_size, factor=1.0)
+        instance.root_ctl.scale(instance.clamped_size, factor=1.0)
 
         # Visibility
         locators_grp.visibility.set(0)
         # Lock
         attrFn.lock(root_ctl.transform, ["sx", "sy", "sz"])
-        obj_instance.set_outliner_color(18)
-        return obj_instance
+        instance.set_outliner_color(18)
+        return instance
 
     def list_geometry(self):
         """List geometry nodes under geometry group.
@@ -186,10 +187,12 @@ class Character(component.Component):
             ctl.to_bind_pose()
 
     def create_controls_set(self, name="controls_set", tag=None):
+        nameFn.add_namespaces(name, self.namespace_list)
         result = pm.sets([ctl.transform for ctl in self.list_controls(tag)], n=name)  # type: nodetypes.ObjectSet
         return result
 
     def create_joints_set(self, name="bind_joints_set"):
+        nameFn.add_namespaces(name, self.namespace_list)
         result = pm.sets(self.list_bind_joints(), n=name)  # type: nodetypes.ObjectSet
         return result
 

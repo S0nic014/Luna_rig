@@ -20,22 +20,22 @@ class FKComponent(component.AnimComponent):
                end_joint=None,
                add_end_ctl=True,
                lock_translate=True):
-        fkcomp = super(FKComponent, cls).create(meta_parent, side, name)  # type: FKComponent
+        instance = super(FKComponent, cls).create(meta_parent, side, name)  # type: FKComponent
         # Joint chain
         joint_chain = jointFn.joint_chain(start_joint, end_joint)
         jointFn.validate_rotations(joint_chain)
         for jnt in joint_chain:
             attrFn.add_meta_attr(jnt)
-        ctl_chain = jointFn.duplicate_chain(original_chain=joint_chain, add_name="ctl", new_parent=fkcomp.group_joints)
+        ctl_chain = jointFn.duplicate_chain(original_chain=joint_chain, add_name="ctl", new_parent=instance.group_joints)
 
         # Create control
         fk_controls = []
-        next_parent = fkcomp.group_ctls
+        next_parent = instance.group_ctls
         guide_chain = ctl_chain if add_end_ctl else ctl_chain[:-1]
         free_attrs = "r" if lock_translate else "tr"
         for jnt in guide_chain:
-            ctl = control.Control.create(side=fkcomp.side,
-                                         name="{0}_fk".format(fkcomp.indexed_name),
+            ctl = control.Control.create(side=instance.side,
+                                         name="{0}_fk".format(instance.indexed_name),
                                          object_to_match=jnt,
                                          parent=next_parent,
                                          attributes=free_attrs,
@@ -46,29 +46,29 @@ class FKComponent(component.AnimComponent):
             fk_controls.append(ctl)
 
         # Store joint chains
-        fkcomp._store_bind_joints(joint_chain)
-        fkcomp._store_ctl_chain(ctl_chain)
-        fkcomp._store_controls(fk_controls)
+        instance._store_bind_joints(joint_chain)
+        instance._store_ctl_chain(ctl_chain)
+        instance._store_controls(fk_controls)
 
         # Store attach points
         for each in fk_controls:
-            fkcomp.add_attach_point(each.transform)
+            instance.add_attach_point(each.transform)
 
         # Connect to character, parent
-        fkcomp.connect_to_character(parent=True)
-        fkcomp.attach_to_component(meta_parent, attach_point)
+        instance.connect_to_character(parent=True)
+        instance.attach_to_component(meta_parent, attach_point)
 
         # Scale controls
         scale_dict = {}
         for ctl in fk_controls:
             scale_dict[ctl] = 0.2
-        fkcomp.scale_controls(scale_dict)
+        instance.scale_controls(scale_dict)
 
         # House keeping
-        if fkcomp.character:
-            fkcomp.group_parts.visibility.set(0)
-            fkcomp.group_joints.visibility.set(0)
-        return fkcomp
+        if instance.character:
+            instance.group_parts.visibility.set(0)
+            instance.group_joints.visibility.set(0)
+        return instance
 
     def attach_to_component(self, other_comp, attach_point=0):
         # Check if should attach at all

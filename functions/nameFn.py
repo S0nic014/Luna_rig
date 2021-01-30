@@ -94,6 +94,24 @@ def generate_name(name, side="", suffix=""):
     return full_name
 
 
+def add_namespaces(name, namespaces):
+    # Handle name input
+    if isinstance(name, pm.PyNode):
+        name = name.name()
+    # Handle namespaces input
+    if not namespaces:
+        return name
+
+    if isinstance(namespaces, str):
+        namespaced_name = ":".join([namespaces] + [name])
+    elif isinstance(namespaces, list):
+        namespaced_name = ":".join([namespaces] + name)
+    else:
+        Logger.error("Invalid type for namespaces arg: {0}".format(type(namespaces)))
+        raise TypeError
+    return namespaced_name
+
+
 def get_namespace(node):
     """Get node namespace
 
