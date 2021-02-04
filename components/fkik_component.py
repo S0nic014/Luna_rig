@@ -44,6 +44,11 @@ class FKIKComponent(component.AnimComponent):
         return control.Control(transform)
 
     @property
+    def matching_helper(self):
+        transform = self.pynode.matchingHelper.listConnections(d=1)[0]  # type: nodetypes.Transform
+        return transform
+
+    @property
     def fkik_state(self):
         state = self.param_control.transform.fkik.get()  # type: float
         return state
@@ -60,6 +65,7 @@ class FKIKComponent(component.AnimComponent):
                name="fkik_component",
                start_joint=None,
                end_joint=None,
+               ik_world_orient=False,
                default_state=1,
                param_locator=None):
         instance = super(FKIKComponent, cls).create(meta_parent, side, name)  # type: FKIKComponent
@@ -98,12 +104,20 @@ class FKIKComponent(component.AnimComponent):
                                             attributes="tr",
                                             parent=instance.group_ctls,
                                             shape="cube",
+                                            match_orient=not ik_world_orient,
                                             tag="ik")
         ik_handle = pm.ikHandle(n=nameFn.generate_name(instance.indexed_name, side=instance.side, suffix="ikh"),
                                 sj=ik_chain[0],
                                 ee=ik_chain[-1],
                                 sol="ikRPsolver")[0]
         pm.parent(ik_handle, ik_control.transform)
+        # Matching helper
+        matching_helper = pm.createNode("transform",
+                                        n=nameFn.generate_name([instance.indexed_name, "matching_helper"], side=instance.side, suffix="grp"),
+                                        p=ik_control.transform)  # type: nodetypes.Transform
+        matching_helper.setParent(fk_controls[-1].transform)
+        attrFn.add_meta_attr(matching_helper)
+
         # Pole vector
         pole_locator = jointFn.get_pole_vector(ik_chain)
         pv_control = control.Control.create(side=instance.side,
@@ -161,6 +175,7 @@ class FKIKComponent(component.AnimComponent):
         instance.pynode.addAttr("ikControl", at="message")
         instance.pynode.addAttr("poleVectorControl", at="message")
         instance.pynode.addAttr("paramControl", at="message")
+        instance.pynode.addAttr("matchingHelper", at="message")
         for fk_jnt in fk_chain:
             fk_jnt.metaParent.connect(instance.pynode.fkChain, na=1)
         for ik_jnt in ik_chain:
@@ -168,6 +183,7 @@ class FKIKComponent(component.AnimComponent):
         for fk_ctl in fk_controls:
             fk_ctl.transform.metaParent.connect(instance.pynode.fkControls, na=1)
         ik_control.transform.metaParent.connect(instance.pynode.ikControl)
+        matching_helper.metaParent.connect(instance.pynode.matchingHelper)
         pv_control.transform.metaParent.connect(instance.pynode.poleVectorControl)
         param_control.transform.metaParent.connect(instance.pynode.paramControl)
 
@@ -215,7 +231,7 @@ class FKIKComponent(component.AnimComponent):
         # If in FK -> match IK to FK and switch to IK
         if not self.fkik_state:
             self.fkik_state = 1
-            pm.matchTransform(self.ik_control.transform, self.fk_chain[-1])
+            pm.matchTransform(self.ik_control.transform, self.matching_helper)
             # Pole vector
             pole_locator = jointFn.get_pole_vector(self.fk_chain)
             pm.matchTransform(self.pv_control.transform, pole_locator)
