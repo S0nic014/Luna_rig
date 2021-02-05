@@ -5,7 +5,7 @@ from pymel.core import nodetypes
 import pymel.api as pma
 
 from luna import Logger
-from luna.static import names
+from luna import static
 from luna.utils import fileFn
 from luna_rig.importexport import manager
 from luna_rig.functions import nameFn
@@ -15,7 +15,6 @@ reload(manager)
 class SkinClusterManager(manager.DeformerManager):
     def __init__(self):
         super(SkinClusterManager, self).__init__("skinCluster", "skin")
-        self.versioned_files = fileFn.get_versioned_files(self.path, extension=self.extension)
 
     @property
     def path(self):
@@ -42,7 +41,7 @@ class SkinClusterManager(manager.DeformerManager):
         }
         return skin_data
 
-    def export_all(self, under_group=names.Character.geometry.value):
+    def export_all(self, under_group=static.CharacterMembers.geometry.value):
         for deformer_node in self.list_deformers(under_group):
             geo_nodes = deformer_node.getGeometry()
             for geo in geo_nodes:

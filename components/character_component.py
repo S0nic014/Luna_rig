@@ -1,7 +1,7 @@
 import pymel.core as pm
 from pymel.core import nodetypes
 from luna import Logger
-from luna.static import names
+from luna import static
 from luna_rig.core import component
 from luna_rig.core import control
 from luna_rig.functions import attrFn
@@ -79,17 +79,17 @@ class Character(component.Component):
                                           tag="root",
                                           orient_axis="y")
         root_ctl.rename(index="")
-        control_rig = pm.createNode('transform', n=names.Character.control_rig.value, p=root_ctl.transform)  # type: nodetypes.Transform
-        deformation_rig = pm.createNode('transform', n=names.Character.deformation_rig.value, p=root_ctl.transform)  # type: nodetypes.Transform
-        locators_grp = pm.createNode('transform', n=names.Character.locators.value, p=root_ctl.transform)  # type: nodetypes.Transform
-        world_locator = pm.spaceLocator(n=names.Character.world_space.value)  # type: nodetypes.Locator
+        control_rig = pm.createNode('transform', n=static.CharacterMembers.control_rig.value, p=root_ctl.transform)  # type: nodetypes.Transform
+        deformation_rig = pm.createNode('transform', n=static.CharacterMembers.deformation_rig.value, p=root_ctl.transform)  # type: nodetypes.Transform
+        locators_grp = pm.createNode('transform', n=static.CharacterMembers.locators.value, p=root_ctl.transform)  # type: nodetypes.Transform
+        world_locator = pm.spaceLocator(n=static.CharacterMembers.world_space.value)  # type: nodetypes.Locator
         pm.parent(world_locator, locators_grp)
 
         # Handle geometry group
-        if not pm.objExists(names.Character.geometry.value):
-            geometry_grp = pm.createNode('transform', n=names.Character.geometry.value, p=root_ctl.transform)
+        if not pm.objExists(static.CharacterMembers.geometry.value):
+            geometry_grp = pm.createNode('transform', n=static.CharacterMembers.geometry.value, p=root_ctl.transform)
         else:
-            geometry_grp = pm.PyNode(names.Character.geometry.value)
+            geometry_grp = pm.PyNode(static.CharacterMembers.geometry.value)
             pm.parent(geometry_grp, root_ctl.transform)
             geometry_grp.inheritsTransform.set(0)
 

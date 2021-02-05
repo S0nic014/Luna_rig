@@ -5,8 +5,8 @@ from pymel.core import nodetypes
 from luna import Logger
 from luna.utils import fileFn
 from luna.utils import enumFn
+from luna import static
 from luna.static import directories
-from luna.static import colors
 from luna_rig.functions import curveFn
 
 
@@ -160,7 +160,7 @@ class ShapeManager:
         if isinstance(color, enumFn.Enum):
             color = color.value
         elif isinstance(color, str):
-            color = colors.ColorIndex[color].value
+            color = static.ColorIndex[color].value
         # Get shape nodes
         shape_nodes = []
         for node in nodes:

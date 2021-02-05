@@ -16,6 +16,7 @@ class AbstractManager(object):
         if not self.asset:
             Logger.error("Asset is not set")
             raise RuntimeError
+        self.versioned_files = fileFn.get_versioned_files(self.path, extension=self.extension)
 
     @abc.abstractproperty
     def path(self):

@@ -3,8 +3,7 @@ import json
 import pymel.core as pm
 from pymel.core import nodetypes
 from luna import Logger
-from luna.static import colors
-from luna.static import names
+from luna import static
 from luna_rig.functions import nameFn
 from luna_rig.functions import attrFn
 from luna_rig.functions import curveFn
@@ -278,7 +277,7 @@ class Control(object):
         :type value: int
         """
         if not value:
-            value = colors.SideColor[self.side].value
+            value = static.SideColor[self.side].value
         ShapeManager.set_color(self.transform, value)
 
     @property
@@ -688,7 +687,7 @@ class Control(object):
         """
         if self.side not in ["l", "r"]:
             return None
-        opposite_transform = "{0}_{1}_{2}_{3}".format(names.OppositeSide[self.side].value, self.name, self.index, "ctl")
+        opposite_transform = "{0}_{1}_{2}_{3}".format(static.OppositeSide[self.side].value, self.name, self.index, "ctl")
         # Handle namespaces
         opposite_transform = ":".join(self.transform.namespaceList() + [opposite_transform])
         if pm.objExists(opposite_transform):

@@ -220,7 +220,7 @@ class AnimComponent(Component):
     def attach_to_skeleton(self):
         """Override: attach to skeleton"""
         for ctl_jnt, bind_jnt in zip(self.ctl_chain, self.bind_joints):
-            pm.parentConstraint(ctl_jnt, bind_jnt)
+            pm.parentConstraint(ctl_jnt, bind_jnt, mo=1)
 
     def bake_to_skeleton(self):
         """Override: bake animation to skeleton"""

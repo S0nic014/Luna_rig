@@ -1,7 +1,7 @@
 import pymel.core as pm
 import pymel.api as pma
 from luna import Logger
-from luna.static import colors
+from luna import static
 from luna_rig.functions import apiFn
 
 
@@ -128,7 +128,7 @@ class Surface:
         data_dict = {"engine": shading_engine,
                      "material": material,
                      "out_color": out_color,
-                     "out_color_index": colors.ColorIndex.rgb_to_index(out_color),
+                     "out_color_index": static.ColorIndex.rgb_to_index(out_color),
                      "out_transparency": material.outTransparency.get()}
         return data_dict
 
@@ -138,7 +138,7 @@ class Surface:
         out_color = shader.outColor.get()  # RGB
         data_dict = {"out_color": out_color,
                      "out_transparency": shader.outTransparency.get(),
-                     "out_color_index": colors.ColorIndex.rgb_to_index(out_color)}
+                     "out_color_index": static.ColorIndex.rgb_to_index(out_color)}
         return data_dict
 
     @classmethod
@@ -148,7 +148,7 @@ class Surface:
         :param index: Color index, defaults to 0
         :type index: int, optional
         """
-        color_name = colors.ColorIndex(index).name
+        color_name = static.ColorIndex(index).name
         shader_name = "ctl_{0}_shd".format(color_name)
         return shader_name
 
@@ -156,7 +156,7 @@ class Surface:
     def set_shader(cls, surface, color_index, transparency=0.0):
         surface = pm.PyNode(surface)
         old_shader_data = cls.get_surface_shader_data(surface)
-        rgb_color = colors.ColorIndex.index_to_rgb(color_index)
+        rgb_color = static.ColorIndex.index_to_rgb(color_index)
         shader_name = cls.get_shader_name(color_index)
         if not pm.objExists(shader_name):
             shader, engine = pm.createSurfaceShader("surfaceShader", name=shader_name)

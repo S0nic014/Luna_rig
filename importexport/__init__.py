@@ -1,2 +1,3 @@
 from luna_rig.importexport.control_shapes import CtlShapeManager
 from luna_rig.importexport.skin_cluster import SkinClusterManager
+from luna_rig.importexport.blendshape import BlendShapeManager
