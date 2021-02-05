@@ -36,6 +36,11 @@ class Component(MetaRigNode):
             attr_dict[str(connected_attr)] = connected_attr.get()
         return attr_dict
 
+    @property
+    def util_nodes(self):
+        nodes = self.pynode.utilNodes.listConnections(d=1)  # type: list
+        return nodes
+
     @ classmethod
     def create(cls, meta_parent, side="c", name="component"):
         """Creates instance of component
@@ -55,6 +60,7 @@ class Component(MetaRigNode):
         instance = super(Component, cls).create(meta_parent)  # type: Component
         instance.pynode.rename(nameFn.generate_name(name, side, suffix="meta"))
         instance.pynode.addAttr("settings", at="message", multi=1, im=0)
+        instance.pynode.addAttr("utilNodes", at="message", multi=1, im=0)
         return instance
 
     def set_outliner_color(self, color):
@@ -80,6 +86,21 @@ class Component(MetaRigNode):
         # if not attr.isConnectedTo(self.pynode.settings, checkLocalArray=True, checkOtherArray=True):
         if attr not in self.pynode.settings.listConnections(d=1, plugs=1):
             attr.connect(self.pynode.settings, na=1)
+
+    def _store_util_nodes(self, nodes):
+        if not isinstance(nodes, list):
+            nodes = [nodes]
+        for each in nodes:
+            if each not in self.util_nodes:
+                each.message.connect(self.pynode.utilNodes, na=1)
+
+    def delete_util_nodes(self):
+        for util_node in self.util_nodes:
+            if isinstance(util_node, nodetypes.DagNode):
+                if util_node.numChildren:
+                    util_node.childAtIndex(0).setParent(util_node.getParent())
+            pm.delete(util_node)
+            Logger.debug("{0}: Deleted util node {1}".format(self, util_node))
 
 
 class AnimComponent(Component):
@@ -252,6 +273,7 @@ class AnimComponent(Component):
     def remove(self):
         """Delete component from scene"""
         pm.delete(self.root)
+        self.delete_util_nodes()
         Logger.info("Removed {0}".format(self))
         self.signals.removed.emit()
 

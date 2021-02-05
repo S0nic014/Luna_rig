@@ -793,3 +793,27 @@ class Control(object):
         for each in temp_transform.getShapes():
             pm.parent(each, self.transform, s=1, r=1)
         pm.delete(temp_transform)
+
+    def add_orient_switch(self, space_target, local_parent, default_state=1.0):
+        if isinstance(local_parent, Control):
+            local_parent = local_parent.transform
+        # Crete orient transforms
+        space_group = pm.createNode("transform", n=nameFn.generate_name([self.name, "orient_space"], side=self.side, suffix="grp"), p=self.group)  # type: nodetypes.Transform
+        local_group = pm.createNode("transform", n=nameFn.generate_name([self.name, "orient_local"], side=self.side, suffix="grp"), p=self.group)  # type: nodetypes.Transform
+        space_group.setParent(None)
+        local_group.setParent(None)
+        # Add orient offset
+        offset = self.insert_offset(extra_name="orient")
+        orient_contstr = pm.orientConstraint(local_group, space_group, offset)  # type: nodetypes.OrientConstraint
+        # pm.pointConstraint(local_group, self.group)
+        local_group.setParent(local_parent)
+        space_group.setParent(space_target)
+        # Connections
+        self.transform.addAttr("localOrient", at="float", k=True, dv=default_state, min=0.0, max=1.0)
+        reverse_node = pm.createNode("reverse", n=nameFn.generate_name([self.name, "orient"], side=self.side, suffix="rev"))
+        self.transform.localOrient.connect(orient_contstr.getWeightAliasList()[0])
+        self.transform.localOrient.connect(reverse_node.inputX)
+        reverse_node.outputX.connect(orient_contstr.getWeightAliasList()[1])
+        # Store util nodes
+        if self.connected_component:
+            self.connected_component._store_util_nodes([local_group, space_group])

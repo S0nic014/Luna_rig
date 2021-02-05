@@ -211,3 +211,4 @@ class Character(component.Component):
         self.geometry_grp.setParent(None)
         self.deformation_rig.setParent(None)
         pm.delete(self.root_ctl.group)
+        self.delete_util_nodes()
