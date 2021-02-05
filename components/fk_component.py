@@ -31,9 +31,9 @@ class FKComponent(component.AnimComponent):
         # Create control
         fk_controls = []
         next_parent = instance.group_ctls
-        guide_chain = ctl_chain if add_end_ctl else ctl_chain[:-1]
+        skel_chain = ctl_chain if add_end_ctl else ctl_chain[:-1]
         free_attrs = "r" if lock_translate else "tr"
-        for jnt in guide_chain:
+        for jnt in skel_chain:
             ctl = control.Control.create(side=instance.side,
                                          name="{0}_fk".format(instance.indexed_name),
                                          object_to_match=jnt,

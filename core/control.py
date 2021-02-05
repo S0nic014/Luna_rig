@@ -24,6 +24,12 @@ class Control(object):
             self.transform = node.controllerObject.listConnections()[0]  # type: nodetypes.Transform
         elif isinstance(node, nodetypes.Transform):
             self.transform = pm.PyNode(node)  # type: nodetypes.Transform
+        elif isinstance(node, nodetypes.Shape):
+            self.transform = node.getTransform()  # type: nodetypes.Transform
+        else:
+            raise TypeError("Control requires node with transform to initialize.")
+        if not self.transform.hasAttr("metaParent"):
+            raise AttributeError("{0} metaParent attribute not found.".format(self))
 
     @classmethod
     def create(cls,
@@ -64,7 +70,7 @@ class Control(object):
         :type match_orient: bool, optional
         :param match_pivot: If Control pivot should match guide object, defaults to True
         :type match_pivot: bool, optional
-        :param color: Control color, if not set will use color based on side., defaults to None
+        :param color: Control color, if not set will use color based on side, defaults to None
         :type color: int, enumFn.Enum, optional
         :param offset_grp: If offset group should be created, defaults to True
         :type offset_grp: bool, optional
@@ -74,13 +80,15 @@ class Control(object):
         :type shape: str, optional
         :param tag: Additional tag to set on tag node, defaults to ""
         :type tag: str, optional
+        :param component: Connect to component.pynode.controls on creation, defaults to None
+        :type component: AnimComponent
+        :param: orient_axis: Control orientation. Valid values: ("x", "y", "z"), defaults to "x"
+        :type orient_axis: str
         :param scale: Control scale, defaults to 1.0
         :type scale: float, optional
         :return: Control instance
         :rtype: Control
         """
-        # TODO: Implement scaling
-
         # Group
         offset_node = None
         ctl_joint = None
@@ -468,11 +476,33 @@ class Control(object):
                 break
         return result
 
-    def mirror_shape(self):
+    def mirror_shape(self, across="yz", behaviour=True, flip=False, flip_across="yz"):
         """Mirrors control's shape
         """
-        # TODO: Mirror control shape
-        Logger.debug("{0} - mirroing shape...")
+        # Create temp transform, parent shapes to it and mirror
+        temp_transform = pm.createNode("transform", n="mirror_shape_grp", p=self.transform)
+        for shape in self.transform.getShapes():
+            shape.setParent(temp_transform, r=1)
+        transformFn.mirror_xform(temp_transform, across=across, behaviour=behaviour, space=self.transform)
+        # Flip shape
+        if flip:
+            curveFn.flip_shape(temp_transform, across=flip_across)
+        pm.makeIdentity(temp_transform, apply=1)
+        # Parent back to control
+        for shape in temp_transform.getShapes():
+            shape.setParent(self.transform, r=1)
+        pm.delete(temp_transform)
+        pm.select(cl=1)
+
+    def mirror_shape_to_opposite(self, behaviour=True, across="yz", flip=False, flip_across="yz"):
+        opposite_ctl = self.find_opposite()
+        if not opposite_ctl:
+            Logger.warning("{0}: No opposite control was found.")
+            return
+        old_color = opposite_ctl.color
+        ShapeManager.apply_shape(opposite_ctl.transform, self.shape)
+        opposite_ctl.mirror_shape(across=across, behaviour=behaviour, flip=flip, flip_across=flip_across)
+        opposite_ctl.color = old_color
 
     def add_space(self, target, name, method="matrix"):
         # Process inputs
@@ -696,7 +726,7 @@ class Control(object):
             Logger.info("{0}: No opposite control found.".format(self))
             return None
 
-    def mirror_pose_from_opposite(self, across="YZ", space="character", behavior=True):
+    def mirror_pose_from_opposite(self, across="yz", space="character", behavior=True):
         """Mirror control attributes from opposite control.
 
         :param across: Mirror plan. Valid values: "YZ", "XY", "XZ", , defaults to "YZ"
@@ -714,7 +744,7 @@ class Control(object):
         pm.matchTransform(self.transform, opposite_ctl.transform)
         transformFn.mirror_xform(transforms=self.transform, across=across, behaviour=behavior, space=space)
 
-    def mirror_pose_to_opposite(self, across="YZ", space="character", behavior=True):
+    def mirror_pose_to_opposite(self, across="yz", space="character", behavior=True):
         """Mirror control attributes to control on opposite side.
 
         :param across: Mirror plan. Valid values: "YZ", "XY", "XZ", , defaults to "YZ"

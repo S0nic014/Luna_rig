@@ -45,15 +45,15 @@ def reference_model(*args):
         pm.warning("Asset is not set!")
 
 
-def import_guides():
+def import_skeleton():
     current_asset = environFn.get_asset_var()
-    latest_guides_path = current_asset.latest_guides_path
-    pm.importFile(latest_guides_path, loadReferenceDepth="none", dns=1)
-    Logger.info("Imported guides: {0}".format(latest_guides_path))
-    return latest_guides_path
+    latest_skeleton_path = current_asset.latest_skeleton_path
+    pm.importFile(latest_skeleton_path, loadReferenceDepth="none", dns=1)
+    Logger.info("Imported skeleton: {0}".format(latest_skeleton_path))
+    return latest_skeleton_path
 
 
-def increment_save_file(typ="guides"):
+def increment_save_file(typ="skeleton"):
     current_asset = environFn.get_asset_var()
     if not current_asset:
         pm.warning("Asset is not set!")
@@ -62,12 +62,12 @@ def increment_save_file(typ="guides"):
     Logger.info("Saved {0}: {1}".format(typ, new_file))
 
 
-def save_file_as(typ="guides"):
+def save_file_as(typ="skeleton"):
     current_asset = environFn.get_asset_var()
     if not current_asset:
         pm.warning("Asset is not set!")
     start_dir = getattr(current_asset, typ)
-    file_path, filters = QtWidgets.QFileDialog.getSaveFileName(None, "Save guides as", start_dir)
+    file_path, filters = QtWidgets.QFileDialog.getSaveFileName(None, "Save {0} as".format(typ), start_dir)
     if file_path:
         pm.saveAs(file_path)
         Logger.info("Saved {0}: {1}".format(typ, file_path))

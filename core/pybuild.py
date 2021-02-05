@@ -38,7 +38,7 @@ class PyBuild(object):
         self.asset = asset.Asset(asset_name, asset_type)
         # Import model and componets files
         asset_files.import_model()
-        asset_files.import_guides()
+        asset_files.import_skeleton()
         # Setup character
         self.character = components.Character.create(name=asset_name)
         environFn.set_character_var(self.character)

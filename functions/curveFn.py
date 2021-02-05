@@ -34,3 +34,14 @@ def curve_from_points(name, degree=1, points=[], parent=None):
     if parent:
         pm.parent(new_curve, parent)
     return new_curve
+
+
+def flip_shape(transform, across="yz"):
+    if across not in ["yz", "xy", "xz"]:
+        Logger.error("Invalid flip plane: {0}".format(across))
+        return
+    scale_vec = {"yz": [-1, 1, 1],
+                 "xy": [1, 1, -1],
+                 "xz": [1, -1, 1]}
+    for shape in transform.getShapes():
+        pm.scale(shape + ".cv[0:1000]", scale_vec.get(across), os=True)

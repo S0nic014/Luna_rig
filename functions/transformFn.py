@@ -3,7 +3,7 @@ import pymel.api as pma
 
 
 # Modified from https://gist.github.com/rondreas/1c6d4e5fc6535649780d5b65fc5a9283
-def mirror_xform(transforms=[], across='YZ', behaviour=True, space="world"):
+def mirror_xform(transforms=[], across="yz", behaviour=True, space="world"):
     """
     :param transforms: Transforms to mirror, defaults to []
     :type transforms: list or str or pm.PyNode, optional
@@ -23,8 +23,9 @@ def mirror_xform(transforms=[], across='YZ', behaviour=True, space="world"):
     if not all(map(lambda x: isinstance(x, pm.nt.Transform), transforms)):
         raise ValueError("Passed node which wasn't of type: Transform")
 
-    # Validate plane which to mirror across,
-    if across not in ('XY', 'YZ', 'XZ'):
+    # Validate plane which to mirror across
+    across = across.lower()
+    if across not in ('yz', 'yz', 'yz'):
         raise ValueError("Keyword Argument: 'across' not of accepted value ('XY', 'YZ', 'XZ').")
 
     stored_matrices = {}
@@ -41,13 +42,13 @@ def mirror_xform(transforms=[], across='YZ', behaviour=True, space="world"):
         # Invert translation row,
         t = [n * -1 for n in mtx[12:15]]
         # Set matrix based on given plane, and whether to include behaviour or not.
-        if across == 'XY':
+        if across == "xy":
             mtx[14] = t[2]    # set inverse of the Z translation
             # Set inverse of all rotation columns but for the one we've set translate to.
             if behaviour:
                 mtx[0:9:4] = rx
                 mtx[1:10:4] = ry
-        elif across == 'YZ':
+        elif across == "yz":
             mtx[12] = t[0]    # set inverse of the X translation
             if behaviour:
                 mtx[1:10:4] = ry
