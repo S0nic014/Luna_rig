@@ -225,7 +225,6 @@ class FKIKComponent(component.AnimComponent):
         # Component specific attach logic
         pm.parentConstraint(attach_obj, self.ik_chain[0], mo=1)
         pm.parentConstraint(attach_obj, self.fk_controls[0].group, mo=1)
-        Logger.debug("Attached: {0} ->> {1}({2})".format(self, other_comp, attach_obj))
 
     def switch_fkik(self, matching=True):
         # If in FK -> match IK to FK and switch to IK

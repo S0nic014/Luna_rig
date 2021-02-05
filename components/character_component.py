@@ -55,7 +55,7 @@ class Character(component.Component):
             if character_node.pynode.characterName.get() == name:
                 result.append(character_node)
         if len(result) == 1:
-            return result[0]
+            result = result[0]  # type: Character
         return result
 
     @classmethod
@@ -203,3 +203,11 @@ class Character(component.Component):
         if pm.objExists(nucleus_name):
             node = pm.PyNode(nucleus_name)  # type: nodetypes.Nucleus
         return node
+
+    def remove(self, bake=True, *args, **kwargs):
+        if bake:
+            for anim_comp in self.get_meta_children(of_type=component.AnimComponent):
+                anim_comp.bake_and_detach(*args, **kwargs)
+        self.geometry_grp.setParent(None)
+        self.deformation_rig.setParent(None)
+        pm.delete(self.root_ctl.group)

@@ -118,4 +118,3 @@ class IKComponent(component.AnimComponent):
             return
         # Component specific attach logic
         pm.parentConstraint(attach_obj, self.group_joints, mo=1)
-        Logger.debug("Attached: {0} ->> {1}({2})".format(self, other_comp, attach_obj))

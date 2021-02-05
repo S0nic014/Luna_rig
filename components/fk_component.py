@@ -81,7 +81,6 @@ class FKComponent(component.AnimComponent):
             return
         # Component specific attach logic
         pm.parentConstraint(attach_obj, self.root, mo=1)
-        Logger.debug("Attached: {0} ->> {1}({2})".format(self, other_comp, attach_obj))
 
     def add_auto_aim(self, follow_control, mirrored_chain=False):
         if not isinstance(follow_control, control.Control):

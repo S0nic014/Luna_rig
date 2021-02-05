@@ -208,26 +208,37 @@ class AnimComponent(Component):
             return taged_list
         return all_ctls
 
-    def select_controls(self):
+    def select_controls(self, tag=None):
         """Select all component controls"""
-        for ctl in self.controls:
+        for ctl in self.list_controls(tag):
             ctl.transform.select(add=1)
 
-    def key_controls(self):
+    def key_controls(self, tag=None):
         """Override: key all componets controls"""
-        pass
+        ctls = self.list_controls(tag)
+        for each in ctls:
+            pm.setKeyframe(each.transform)
 
     def attach_to_skeleton(self):
         """Override: attach to skeleton"""
         for ctl_jnt, bind_jnt in zip(self.ctl_chain, self.bind_joints):
             pm.parentConstraint(ctl_jnt, bind_jnt, mo=1)
 
-    def bake_to_skeleton(self):
+    def bake_to_skeleton(self, time_range=None, *args, **kwargs):
         """Override: bake animation to skeleton"""
-        pass
+        if not self.bind_joints:
+            return
+        if not time_range:
+            time_range = (int(pm.playbackOptions(min=1, q=1)), int(pm.playbackOptions(max=1, q=1)))
+        pm.bakeResults(self.bind_joints, t=time_range, simulation=True, *args, **kwargs)
+        Logger.info("{0}: Baked to skeleton.".format(self))
 
-    def bake_and_detach(self):
-        pass
+    def bake_and_detach(self, time_range=None, *args, **kwargs):
+        self.bake_to_skeleton(time_range, *args, **kwargs)
+        for skel_jnt in self.bind_joints:
+            pconstr = skel_jnt.listHistory(type="parentConstraint")
+            pm.delete(pconstr)
+        Logger.info("{0}: Detached from skeleton.".format(self))
 
     def bake_to_rig(self):
         """Override: reverse bake to rig"""
@@ -241,6 +252,7 @@ class AnimComponent(Component):
     def remove(self):
         """Delete component from scene"""
         pm.delete(self.root)
+        Logger.info("Removed {0}".format(self))
         self.signals.removed.emit()
 
     def add_attach_point(self, node):
@@ -295,6 +307,7 @@ class AnimComponent(Component):
             attach_obj = other_comp.get_attach_point(index=attach_point)
         if not attach_obj:
             Logger.error("Failed to connect {0} to {1} at point {2}".format(self, other_comp, attach_point))
+        Logger.info("Attached: {0} ->> {1}".format(self, other_comp))
         self.signals.attached.emit(other_comp)
         return attach_obj
 

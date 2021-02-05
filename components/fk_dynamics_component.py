@@ -13,6 +13,11 @@ from luna_rig.components import fk_component
 
 class FKDynamicsComponent(component.AnimComponent):
 
+    @property
+    def offsets(self):
+        nodes = self.pynode.offsets.listConnections(d=1)  # type: list
+        return nodes
+
     @classmethod
     def create(cls,
                meta_parent,
@@ -95,31 +100,19 @@ class FKDynamicsComponent(component.AnimComponent):
                                 scv=0)[0]  # type: nodetypes.IkHandle
         ik_handle.setParent(instance.group_parts)
 
-        # Create param control
-        param_locator = rigFn.get_param_ctl_locator(side=instance.side, joint_chain=ctl_chain, move_axis="x", align_index=0)
-        param_control = control.Control.create(side=instance.side,
-                                               name="{0}_param".format(instance.indexed_name),
-                                               object_to_match=param_locator,
-                                               delete_match_object=True,
-                                               attributes="",
-                                               parent=instance.group_ctls,
-                                               match_orient=False,
-                                               offset_grp=False,
-                                               shape="small_cog")
         # Add dynamics attributes
-        attr_dict = attrFn.transfer_attr(hair_system.getShape(), param_control.transform, connect=True)
+        attrFn.add_divider(meta_parent.controls[0].transform, attr_name="DYNAMICS")
+        attr_dict = attrFn.transfer_attr(hair_system.getShape(), meta_parent.controls[0].transform, connect=True)
         for added_attr in attr_dict.values():
             instance._store_settings(added_attr)
+        # Add meta attributes
+        instance.pynode.addAttr("offsets", at="message", multi=True, im=False)
 
         # Store joint chains
-        instance._store_controls([param_control])
         instance._store_ctl_chain(ctl_chain)
         # Connect to character, parent
         instance.connect_to_character(parent=True)
         instance.attach_to_component(meta_parent)
-
-        # Scale controls
-        instance.scale_controls({param_control: 0.2})
 
         # # House keeping
         if instance.character:
@@ -136,8 +129,23 @@ class FKDynamicsComponent(component.AnimComponent):
         # Component specific attach logic
         for fk_ctl, jnt in zip(self.meta_parent.controls, self.ctl_chain):
             dynam_offset = fk_ctl.insert_offset("dynamics")
+            dynam_offset.message.connect(self.pynode.offsets, na=1)
             jnt.rotate.connect(dynam_offset.rotate)
-        Logger.debug("Attached: {0} ->> {1}".format(self, other_comp))
 
     def attach_to_skeleton(self):
         pass
+
+    def remove(self):
+        # Delete attributes
+        for attr in self.settings.keys():
+            pm.deleteAttr(attr)
+        self.meta_parent.controls[0].transform.DYNAMICS.unlock()
+        pm.deleteAttr(self.meta_parent.controls[0].transform.DYNAMICS)
+        # Delete created offsets
+        for offset in self.offsets:
+            offset.childAtIndex(0).setParent(offset.getParent())
+        for offset in self.offsets:
+            pm.delete(offset)
+            Logger.info("Deleted dynamics offset: {0}".format(offset))
+        super(FKDynamicsComponent, self).remove()
+        self.signals.removed.emit()

@@ -64,13 +64,6 @@ def transfer_attr(source, destination, attr_list=[], connect=False, ** kwargs):
                 min_value = attr.getMin()
                 max_value = attr.getMax()
                 default_val = attr.get()
-                # Solve default value
-                if not (default_val > min_value and default_val < max_value):
-                    if default_val > max_value:
-                        default_val = max_value
-                    else:
-                        default_val = min_value
-                # Add attr depending if min max exists
                 if min_value is None and max_value is None:
                     destination.addAttr(attr.attrName(longName=True), at=attr.type(), k=1, dv=default_val)
                 elif min_value is None and max_value is not None:
