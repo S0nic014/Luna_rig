@@ -1,5 +1,4 @@
 import pymel.core as pm
-from pymel.core import nodetypes
 from luna import Logger
 from luna import static
 from luna.utils import fileFn
@@ -24,8 +23,8 @@ class BlendShapeManager(manager.AbstractManager):
         return fileFn.get_new_versioned_file(self.get_base_name(geo_name, bs_name), self.path, extension=self.extension, full_path=True)
 
     def export_single(self, node):
-        node = pm.PyNode(node)  # type:  nodetypes.BlendShape
-        if not isinstance(node, nodetypes.BlendShape):
+        node = pm.PyNode(node)  # type:  luna_rig.nt.BlendShape
+        if not isinstance(node, luna_rig.nt.BlendShape):
             Logger.error("{0} is not a blendShape node.".format(node))
             return False
         export_path = self.get_new_file(node.getGeometry()[0], node.name())
@@ -61,11 +60,11 @@ class BlendShapeManager(manager.AbstractManager):
             Logger.warning("Geometry {0} for shape {1} no longer exists, skipping...".format(geometry, shape_name))
             return False
         # Check if blendshape already exists and create one if not.
-        geometry = pm.PyNode(geometry)  # type: nodetypes.Shape
+        geometry = pm.PyNode(geometry)  # type: luna_rig.nt.Shape
         if shape_name not in [str(node) for node in geometry.listHistory(type=self.data_type)]:
-            shape_node = pm.blendShape(geometry, n=shape_name, foc=1)  # type:  nodetypes.BlendShape
+            shape_node = pm.blendShape(geometry, n=shape_name, foc=1)  # type:  luna_rig.nt.BlendShape
         else:
-            shape_node = pm.PyNode(shape_name)  # type:  nodetypes.BlendShape
+            shape_node = pm.PyNode(shape_name)  # type:  luna_rig.nt.BlendShape
         # Import data
         try:
             pm.blendShape(shape_node, e=1, ip=latest_path)

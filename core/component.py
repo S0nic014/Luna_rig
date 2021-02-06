@@ -1,13 +1,11 @@
 import pymel.core as pm
-from pymel.core import nodetypes
 from PySide2 import QtCore
 
+import luna_rig
 from luna import Logger
 from luna.utils import enumFn
 from luna_rig.functions import nameFn
 from luna_rig.functions import outlinerFn
-from luna_rig.core.meta import MetaRigNode
-from luna_rig.core.control import Control
 
 
 class _compSignals(QtCore.QObject):
@@ -15,7 +13,7 @@ class _compSignals(QtCore.QObject):
     attached = QtCore.Signal(object)
 
 
-class Component(MetaRigNode):
+class Component(luna_rig.MetaRigNode):
 
     def __new__(cls, node=None):
         return object.__new__(cls, node)
@@ -55,7 +53,7 @@ class Component(MetaRigNode):
         :rtype: Component
         """
         Logger.info("Building {0}({1}_{2})...".format(cls.as_str(name_only=True), side, name))
-        if isinstance(meta_parent, MetaRigNode):
+        if isinstance(meta_parent, luna_rig.MetaRigNode):
             meta_parent = meta_parent.pynode
         instance = super(Component, cls).create(meta_parent)  # type: Component
         instance.pynode.rename(nameFn.generate_name(name, side, suffix="meta"))
@@ -73,7 +71,7 @@ class Component(MetaRigNode):
         :type other_comp: Component
         """
         if not isinstance(other_comp, Component):
-            other_comp = MetaRigNode(other_comp)
+            other_comp = luna_rig.MetaRigNode(other_comp)
         if other_comp.pynode not in self.pynode.metaParent.listConnections():
             self.set_meta_parent(other_comp)
 
@@ -96,7 +94,7 @@ class Component(MetaRigNode):
 
     def delete_util_nodes(self):
         for util_node in self.util_nodes:
-            if isinstance(util_node, nodetypes.DagNode):
+            if isinstance(util_node, luna_rig.nt.DagNode):
                 if util_node.numChildren:
                     util_node.childAtIndex(0).setParent(util_node.getParent())
             pm.delete(util_node)
@@ -110,7 +108,7 @@ class AnimComponent(Component):
                meta_parent=None,
                side="c",
                name="anim_component",
-               attach_point=0):  # noqa:F821
+               hook=0):  # noqa:F821
         """Create AnimComponent hierarchy in the scene and instance.
 
         :param meta_parent: Other Rig element to connect to, defaults to None
@@ -119,8 +117,8 @@ class AnimComponent(Component):
         :type side: str, optional
         :param name: Component name. If list - items will be connected by underscore, defaults to "anim_component"
         :type name: str, list[str], optional
-        :param attach_point: Point index on parent component to attach to, defaults to 0
-        :type attach_point: int, optional
+        :param hook: Point index on parent component to attach to, defaults to 0
+        :type hook: int, optional
         :return: New instance of AnimComponent.
         :rtype: AnimComponent
         """
@@ -142,8 +140,9 @@ class AnimComponent(Component):
         instance.pynode.addAttr("partsGroup", at="message")
         instance.pynode.addAttr("bindJoints", at="message", multi=1, im=0)
         instance.pynode.addAttr("ctlChain", at="message", multi=1, im=0)
-        instance.pynode.addAttr("attachPoints", at="message", multi=1, im=0)
         instance.pynode.addAttr("controls", at="message", multi=1, im=0)
+        instance.pynode.addAttr("hooks", at="message", multi=1, im=0)
+        instance.pynode.addAttr("attachObject", at="message")
 
         # Connect hierarchy to meta
         root_grp.metaParent.connect(instance.pynode.rootGroup)
@@ -156,47 +155,51 @@ class AnimComponent(Component):
 
     @property
     def root(self):
-        node = self.pynode.rootGroup.listConnections()[0]  # type: nodetypes.Transform
+        node = self.pynode.rootGroup.listConnections()[0]  # type: luna_rig.nt.Transform
         return node
 
     @property
     def group_ctls(self):
-        node = self.pynode.ctlsGroup.listConnections()[0]  # type: nodetypes.Transform
+        node = self.pynode.ctlsGroup.listConnections()[0]  # type: luna_rig.nt.Transform
         return node
 
     @property
     def group_joints(self):
-        node = self.pynode.jointsGroup.listConnections()[0]  # type: nodetypes.Transform
+        node = self.pynode.jointsGroup.listConnections()[0]  # type: luna_rig.nt.Transform
         return node
 
     @property
     def group_parts(self):
-        node = self.pynode.partsGroup.listConnections()[0]  # type: nodetypes.Transform
+        node = self.pynode.partsGroup.listConnections()[0]  # type: luna_rig.nt.Transform
         return node
 
     @property
     def controls(self):
         connected_nodes = self.pynode.controls.listConnections()
-        all_ctls = [Control(node) for node in connected_nodes]
+        all_ctls = [luna_rig.Control(node) for node in connected_nodes]
         return all_ctls
 
     @property
     def bind_joints(self):
-        joint_list = self.pynode.bindJoints.listConnections()  # type: list[nodetypes.Joint]
+        joint_list = self.pynode.bindJoints.listConnections()  # type: list[luna_rig.nt.Joint]
         return joint_list
 
     @property
     def ctl_chain(self):
-        ctl_chain = self.pynode.ctlChain.listConnections()  # type: list[nodetypes.Joint]
+        ctl_chain = self.pynode.ctlChain.listConnections()  # type: list[luna_rig.nt.Joint]
         return ctl_chain
 
     @property
     def character(self):
         connections = self.pynode.character.listConnections()
-        if connections:
-            return MetaRigNode(connections[0])
-        else:
-            return None
+        result = luna_rig.MetaRigNode(connections[0]) if connections else None  # type: luna_rig.components.Character
+        return result
+
+    @property
+    def attach_object(self):
+        connections = self.pynode.attachObject.listConnections()
+        result = connections[0] if connections else None  # type: luna_rig.nt.PyNode
+        return result
 
     def set_outliner_color(self, color):
         outlinerFn.set_color(self.root, color)
@@ -220,10 +223,10 @@ class AnimComponent(Component):
         """Get list of component controls. Extra attr for tag sorting.
 
         :return: List of all component controls.
-        :rtype: list[Control]
+        :rtype: list[luna_rig.Control]
         """
         connected_nodes = self.pynode.controls.listConnections()
-        all_ctls = [Control(node) for node in connected_nodes]
+        all_ctls = [luna_rig.Control(node) for node in connected_nodes]
         if tag:
             taged_list = [ctl for ctl in all_ctls if ctl.tag == tag]
             return taged_list
@@ -277,16 +280,16 @@ class AnimComponent(Component):
         Logger.info("Removed {0}".format(self))
         self.signals.removed.emit()
 
-    def add_attach_point(self, node):
+    def add_hook(self, node):
         """Set given node as attach point
 
         :param node: Dag node
         :type node: str or pm.PyNode
         """
         node = pm.PyNode(node)
-        node.message.connect(self.pynode.attachPoints, na=1)
+        node.message.connect(self.pynode.hooks, na=1)
 
-    def get_attach_point(self, index=0):
+    def get_hook(self, index=0):
         """Get component attach point from index
 
         :param index: Index for attach point, defaults to 0
@@ -297,7 +300,7 @@ class AnimComponent(Component):
         if isinstance(index, enumFn.Enum):
             index = index.value
 
-        connected_points = self.pynode.attachPoints.listConnections()
+        connected_points = self.pynode.hooks.listConnections()
         try:
             point = connected_points[index]
         except IndexError:
@@ -305,13 +308,13 @@ class AnimComponent(Component):
             point = None
         return point
 
-    def attach_to_component(self, other_comp, attach_point=0):
+    def attach_to_component(self, other_comp, hook=0):
         """Attach to other AnimComponent
 
         :param other_comp: Component to attach to.
         :type other_comp: AnimComponent
-        :param attach_point: Attach point index, defaults to 0
-        :type attach_point: int, enumFn.Enum, optional
+        :param hook: Attach point index, defaults to 0
+        :type hook: int, enumFn.Enum, optional
         :return: Attach object to use in derived method.
         :rtype: pm.PyNode
         """
@@ -319,16 +322,20 @@ class AnimComponent(Component):
             return
         super(AnimComponent, self).attach_to_component(other_comp)
         # Fetch attach point from component if int
-        if isinstance(attach_point, str):
-            attach_obj = pm.PyNode(attach_point)
-        elif isinstance(attach_point, Control):
-            attach_obj = attach_point.transform
-        elif isinstance(attach_point, pm.PyNode):
-            attach_obj = attach_point
+        if hook is None:
+            attach_obj = None
+        if isinstance(hook, str):
+            attach_obj = pm.PyNode(hook)
+        elif isinstance(hook, luna_rig.Control):
+            attach_obj = hook.transform
+        elif isinstance(hook, pm.PyNode):
+            attach_obj = hook
         else:
-            attach_obj = other_comp.get_attach_point(index=attach_point)
-        if not attach_obj:
-            Logger.error("Failed to connect {0} to {1} at point {2}".format(self, other_comp, attach_point))
+            attach_obj = other_comp.get_hook(index=hook)
+            if not attach_obj:
+                Logger.error("Failed to connect {0} to {1} at point {2}".format(self, other_comp, hook))
+        if attach_obj:
+            attach_obj.message.connect(self.pynode.attachObject)
         Logger.info("Attached: {0} ->> {1}".format(self, other_comp))
         self.signals.attached.emit(other_comp)
         return attach_obj
@@ -340,7 +347,7 @@ class AnimComponent(Component):
         :type character_name: str, optional
         """
         character = None
-        all_characters = MetaRigNode.list_nodes("Character")
+        all_characters = luna_rig.MetaRigNode.list_nodes(luna_rig.components.Character)
         if not all_characters:
             Logger.error("No characters found in the scene!")
             return
@@ -354,7 +361,7 @@ class AnimComponent(Component):
                 Logger.error("No character: {0} found!".format(character_name))
                 return
         else:
-            character = all_characters[0]
+            character = all_characters[0]  # type: luna_rig.components.Character
 
         self.pynode.character.connect(character.pynode.metaChildren, na=1)
         if parent:

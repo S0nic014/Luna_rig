@@ -1,46 +1,44 @@
 import pymel.core as pm
-from pymel.core import nodetypes
 from luna import Logger
 from luna import static
-from luna_rig.core import component
-from luna_rig.core import control
+import luna_rig
 from luna_rig.functions import attrFn
 from luna_rig.functions import outlinerFn
 from luna_rig.functions import rigFn
 from luna_rig.functions import nameFn
 
 
-class Character(component.Component):
+class Character(luna_rig.Component):
     def __repr__(self):
         return "Character component: ({0})".format(self.pynode.characterName.get())
 
     @ property
     def root_ctl(self):
-        return control.Control(self.pynode.rootCtl.listConnections()[0])
+        return luna_rig.Control(self.pynode.rootCtl.listConnections()[0])
 
     @ property
     def control_rig(self):
-        node = self.pynode.controlRig.listConnections()[0]  # type: nodetypes.Transform
+        node = self.pynode.controlRig.listConnections()[0]  # type: luna_rig.nt.Transform
         return node
 
     @ property
     def deformation_rig(self):
-        node = self.pynode.deformationRig.listConnections()[0]  # type: nodetypes.Transform
+        node = self.pynode.deformationRig.listConnections()[0]  # type: luna_rig.nt.Transform
         return node
 
     @ property
     def geometry_grp(self):
-        node = self.pynode.geometryGroup.listConnections()[0]  # type: nodetypes.Transform
+        node = self.pynode.geometryGroup.listConnections()[0]  # type: luna_rig.nt.Transform
         return node
 
     @ property
     def locators_grp(self):
-        node = self.pynode.locatorsGroup.listConnections()[0]  # type: nodetypes.Transform
+        node = self.pynode.locatorsGroup.listConnections()[0]  # type: luna_rig.nt.Transform
         return node
 
     @ property
     def world_locator(self):
-        node = self.pynode.worldLocator.listConnections()[0]  # type:nodetypes.Locator
+        node = self.pynode.worldLocator.listConnections()[0]  # type:luna_rig.nt.Locator
         return node
 
     @property
@@ -71,18 +69,18 @@ class Character(component.Component):
         """
         instance = super(Character, cls).create(meta_parent, name=name, side="char")  # type: Character
         # Create main members
-        root_ctl = control.Control.create(name="character_node",
-                                          side="c",
-                                          offset_grp=False,
-                                          attributes="trs",
-                                          shape="character_node",
-                                          tag="root",
-                                          orient_axis="y")
+        root_ctl = luna_rig.Control.create(name="character_node",
+                                           side="c",
+                                           offset_grp=False,
+                                           attributes="trs",
+                                           shape="character_node",
+                                           tag="root",
+                                           orient_axis="y")
         root_ctl.rename(index="")
-        control_rig = pm.createNode('transform', n=static.CharacterMembers.control_rig.value, p=root_ctl.transform)  # type: nodetypes.Transform
-        deformation_rig = pm.createNode('transform', n=static.CharacterMembers.deformation_rig.value, p=root_ctl.transform)  # type: nodetypes.Transform
-        locators_grp = pm.createNode('transform', n=static.CharacterMembers.locators.value, p=root_ctl.transform)  # type: nodetypes.Transform
-        world_locator = pm.spaceLocator(n=static.CharacterMembers.world_space.value)  # type: nodetypes.Locator
+        control_rig = pm.createNode('transform', n=static.CharacterMembers.control_rig.value, p=root_ctl.transform)  # type: luna_rig.nt.Transform
+        deformation_rig = pm.createNode('transform', n=static.CharacterMembers.deformation_rig.value, p=root_ctl.transform)  # type: luna_rig.nt.Transform
+        locators_grp = pm.createNode('transform', n=static.CharacterMembers.locators.value, p=root_ctl.transform)  # type: luna_rig.nt.Transform
+        world_locator = pm.spaceLocator(n=static.CharacterMembers.world_space.value)  # type: luna_rig.nt.Locator
         pm.parent(world_locator, locators_grp)
 
         # Handle geometry group
@@ -140,7 +138,7 @@ class Character(component.Component):
         """
         result = []
         for child in self.geometry_grp.listRelatives(ad=1):
-            if isinstance(child, pm.nodetypes.Mesh):
+            if isinstance(child, luna_rig.nt.Mesh):
                 result.append(child)
 
         return result
@@ -149,7 +147,7 @@ class Character(component.Component):
         ctls = []
         comp_list = self.get_meta_children()
         for comp in comp_list:
-            if isinstance(comp, component.AnimComponent):
+            if isinstance(comp, luna_rig.AnimComponent):
                 ctls += comp.list_controls(tag)
         return ctls
 
@@ -157,7 +155,7 @@ class Character(component.Component):
         joint_list = []
         comp_list = self.get_meta_children()
         for comp in comp_list:
-            if isinstance(comp, component.AnimComponent):
+            if isinstance(comp, luna_rig.AnimComponent):
                 joint_list += comp.bind_joints
         return joint_list
 
@@ -188,12 +186,12 @@ class Character(component.Component):
 
     def create_controls_set(self, name="controls_set", tag=None):
         nameFn.add_namespaces(name, self.namespace_list)
-        result = pm.sets([ctl.transform for ctl in self.list_controls(tag)], n=name)  # type: nodetypes.ObjectSet
+        result = pm.sets([ctl.transform for ctl in self.list_controls(tag)], n=name)  # type: luna_rig.nt.ObjectSet
         return result
 
     def create_joints_set(self, name="bind_joints_set"):
         nameFn.add_namespaces(name, self.namespace_list)
-        result = pm.sets(self.list_bind_joints(), n=name)  # type: nodetypes.ObjectSet
+        result = pm.sets(self.list_bind_joints(), n=name)  # type: luna_rig.nt.ObjectSet
         return result
 
     def get_nucleus(self):
@@ -201,12 +199,12 @@ class Character(component.Component):
         nucleus_name = "{0}_nucl".format(self.name)
         nucleus_name = ":".join(self.namespace_list + [nucleus_name])
         if pm.objExists(nucleus_name):
-            node = pm.PyNode(nucleus_name)  # type: nodetypes.Nucleus
+            node = pm.PyNode(nucleus_name)  # type: luna_rig.nt.Nucleus
         return node
 
     def remove(self, bake=True, *args, **kwargs):
         if bake:
-            for anim_comp in self.get_meta_children(of_type=component.AnimComponent):
+            for anim_comp in self.get_meta_children(of_type=luna_rig.AnimComponent):
                 anim_comp.bake_and_detach(*args, **kwargs)
         self.geometry_grp.setParent(None)
         self.deformation_rig.setParent(None)

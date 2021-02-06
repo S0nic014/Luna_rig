@@ -1,16 +1,15 @@
 
 import json
 import pymel.core as pm
-from pymel.core import nodetypes
 from luna import Logger
 from luna import static
+import luna_rig
 from luna_rig.functions import nameFn
 from luna_rig.functions import attrFn
 from luna_rig.functions import curveFn
 from luna_rig.functions import transformFn
 from luna_rig.functions import outlinerFn
 from luna_rig.core.shape_manager import ShapeManager
-from luna_rig.core import meta
 
 
 class Control(object):
@@ -20,12 +19,12 @@ class Control(object):
 
     def __init__(self, node):
         node = pm.PyNode(node)
-        if isinstance(node, nodetypes.Controller):
-            self.transform = node.controllerObject.listConnections()[0]  # type: nodetypes.Transform
-        elif isinstance(node, nodetypes.Transform):
-            self.transform = pm.PyNode(node)  # type: nodetypes.Transform
-        elif isinstance(node, nodetypes.Shape):
-            self.transform = node.getTransform()  # type: nodetypes.Transform
+        if isinstance(node, luna_rig.nt.Controller):
+            self.transform = node.controllerObject.listConnections()[0]  # type: luna_rig.nt.Transform
+        elif isinstance(node, luna_rig.nt.Transform):
+            self.transform = pm.PyNode(node)  # type: luna_rig.nt.Transform
+        elif isinstance(node, luna_rig.nt.Shape):
+            self.transform = node.getTransform()  # type: luna_rig.nt.Transform
         else:
             raise TypeError("Control requires node with transform to initialize.")
         if not self.transform.hasAttr("metaParent"):
@@ -57,9 +56,9 @@ class Control(object):
         :param side: Control side, defaults to "c"
         :type side: str, optional
         :param object_to_match: Transform object to match, defaults to None
-        :type object_to_match: pm.nodetypes.Transform, optional
+        :type object_to_match: pm.luna_rig.nt.Transform, optional
         :param parent: Object to parent to, defaults to None
-        :type parent: pm.nodetypes.Transform, optional
+        :type parent: pm.luna_rig.nt.Transform, optional
         :param attributes: Attributes to leave unlocked and visible, defaults to "tr"
         :type attributes: str, optional
         :param delete_match_object: If guide object should be deleted after matched, defaults to False
@@ -215,9 +214,9 @@ class Control(object):
         """Controller node
 
         :return: Control tag node as instance.
-        :rtype: nodetypes.Controller
+        :rtype: luna_rig.nt.Controller
         """
-        node = self.transform.listConnections(t="controller")[0]  # type: nodetypes.Controller
+        node = self.transform.listConnections(t="controller")[0]  # type: luna_rig.nt.Controller
         return node
 
     @property
@@ -225,9 +224,9 @@ class Control(object):
         """Control's root group
 
         :return: Group
-        :rtype: nodetypes.Transform
+        :rtype: luna_rig.nt.Transform
         """
-        node = self.tag_node.group.listConnections()[0]  # type: nodetypes.Transform
+        node = self.tag_node.group.listConnections()[0]  # type: luna_rig.nt.Transform
         return node
 
     @property
@@ -235,12 +234,12 @@ class Control(object):
         """Joint parented under Control.transform
 
         :return: Joint
-        :rtype: nodetypes.Joint
+        :rtype: luna_rig.nt.Joint
         """
-        result = None  # type: nodetypes.Joint
+        result = None  # type: luna_rig.nt.Joint
         child_joints = self.tag_node.joint.listConnections()
         if child_joints:
-            result = child_joints[0]  # type: nodetypes.Joint
+            result = child_joints[0]  # type: luna_rig.nt.Joint
         return result
 
     @property
@@ -248,14 +247,14 @@ class Control(object):
         """Get offset above transform node
 
         :return: Offset node
-        :rtype: nodetypes.Transform
+        :rtype: luna_rig.nt.Transform
         """
         all_offsets = self.offset_list
-        result = None  # type: nodetypes.Transform
+        result = None  # type: luna_rig.nt.Transform
         if all_offsets:
-            result = all_offsets[-1]  # type: nodetypes.Transform
+            result = all_offsets[-1]  # type: luna_rig.nt.Transform
         else:
-            result = None  # type: nodetypes.Transform
+            result = None  # type: luna_rig.nt.Transform
         return result
 
     @property
@@ -263,7 +262,7 @@ class Control(object):
         """List of controls offsets. Newly inserted offsets are appended at the end of the list.
 
         :return: List of transform nodes
-        :rtype: list, nodetypes.Transform
+        :rtype: list, luna_rig.nt.Transform
         """
         offsets = self.tag_node.offset.listConnections()  # type: list
         return offsets
@@ -346,10 +345,10 @@ class Control(object):
         result = None
         connections = self.transform.metaParent.listConnections()
         for node in connections:
-            if not meta.MetaRigNode.is_metanode(node):
+            if not luna_rig.MetaRigNode.is_metanode(node):
                 Logger.warning("Strange connection on {0}.metaParent: {1}".format(self, node))
                 continue
-            result = meta.MetaRigNode(node)
+            result = luna_rig.MetaRigNode(node)  # type: luna_rig.AnimComponent
         return result
 
     @property
@@ -358,7 +357,7 @@ class Control(object):
         if not comp:
             Logger.warning("{0}: Failed to find connected component!".format(self))
             return None
-        if "Character" in comp.as_str():
+        if isinstance(comp, luna_rig.components.Character):
             return comp
         return comp.character
 
@@ -367,7 +366,7 @@ class Control(object):
         """Test if specified node is a controller
 
         :param node: Node to test
-        :type node: str or nodetypes.Transform
+        :type node: str or luna_rig.nt.Transform
         :return: Test result (0 or 1)
         :rtype: int
         """
@@ -461,7 +460,7 @@ class Control(object):
             parent = self.group
         if extra_name:
             new_name = "_".join([self.name, extra_name])
-        new_offset = pm.createNode("transform", n=nameFn.generate_name(new_name, side=self.side, suffix="ofs"), p=parent)  # type: nodetypes.Transform
+        new_offset = pm.createNode("transform", n=nameFn.generate_name(new_name, side=self.side, suffix="ofs"), p=parent)  # type: luna_rig.nt.Transform
         pm.parent(self.transform, new_offset)
         new_offset.addAttr("metaParent", at="message")
         new_offset.metaParent.connect(self.tag_node.offset, na=1)
@@ -472,7 +471,7 @@ class Control(object):
         result = None
         for offset_node in self.offset_list:
             if extra_name in nameFn.deconstruct_name(offset_node).name:
-                result = offset_node  # type: nodetypes.Transform
+                result = offset_node  # type: luna_rig.nt.Transform
                 break
         return result
 
@@ -521,7 +520,7 @@ class Control(object):
             target = target.transform
         else:
             target = pm.PyNode(target)
-        if not isinstance(target, nodetypes.Transform):
+        if not isinstance(target, luna_rig.nt.Transform):
             Logger.error("{0}: Can't add space to not transform {1}".format(self, target))
             raise ValueError
 
@@ -638,7 +637,7 @@ class Control(object):
         """Adds staight line curve connecting source object and controls' transform
 
         :param source: Wire source object
-        :type source: str or pm.nodetypes.Transform
+        :type source: str or pm.luna_rig.nt.Transform
         """
         # Curve
         curve_points = [source.getTranslation(space="world"), self.transform.getTranslation(space="world")]
@@ -770,7 +769,7 @@ class Control(object):
             return
 
         # Create temp transform and parent shapes to it
-        temp_transform = pm.createNode("transform", n="temp_transform", p=self.transform)  # type: nodetypes.Transform
+        temp_transform = pm.createNode("transform", n="temp_transform", p=self.transform)  # type: luna_rig.nt.Transform
         for each in self.transform.getShapes():
             pm.parent(each, temp_transform, s=1, r=1)
 
@@ -798,13 +797,13 @@ class Control(object):
         if isinstance(local_parent, Control):
             local_parent = local_parent.transform
         # Crete orient transforms
-        space_group = pm.createNode("transform", n=nameFn.generate_name([self.name, "orient_space"], side=self.side, suffix="grp"), p=self.group)  # type: nodetypes.Transform
-        local_group = pm.createNode("transform", n=nameFn.generate_name([self.name, "orient_local"], side=self.side, suffix="grp"), p=self.group)  # type: nodetypes.Transform
+        space_group = pm.createNode("transform", n=nameFn.generate_name([self.name, "orient_space"], side=self.side, suffix="grp"), p=self.group)  # type: luna_rig.nt.Transform
+        local_group = pm.createNode("transform", n=nameFn.generate_name([self.name, "orient_local"], side=self.side, suffix="grp"), p=self.group)  # type: luna_rig.nt.Transform
         space_group.setParent(None)
         local_group.setParent(None)
         # Add orient offset
         offset = self.insert_offset(extra_name="orient")
-        orient_contstr = pm.orientConstraint(local_group, space_group, offset)  # type: nodetypes.OrientConstraint
+        orient_contstr = pm.orientConstraint(local_group, space_group, offset)  # type: luna_rig.nt.OrientConstraint
         # pm.pointConstraint(local_group, self.group)
         local_group.setParent(local_parent)
         space_group.setParent(space_target)

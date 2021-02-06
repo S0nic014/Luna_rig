@@ -1,7 +1,7 @@
 """Based on 2015 GDC talk by David Hunt & Forrest Sderlind https://www.youtube.com/watch?v=U_4u0kbf-JE"""
 
 import pymel.core as pm
-from pymel.core import nodetypes
+import luna_rig
 from luna import Logger
 from luna_rig.functions import nameFn
 
@@ -58,7 +58,7 @@ class MetaRigNode(object):
         node = pm.PyNode(node)
         if not self.is_metanode(node):
             raise TypeError("{0} is not a valid meta rig node".format(str(node)))
-        self.pynode = node  # type: nodetypes.Network
+        self.pynode = node  # type: luna_rig.nt.Network
 
     @property
     def namespace_list(self):
@@ -144,26 +144,6 @@ class MetaRigNode(object):
     def set_meta_parent(self, parent):
         self.pynode.metaParent.connect(parent.pynode.metaChildren, na=1)
 
-    @staticmethod
-    def list_nodes(of_type=None):
-        """List Metarig nodes
-
-        :param of_type: List only specific type, defaults to None
-        :type of_type: str, class, optional
-        :return: List of MetaRigNode instances.
-        :rtype: list[MetaRigNode]
-        """
-        result = []
-        all_nodes = [MetaRigNode(node) for node in pm.ls(typ="network") if node.hasAttr("metaRigType")]
-        if of_type:
-            if isinstance(of_type, str):
-                result = [node for node in all_nodes if of_type in node.as_str()]
-            else:
-                result = [node for node in all_nodes if isinstance(node, of_type)]
-        else:
-            result = all_nodes
-        return result
-
     def get_meta_children(self, of_type=None):
         """Get list of connected meta children
 
@@ -186,4 +166,24 @@ class MetaRigNode(object):
                         result = [child for child in children if isinstance(child, of_type)]
         else:
             Logger.warning("{0}: Missing metaChildren attribute.")
+        return result
+
+    @staticmethod
+    def list_nodes(of_type=None):
+        """List Metarig nodes
+
+        :param of_type: List only specific type, defaults to None
+        :type of_type: str, class, optional
+        :return: List of MetaRigNode instances.
+        :rtype: list[MetaRigNode]
+        """
+        result = []
+        all_nodes = [MetaRigNode(node) for node in pm.ls(typ="network") if node.hasAttr("metaRigType")]
+        if of_type:
+            if isinstance(of_type, str):
+                result = [node for node in all_nodes if of_type in node.as_str()]
+            else:
+                result = [node for node in all_nodes if isinstance(node, of_type)]
+        else:
+            result = all_nodes
         return result

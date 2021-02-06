@@ -1,8 +1,8 @@
 from __future__ import division
 import pymel.core as pm
 import pymel.api as pma
-from pymel.core import nodetypes
 from luna import Logger
+import luna_rig
 from luna_rig.functions import nameFn
 
 
@@ -53,8 +53,8 @@ def joint_chain(start_joint, end_joint=None):
     :rtype: list
     """
     start_joint = pm.PyNode(start_joint)
-    assert isinstance(start_joint, nodetypes.Joint), "{0} is not a joint".format(start_joint)
-    start_joint = pm.PyNode(start_joint)  # type: nodetypes.Joint
+    assert isinstance(start_joint, luna_rig.nt.Joint), "{0} is not a joint".format(start_joint)
+    start_joint = pm.PyNode(start_joint)  # type: luna_rig.nt.Joint
     chain = start_joint.getChildren(type="joint", ad=1) + [start_joint]
     chain.reverse()
     if not end_joint:
@@ -75,7 +75,7 @@ def along_curve(curve, amount, joint_name="joint", joint_side="c", joint_suffix=
     for index in range(amount + 1):
         param = index / amount
         point = pm.pointOnCurve(curve, pr=param, top=1)
-        jnt = pm.createNode("joint", n=nameFn.generate_name(joint_name, joint_side, joint_suffix))  # type: nodetypes.Joint
+        jnt = pm.createNode("joint", n=nameFn.generate_name(joint_name, joint_side, joint_suffix))  # type: luna_rig.nt.Joint
         jnt.setTranslation(point, space="world")
         joints.append(jnt)
     if delete_curve:
@@ -84,7 +84,7 @@ def along_curve(curve, amount, joint_name="joint", joint_side="c", joint_suffix=
 
 
 def rot_to_orient(jnt):
-    jnt = pm.PyNode(jnt)  # type: nodetypes.Joint
+    jnt = pm.PyNode(jnt)  # type: luna_rig.nt.Joint
     newOrient = []
     for rot, orient in zip(jnt.rotate.get(), jnt.jointOrient.get()):
         newOrient.append(orient + rot)
@@ -100,7 +100,7 @@ def rot_to_orient(jnt):
 def validate_rotations(joint_chain):
     is_valid = True
     for jnt in joint_chain:
-        jnt = pm.PyNode(jnt)  # type: nodetypes.Joint
+        jnt = pm.PyNode(jnt)  # type: luna_rig.nt.Joint
         if jnt.rotateX.get() > 0:
             Logger.warning("Non zero rotationX on joint {0}".format(jnt))
             is_valid = False

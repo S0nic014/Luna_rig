@@ -1,12 +1,12 @@
 import pymel.core as pm
-from pymel.core import nodetypes
+import luna_rig
 from luna import Logger
 
 
 def get_curve_data(curve):
     curve = pm.PyNode(curve)
     data_dict = {}
-    if not isinstance(curve, pm.nodetypes.NurbsCurve):
+    if not isinstance(curve, luna_rig.nt.NurbsCurve):
         Logger.exception("Invalid NurbsCurve {}".format(curve))
         return data_dict
 
@@ -30,7 +30,7 @@ def curve_from_points(name, degree=1, points=[], parent=None):
     if degree == 1:
         knot_vecs = [v for v in range(knot_len)]
 
-    new_curve = pm.curve(n=name, p=points, d=degree, k=knot_vecs)  # type: nodetypes.NurbsCurve
+    new_curve = pm.curve(n=name, p=points, d=degree, k=knot_vecs)  # type: luna_rig.nt.NurbsCurve
     if parent:
         pm.parent(new_curve, parent)
     return new_curve

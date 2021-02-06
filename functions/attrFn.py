@@ -56,6 +56,9 @@ def transfer_attr(source, destination, attr_list=[], connect=False, ** kwargs):
     for attr in transfer_list:
         if not attr.exists() or attr.isCompound() or attr in source.listAttr(ra=1):
             continue
+        if destination.hasAttr(attr.attrName(longName=True)):
+            Logger.warning("{0}: clashing attr {1}, skipping transfer...".format(destination, attr.attrName()))
+            continue
         try:
             if attr.type() == "enum":
                 enum_names = [enum[0] for enum in get_enums(attr)]

@@ -1,5 +1,6 @@
 import pymel.core as pm
 import pymel.api as pma
+import luna_rig
 from luna import Logger
 from luna import static
 from luna_rig.functions import apiFn
@@ -12,14 +13,14 @@ class Surface:
         """Get surface data
 
         :param surface_node: Surface to get data from.
-        :type surface_node: str or pm.nodetypes.NurbsSurface
+        :type surface_node: str or luna_rig.nt.NurbsSurface
         :return: Surface data as dict
         :rtype: dict
         """
         surface_node = pm.PyNode(surface_node)
-        if isinstance(surface_node, pm.nodetypes.Transform):
+        if isinstance(surface_node, luna_rig.nt.Transform):
             surface_node = surface_node.getShape()
-        if not isinstance(surface_node, pm.nodetypes.NurbsSurface):
+        if not isinstance(surface_node, luna_rig.nt.NurbsSurface):
             Logger.exception("Invalid shape node type, expected NurbsSurface, got {0}".format(surface_node))
             raise RuntimeError("Faield to get surface data")
 
@@ -68,7 +69,7 @@ class Surface:
         :param data: Surface data
         :type data: _surfaceDataStruct
         :param transform: Transform to connect shape node to, defaults to None
-        :type transform: pm.nodetypes.Transform, optional
+        :type transform: luna_rig.nt.Transform, optional
         :return: Packed struct(mobj, partial_path, full_path)
         :rtype: _returnStruct
         """

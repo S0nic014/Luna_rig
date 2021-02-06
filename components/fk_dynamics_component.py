@@ -1,17 +1,18 @@
 import pymel.core as pm
-from pymel.core import nodetypes
 from luna import Logger
-from luna_rig.core import component
-from luna_rig.core import control
+import luna_rig
 from luna_rig.functions import jointFn
 from luna_rig.functions import nameFn
-from luna_rig.functions import rigFn
 from luna_rig.functions import attrFn
 from luna_rig.functions import curveFn
-from luna_rig.components import fk_component
 
 
-class FKDynamicsComponent(component.AnimComponent):
+class FKDynamicsComponent(luna_rig.AnimComponent):
+
+    @property
+    def hair_system(self):
+        node = self.pynode.hairSystem.listConnections(d=1)[0].getShape()  # type: luna_rig.nt.HairSystem
+        return node
 
     @property
     def offsets(self):
@@ -22,12 +23,16 @@ class FKDynamicsComponent(component.AnimComponent):
     def create(cls,
                meta_parent,
                name="dynamics_component",
-               unique_nsolver=False):
-        if not isinstance(meta_parent, fk_component.FKComponent):
+               unique_nsolver=False,
+               hook=0):
+        if not isinstance(meta_parent, luna_rig.components.FKComponent):
             Logger.exception("Dynamics component requires FKComponent instance as meta_parent")
             return
 
         instance = super(FKDynamicsComponent, cls).create(meta_parent, meta_parent.side, name)
+        # Add attributes
+        instance.pynode.addAttr("hairSystem", at="message")
+
         # Joint chain
         ctl_chain = jointFn.duplicate_chain(original_chain=meta_parent.ctl_chain,
                                             replace_name=name,
@@ -47,11 +52,11 @@ class FKDynamicsComponent(component.AnimComponent):
         pm.select(cl=1)
 
         # Gather created nodes
-        follicle = input_curve.getParent()  # type: nodetypes.Transform
-        hair_system = follicle.getShape().listConnections(type="hairSystem")[0]  # type:  nodetypes.Transform
+        follicle = input_curve.getParent()  # type: luna_rig.nt.Transform
+        hair_system = follicle.getShape().listConnections(type="hairSystem")[0]  # type:  luna_rig.nt.Transform
         nucleus = hair_system.getShape().listConnections(type="nucleus")[0]
-        output_curve = follicle.getShape().outCurve.listConnections()[0]  # type: nodetypes.NurbsCurve
-        output_grp = output_curve.getParent()  # type:  nodetypes.Transform
+        output_curve = follicle.getShape().outCurve.listConnections()[0]  # type: luna_rig.nt.NurbsCurve
+        output_grp = output_curve.getParent()  # type:  luna_rig.nt.Transform
 
         # Assign nucleus
         if not unique_nsolver:
@@ -60,13 +65,13 @@ class FKDynamicsComponent(component.AnimComponent):
                 pm.select(hair_system, r=1)
                 pm.mel.eval("assignNSolver {0}".format(char_nucleus))
                 pm.delete(nucleus)
-                nucleus = char_nucleus  # type: nodetypes.Nucleus
+                nucleus = char_nucleus  # type: luna_rig.nt.Nucleus
                 pm.select(cl=1)
             else:
                 nucleus.rename("{0}_nucl".format(meta_parent.character.name))
         else:
             old_nucleus = nucleus
-            nucleus = pm.createNode("nucleus", n="{0}_nucl".format(instance.indexed_name))  # type: nodetypes.Nucleus
+            nucleus = pm.createNode("nucleus", n="{0}_nucl".format(instance.indexed_name))  # type: luna_rig.nt.Nucleus
             pm.select(hair_system, r=1)
             pm.mel.eval("assignNSolver {0}".format(nucleus))
             pm.select(cl=1)
@@ -79,6 +84,7 @@ class FKDynamicsComponent(component.AnimComponent):
         follicle.rename(nameFn.generate_name([instance.name], side=instance.side, suffix="fol"))
         output_grp.rename(nameFn.generate_name([instance.name, "output"], side=instance.side, suffix="grp"))
         output_curve.rename(nameFn.generate_name([instance.name, "out"], side=instance.side, suffix="crv"))
+        attrFn.add_meta_attr(hair_system.getShape())
 
         # Adjust dynamics
         follicle.getShape().pointLock.set(1)
@@ -97,22 +103,24 @@ class FKDynamicsComponent(component.AnimComponent):
                                 roc=1,
                                 pcv=0,
                                 ccv=0,
-                                scv=0)[0]  # type: nodetypes.IkHandle
+                                scv=0)[0]  # type: luna_rig.nt.IkHandle
         ik_handle.setParent(instance.group_parts)
 
-        # Add dynamics attributes
-        attrFn.add_divider(meta_parent.controls[0].transform, attr_name="DYNAMICS")
-        attr_dict = attrFn.transfer_attr(hair_system.getShape(), meta_parent.controls[0].transform, connect=True)
-        for added_attr in attr_dict.values():
-            instance._store_settings(added_attr)
-        # Add meta attributes
-        instance.pynode.addAttr("offsets", at="message", multi=True, im=False)
-
+        # # Add dynamics attributes
+        # attrFn.add_divider(meta_parent.controls[0].transform, attr_name="DYNAMICS")
+        # attr_dict = attrFn.transfer_attr(hair_system.getShape(), meta_parent.controls[0].transform, connect=True)
+        # for added_attr in attr_dict.values():
+        #     instance._store_settings(added_attr)
+        # # Add meta attributes
+        # instance.pynode.addAttr("offsets", at="message", multi=True, im=False)
         # Store joint chains
         instance._store_ctl_chain(ctl_chain)
         # Connect to character, parent
         instance.connect_to_character(parent=True)
-        instance.attach_to_component(meta_parent)
+        # Store component nodes
+        hair_system.getShape().metaParent.connect(instance.pynode.hairSystem)
+
+        instance.attach_to_component(meta_parent, hook)
 
         # # House keeping
         if instance.character:
@@ -120,16 +128,26 @@ class FKDynamicsComponent(component.AnimComponent):
             instance.group_joints.visibility.set(0)
         return instance
 
-    def attach_to_component(self, other_comp, attach_point=0):
+    def attach_to_component(self, other_comp, hook=0):
         # Check if should attach at all
         if not other_comp:
             return
         # Create meta parent connections
-        super(FKDynamicsComponent, self).attach_to_component(other_comp, attach_point=attach_point)
-        # Component specific attach logic
+        super(FKDynamicsComponent, self).attach_to_component(other_comp, hook=hook)
+        # Add dynamics attributes
+        attrFn.add_divider(self.attach_object, attr_name="DYNAMICS")
+        Logger.debug(self.attach_object)
+        Logger.debug(self.hair_system)
+        attr_dict = attrFn.transfer_attr(self.hair_system, self.attach_object, connect=True)
+        for added_attr in attr_dict.values():
+            self._store_settings(added_attr)
+        # Add meta attributes
+        # self.pynode.addAttr("offsets", at="message", multi=True, im=False)
+        # Create dynamics offsets
         for fk_ctl, jnt in zip(self.meta_parent.controls, self.ctl_chain):
             dynam_offset = fk_ctl.insert_offset("dynamics")
-            dynam_offset.message.connect(self.pynode.offsets, na=1)
+            self._store_util_nodes(dynam_offset)
+            # dynam_offset.message.connect(self.pynode.offsets, na=1)
             jnt.rotate.connect(dynam_offset.rotate)
 
     def attach_to_skeleton(self):
@@ -141,11 +159,11 @@ class FKDynamicsComponent(component.AnimComponent):
             pm.deleteAttr(attr)
         self.meta_parent.controls[0].transform.DYNAMICS.unlock()
         pm.deleteAttr(self.meta_parent.controls[0].transform.DYNAMICS)
-        # Delete created offsets
-        for offset in self.offsets:
-            offset.childAtIndex(0).setParent(offset.getParent())
-        for offset in self.offsets:
-            pm.delete(offset)
-            Logger.info("Deleted dynamics offset: {0}".format(offset))
+        # # Delete created offsets
+        # for offset in self.offsets:
+        #     offset.childAtIndex(0).setParent(offset.getParent())
+        # for offset in self.offsets:
+        #     pm.delete(offset)
+        #     Logger.info("Deleted dynamics offset: {0}".format(offset))
         super(FKDynamicsComponent, self).remove()
         self.signals.removed.emit()

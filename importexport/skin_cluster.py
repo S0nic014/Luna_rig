@@ -1,7 +1,5 @@
 import os
-from itertools import izip
 import pymel.core as pm
-from pymel.core import nodetypes
 import pymel.api as pma
 
 from luna import Logger
@@ -85,7 +83,7 @@ class SkinClusterManager(manager.DeformerManager):
         # TODO: Handle not existing influences
         deformer = self.get_deformer(geo_name)
         if not deformer:
-            deformer = pm.skinCluster(skin_data.get("influenceObjects"), geo_name, n=geo_name + "_skin")  # type: nodetypes.SkinCluster
+            deformer = pm.skinCluster(skin_data.get("influenceObjects"), geo_name, n=geo_name + "_skin")  # type: luna_rig.nt.SkinCluster
         weights = deformer.getWeights(deformer.getGeometry()[0])
         deformer.setWeights(geo_name, [pm.PyNode(name) for name in skin_data.get("influenceObjects")], weights, skin_data.get("normalizeWeights"))
         Logger.info("Imported {0} skinCluster weights: {1}".format(geo_name, latest_file))

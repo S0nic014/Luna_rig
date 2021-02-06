@@ -9,8 +9,8 @@ from luna.utils import environFn
 from luna.utils import maya_utils
 from luna.workspace import project
 from luna.workspace import asset
+import luna_rig
 from luna_rig.functions import asset_files
-from luna_rig import components
 
 
 class _buildSignals(QtCore.QObject):
@@ -40,7 +40,7 @@ class PyBuild(object):
         asset_files.import_model()
         asset_files.import_skeleton()
         # Setup character
-        self.character = components.Character.create(name=asset_name)
+        self.character = luna_rig.components.Character.create(name=asset_name)
         environFn.set_character_var(self.character)
 
         # Override methods

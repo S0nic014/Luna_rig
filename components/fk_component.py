@@ -1,19 +1,17 @@
 import pymel.core as pm
-from pymel.core import nodetypes
+import luna_rig
 from luna import Logger
-from luna_rig.core import component
-from luna_rig.core import control
 from luna_rig.functions import jointFn
 from luna_rig.functions import nameFn
 from luna_rig.functions import attrFn
 
 
-class FKComponent(component.AnimComponent):
+class FKComponent(luna_rig.AnimComponent):
 
     @classmethod
     def create(cls,
                meta_parent=None,
-               attach_point=0,
+               hook=0,
                side="c",
                name="fk_component",
                start_joint=None,
@@ -34,13 +32,13 @@ class FKComponent(component.AnimComponent):
         skel_chain = ctl_chain if add_end_ctl else ctl_chain[:-1]
         free_attrs = "r" if lock_translate else "tr"
         for jnt in skel_chain:
-            ctl = control.Control.create(side=instance.side,
-                                         name="{0}_fk".format(instance.indexed_name),
-                                         object_to_match=jnt,
-                                         parent=next_parent,
-                                         attributes=free_attrs,
-                                         shape="circleCrossed",
-                                         tag="fk")
+            ctl = luna_rig.Control.create(side=instance.side,
+                                          name="{0}_fk".format(instance.indexed_name),
+                                          object_to_match=jnt,
+                                          parent=next_parent,
+                                          attributes=free_attrs,
+                                          shape="circleCrossed",
+                                          tag="fk")
             pm.parentConstraint(ctl.transform, jnt, mo=1)
             next_parent = ctl
             fk_controls.append(ctl)
@@ -52,11 +50,11 @@ class FKComponent(component.AnimComponent):
 
         # Store attach points
         for each in fk_controls:
-            instance.add_attach_point(each.transform)
+            instance.add_hook(each.transform)
 
         # Connect to character, parent
         instance.connect_to_character(parent=True)
-        instance.attach_to_component(meta_parent, attach_point)
+        instance.attach_to_component(meta_parent, hook)
 
         # Scale controls
         scale_dict = {}
@@ -70,30 +68,30 @@ class FKComponent(component.AnimComponent):
             instance.group_joints.visibility.set(0)
         return instance
 
-    def attach_to_component(self, other_comp, attach_point=0):
+    def attach_to_component(self, other_comp, hook=0):
         # Check if should attach at all
         if not other_comp:
             return
 
         # Get attach point from super method
-        attach_obj = super(FKComponent, self).attach_to_component(other_comp, attach_point=attach_point)
+        attach_obj = super(FKComponent, self).attach_to_component(other_comp, hook=hook)
         if not attach_obj:
             return
         # Component specific attach logic
         pm.parentConstraint(attach_obj, self.root, mo=1)
 
     def add_auto_aim(self, follow_control, mirrored_chain=False):
-        if not isinstance(follow_control, control.Control):
+        if not isinstance(follow_control, luna_rig.Control):
             raise ValueError("{0}: {1} is not a Control instance".format(self, follow_control))
         # Create aim transforms
         aim_grp = pm.createNode("transform", n=nameFn.generate_name([self.indexed_name, "aim"], side=self.side,
-                                                                    suffix="grp"), p=self.controls[0].group)  # type: nodetypes.Transform
+                                                                    suffix="grp"), p=self.controls[0].group)  # type: luna_rig.nt.Transform
         no_aim_grp = pm.createNode("transform", n=nameFn.generate_name([self.indexed_name, "noaim"],
-                                                                       side=self.side, suffix="grp"), p=self.controls[0].group)  # type: nodetypes.Transform
+                                                                       side=self.side, suffix="grp"), p=self.controls[0].group)  # type: luna_rig.nt.Transform
         constr_grp = pm.createNode("transform", n=nameFn.generate_name([self.indexed_name, "aim_constr"],
-                                                                       side=self.side, suffix="grp"), p=self.controls[0].group)  # type: nodetypes.Transform
+                                                                       side=self.side, suffix="grp"), p=self.controls[0].group)  # type: luna_rig.nt.Transform
         target_grp = pm.createNode("transform", n=nameFn.generate_name([self.indexed_name, "target"],
-                                                                       side=self.side, suffix="grp"), p=follow_control.transform)  # type: nodetypes.Transform
+                                                                       side=self.side, suffix="grp"), p=follow_control.transform)  # type: luna_rig.nt.Transform
 
         # Set aim vector to X or -X
         if mirrored_chain:
@@ -104,7 +102,7 @@ class FKComponent(component.AnimComponent):
         # Create aim setup
         pm.aimConstraint(target_grp, aim_grp, wut="object", wuo=self.controls[0].group, aim=aim_vector)
         pm.delete(pm.aimConstraint(target_grp, no_aim_grp, wut="object", wuo=self.controls[0].group, aim=aim_vector))
-        orient_constr = pm.orientConstraint(aim_grp, no_aim_grp, constr_grp)  # type: nodetypes.OrientConstraint
+        orient_constr = pm.orientConstraint(aim_grp, no_aim_grp, constr_grp)  # type: luna_rig.nt.OrientConstraint
         pm.parent(self.controls[0].offset_list[0], constr_grp)
         # Add attr to control
         self.controls[0].transform.addAttr("autoAim", at="float", dv=3.0, min=0.0, max=10.0, k=1)

@@ -1,10 +1,8 @@
 import pymel.core as pm
 import pymel.api as pma
-from pymel.core import nodetypes
 from luna import Logger
 from luna.utils import environFn
-from luna_rig.core import control
-from luna_rig.core.meta import MetaRigNode
+import luna_rig
 
 
 def list_controls():
@@ -17,7 +15,7 @@ def list_controls():
     ctls = []
     for each in transforms:
         try:
-            instance = control.Control(each)  # type :control.Control
+            instance = luna_rig.Control(each)  # type :control.Control
         except Exception:
             Logger.exception("Failed to create control instance from {0}".format(each))
             continue
@@ -32,7 +30,7 @@ def get_build_character():
     :rtype: Character
     """
     current_asset = environFn.get_asset_var()
-    all_characters = MetaRigNode.list_nodes(of_type="Character")
+    all_characters = luna_rig.MetaRigNode.list_nodes(of_type=luna_rig.components.Character)
     for char_node in all_characters:
         if char_node.pynode.characterName.get() == current_asset.name:
             return char_node
@@ -46,7 +44,7 @@ def get_param_ctl_locator(side, joint_chain, move_axis="x", align_index=-1):
     else:
         clamped_size = 1.0
 
-    locator = pm.spaceLocator(n="param_loc")  # type: nodetypes.Transform
+    locator = pm.spaceLocator(n="param_loc")  # type: luna_rig.nt.Transform
     end_jnt_vec = joint_chain[align_index].getTranslation(space="world")  # type:pma.MVector
     side_mult = -1 if side == "r" else 1
     if move_axis == "x":
@@ -57,3 +55,9 @@ def get_param_ctl_locator(side, joint_chain, move_axis="x", align_index=-1):
         end_jnt_vec.z += clamped_size * 20 * side_mult
     locator.translate.set(end_jnt_vec)
     return locator
+
+
+def delete_all_meta_nodes():
+    for node in luna_rig.MetaRigNode.list_nodes():
+        if pm.objExists(node.pynode):
+            pm.delete(node.pynode)

@@ -1,12 +1,10 @@
 import pymel.core as pm
-from pymel.core import nodetypes
 import os
 from luna import Logger
 from luna.utils import fileFn
-from luna.utils import environFn
+import luna_rig
 from luna_rig.importexport import manager
 from luna_rig.core.shape_manager import ShapeManager
-from luna_rig.core.control import Control
 from luna_rig.functions import rigFn
 
 
@@ -31,7 +29,7 @@ class CtlShapeManager(manager.AbstractManager):
     @classmethod
     def save_selection_to_lib(cls):
         selection = pm.ls(sl=1)
-        if not selection or not Control.is_control(selection[-1]):
+        if not selection or not luna_rig.Control.is_control(selection[-1]):
             Logger.warning("No control selected to save")
             return
 
@@ -48,7 +46,7 @@ class CtlShapeManager(manager.AbstractManager):
     @classmethod
     def load_shape_from_lib(cls):
         selection = pm.ls(sl=1)
-        if not selection or not Control.is_control(selection[-1]):
+        if not selection or not luna_rig.Control.is_control(selection[-1]):
             Logger.warning("No control selected to load shape for!")
             return
 
@@ -57,7 +55,7 @@ class CtlShapeManager(manager.AbstractManager):
             return
         shape_name = os.path.basename(shape_file[0]).split(".")[0]
         for node in selection:
-            ctl = Control(node)
+            ctl = luna_rig.Control(node)
             ctl.shape = shape_name
         Logger.info("Successfully loaded shape: " + shape_name)
 

@@ -1,34 +1,34 @@
 import pymel.core as pm
-from pymel.core import nodetypes
 from luna import Logger
 from luna.utils import enumFn
-from luna_rig.core import component
-from luna_rig.core import control
+import luna_rig
 from luna_rig.functions import jointFn
 from luna_rig.functions import attrFn
 from luna_rig.functions import rigFn
 from luna_rig.functions import nameFn
 
 
-class FKIKComponent(component.AnimComponent):
+class FKIKComponent(luna_rig.AnimComponent):
 
-    class AttachPoints(enumFn.Enum):
+    class Hooks(enumFn.Enum):
         START_JNT = 0
         END_JNT = 1
+        IK = 2
+        PV = 3
 
     @property
     def ik_control(self):
-        transform = self.pynode.ikControl.listConnections(d=1)[0]  # type: nodetypes.Transform
-        return control.Control(transform)
+        transform = self.pynode.ikControl.listConnections(d=1)[0]  # type: luna_rig.nt.Transform
+        return luna_rig.Control(transform)
 
     @property
     def pv_control(self):
-        transform = self.pynode.poleVectorControl.listConnections(d=1)[0]  # type: nodetypes.Transform
-        return control.Control(transform)
+        transform = self.pynode.poleVectorControl.listConnections(d=1)[0]  # type: luna_rig.nt.Transform
+        return luna_rig.Control(transform)
 
     @property
     def fk_controls(self):
-        return [control.Control(node) for node in self.pynode.fkControls.listConnections(d=1)]
+        return [luna_rig.Control(node) for node in self.pynode.fkControls.listConnections(d=1)]
 
     @property
     def ik_chain(self):
@@ -41,11 +41,11 @@ class FKIKComponent(component.AnimComponent):
     @property
     def param_control(self):
         transform = self.pynode.paramControl.listConnections(d=1)[0]
-        return control.Control(transform)
+        return luna_rig.Control(transform)
 
     @property
     def matching_helper(self):
-        transform = self.pynode.matchingHelper.listConnections(d=1)[0]  # type: nodetypes.Transform
+        transform = self.pynode.matchingHelper.listConnections(d=1)[0]  # type: luna_rig.nt.Transform
         return transform
 
     @property
@@ -60,7 +60,7 @@ class FKIKComponent(component.AnimComponent):
     @classmethod
     def create(cls,
                meta_parent=None,
-               attach_point=0,
+               hook=0,
                side="c",
                name="fkik_component",
                start_joint=None,
@@ -85,27 +85,27 @@ class FKIKComponent(component.AnimComponent):
         fk_controls = []
         next_parent = instance.group_ctls
         for jnt in fk_chain:
-            ctl = control.Control.create(side=instance.side,
-                                         name="{0}_fk".format(instance.indexed_name),
-                                         object_to_match=jnt,
-                                         attributes="r",
-                                         parent=next_parent,
-                                         shape="circleCrossed",
-                                         tag="fk")
+            ctl = luna_rig.Control.create(side=instance.side,
+                                          name="{0}_fk".format(instance.indexed_name),
+                                          object_to_match=jnt,
+                                          attributes="r",
+                                          parent=next_parent,
+                                          shape="circleCrossed",
+                                          tag="fk")
             pm.parentConstraint(ctl.transform, jnt, mo=1)
             next_parent = ctl
             fk_controls.append(ctl)
 
         # Create IK setup
-        ik_control = control.Control.create(side=instance.side,
-                                            name="{0}_ik".format(instance.indexed_name),
-                                            object_to_match=ik_chain[-1],
-                                            delete_match_object=False,
-                                            attributes="tr",
-                                            parent=instance.group_ctls,
-                                            shape="cube",
-                                            match_orient=not ik_world_orient,
-                                            tag="ik")
+        ik_control = luna_rig.Control.create(side=instance.side,
+                                             name="{0}_ik".format(instance.indexed_name),
+                                             object_to_match=ik_chain[-1],
+                                             delete_match_object=False,
+                                             attributes="tr",
+                                             parent=instance.group_ctls,
+                                             shape="cube",
+                                             match_orient=not ik_world_orient,
+                                             tag="ik")
         ik_handle = pm.ikHandle(n=nameFn.generate_name(instance.indexed_name, side=instance.side, suffix="ikh"),
                                 sj=ik_chain[0],
                                 ee=ik_chain[-1],
@@ -114,19 +114,19 @@ class FKIKComponent(component.AnimComponent):
         # Matching helper
         matching_helper = pm.createNode("transform",
                                         n=nameFn.generate_name([instance.indexed_name, "matching_helper"], side=instance.side, suffix="grp"),
-                                        p=ik_control.transform)  # type: nodetypes.Transform
+                                        p=ik_control.transform)  # type: luna_rig.nt.Transform
         matching_helper.setParent(fk_controls[-1].transform)
         attrFn.add_meta_attr(matching_helper)
 
         # Pole vector
         pole_locator = jointFn.get_pole_vector(ik_chain)
-        pv_control = control.Control.create(side=instance.side,
-                                            name="{0}_pvec".format(instance.indexed_name),
-                                            object_to_match=pole_locator,
-                                            delete_match_object=True,
-                                            parent=instance.group_ctls,
-                                            attributes="tr",
-                                            shape="poleVector")
+        pv_control = luna_rig.Control.create(side=instance.side,
+                                             name="{0}_pvec".format(instance.indexed_name),
+                                             object_to_match=pole_locator,
+                                             delete_match_object=True,
+                                             parent=instance.group_ctls,
+                                             attributes="tr",
+                                             shape="poleVector")
         pm.poleVectorConstraint(pv_control.transform, ik_handle)
         # Add wire
         if len(ik_chain) % 2:
@@ -138,16 +138,16 @@ class FKIKComponent(component.AnimComponent):
         # Params control
         if not param_locator:
             param_locator = rigFn.get_param_ctl_locator(instance.side, joint_chain, move_axis="x")
-        param_control = control.Control.create(side=instance.side,
-                                               name="{0}_param".format(instance.indexed_name),
-                                               object_to_match=param_locator,
-                                               delete_match_object=True,
-                                               attributes="",
-                                               parent=instance.group_ctls,
-                                               match_orient=False,
-                                               offset_grp=False,
-                                               shape="small_cog",
-                                               orient_axis="y")
+        param_control = luna_rig.Control.create(side=instance.side,
+                                                name="{0}_param".format(instance.indexed_name),
+                                                object_to_match=param_locator,
+                                                delete_match_object=True,
+                                                attributes="",
+                                                parent=instance.group_ctls,
+                                                match_orient=False,
+                                                offset_grp=False,
+                                                shape="small_cog",
+                                                orient_axis="y")
         pm.pointConstraint(joint_chain[-1], param_control.group, mo=1)
 
         # Create blend
@@ -188,12 +188,12 @@ class FKIKComponent(component.AnimComponent):
         param_control.transform.metaParent.connect(instance.pynode.paramControl)
 
         # Store attach points
-        instance.add_attach_point(ctl_chain[0])
-        instance.add_attach_point(ctl_chain[-1])
+        instance.add_hook(ctl_chain[0])
+        instance.add_hook(ctl_chain[-1])
 
         # Connect to character, parent
         instance.connect_to_character(parent=True)
-        instance.attach_to_component(meta_parent, attach_point)
+        instance.attach_to_component(meta_parent, hook)
 
         # Scale controls
         scale_dict = {ik_control: 0.8,
@@ -213,13 +213,13 @@ class FKIKComponent(component.AnimComponent):
             instance.group_joints.visibility.set(0)
         return instance
 
-    def attach_to_component(self, other_comp, attach_point=0):
+    def attach_to_component(self, other_comp, hook=0):
         # Check if should attach at all
         if not other_comp:
             return
 
         # Get attach point from super method
-        attach_obj = super(FKIKComponent, self).attach_to_component(other_comp, attach_point=attach_point)
+        attach_obj = super(FKIKComponent, self).attach_to_component(other_comp, hook)
         if not attach_obj:
             return
         # Component specific attach logic

@@ -1,19 +1,17 @@
 import pymel.core as pm
-from pymel.core import nodetypes
 
 from luna import Logger
 from luna.utils import enumFn
-from luna_rig.core import component
-from luna_rig.core import control
+import luna_rig
 from luna_rig.functions import jointFn
 from luna_rig.functions import attrFn
 from luna_rig.functions import curveFn
 from luna_rig.functions import nameFn
 
 
-class FKIKSpineComponent(component.AnimComponent):
+class FKIKSpineComponent(luna_rig.AnimComponent):
 
-    class AttachPoints(enumFn.Enum):
+    class Hooks(enumFn.Enum):
         ROOT = 0
         HIPS = 1
         MID = 2
@@ -21,39 +19,39 @@ class FKIKSpineComponent(component.AnimComponent):
 
     @property
     def root_control(self):
-        return control.Control(self.pynode.rootControl.listConnections()[0])
+        return luna_rig.Control(self.pynode.rootControl.listConnections()[0])
 
     @property
     def hips_control(self):
-        return control.Control(self.pynode.hipsControl.listConnections()[0])
+        return luna_rig.Control(self.pynode.hipsControl.listConnections()[0])
 
     @property
     def mid_control(self):
-        return control.Control(self.pynode.midControl.listConnections()[0])
+        return luna_rig.Control(self.pynode.midControl.listConnections()[0])
 
     @property
     def chest_control(self):
-        return control.Control(self.pynode.chestControl.listConnections()[0])
+        return luna_rig.Control(self.pynode.chestControl.listConnections()[0])
 
     @property
     def fk1_control(self):
-        return control.Control(self.pynode.fkControls.listConnections()[0])
+        return luna_rig.Control(self.pynode.fkControls.listConnections()[0])
 
     @property
     def fk2_control(self):
-        return control.Control(self.pynode.fkControls.listConnections()[1])
+        return luna_rig.Control(self.pynode.fkControls.listConnections()[1])
 
     @property
     def pivot_control(self):
         if not self.pynode.hasAttr("pivotControl"):
             return None
         else:
-            return control.Control(self.pynode.pivotControl.listConnections()[0])
+            return luna_rig.Control(self.pynode.pivotControl.listConnections()[0])
 
     @classmethod
     def create(cls,
                meta_parent=None,
-               attach_point=0,
+               hook=0,
                side='c',
                name='spine',
                start_joint=None,
@@ -89,52 +87,52 @@ class FKIKSpineComponent(component.AnimComponent):
         ctl_locator = pm.spaceLocator(n="temp_control_loc")
         ctl_locator.translate.set(pm.pointOnCurve(ik_curve, pr=0.0, top=1))
         # Root
-        root_control = control.Control.create(side=instance.side,
-                                              name="{0}_root".format(instance.indexed_name),
-                                              object_to_match=ctl_locator,
-                                              delete_match_object=False,
-                                              parent=instance.group_ctls,
-                                              joint=False,
-                                              attributes="tr",
-                                              color="red",
-                                              shape="root",
-                                              orient_axis="y")
+        root_control = luna_rig.Control.create(side=instance.side,
+                                               name="{0}_root".format(instance.indexed_name),
+                                               object_to_match=ctl_locator,
+                                               delete_match_object=False,
+                                               parent=instance.group_ctls,
+                                               joint=False,
+                                               attributes="tr",
+                                               color="red",
+                                               shape="root",
+                                               orient_axis="y")
         # Hips
-        hips_control = control.Control.create(side=instance.side,
-                                              name="{0}_hips".format(instance.indexed_name),
-                                              object_to_match=ctl_locator,
-                                              delete_match_object=False,
-                                              parent=root_control,
-                                              joint=True,
-                                              attributes="tr",
-                                              shape="hips",
-                                              orient_axis="y")
-        # Mid
-        ctl_locator.translate.set(pm.pointOnCurve(ik_curve, pr=0.5, top=1))
-        mid_control = control.Control.create(side=instance.side,
-                                             name="{0}_mid".format(instance.indexed_name),
-                                             object_to_match=ctl_locator,
-                                             delete_match_object=False,
-                                             parent=root_control,
-                                             joint=True,
-                                             attributes="tr",
-                                             shape="circle",
-                                             orient_axis="y")
-        mid_control.transform.addAttr("followChest", at="float", dv=0.5, k=1)
-        mid_control.transform.addAttr("followHips", at="float", dv=0.5, k=1)
-        # Chest
-        ctl_locator.translate.set(pm.pointOnCurve(ik_curve, pr=1.0, top=1))
-        chest_control = control.Control.create(side=instance.side,
-                                               name="{0}_chest".format(instance.indexed_name),
+        hips_control = luna_rig.Control.create(side=instance.side,
+                                               name="{0}_hips".format(instance.indexed_name),
                                                object_to_match=ctl_locator,
                                                delete_match_object=False,
                                                parent=root_control,
                                                joint=True,
                                                attributes="tr",
-                                               shape="chest",
+                                               shape="hips",
                                                orient_axis="y")
+        # Mid
+        ctl_locator.translate.set(pm.pointOnCurve(ik_curve, pr=0.5, top=1))
+        mid_control = luna_rig.Control.create(side=instance.side,
+                                              name="{0}_mid".format(instance.indexed_name),
+                                              object_to_match=ctl_locator,
+                                              delete_match_object=False,
+                                              parent=root_control,
+                                              joint=True,
+                                              attributes="tr",
+                                              shape="circle",
+                                              orient_axis="y")
+        mid_control.transform.addAttr("followChest", at="float", dv=0.5, k=1)
+        mid_control.transform.addAttr("followHips", at="float", dv=0.5, k=1)
+        # Chest
+        ctl_locator.translate.set(pm.pointOnCurve(ik_curve, pr=1.0, top=1))
+        chest_control = luna_rig.Control.create(side=instance.side,
+                                                name="{0}_chest".format(instance.indexed_name),
+                                                object_to_match=ctl_locator,
+                                                delete_match_object=False,
+                                                parent=root_control,
+                                                joint=True,
+                                                attributes="tr",
+                                                shape="chest",
+                                                orient_axis="y")
         # Connect IK controls
-        mid_ctl_constr = pm.parentConstraint(hips_control.transform, chest_control.transform, mid_control.group, mo=1)  # type: nodetypes.ParentConstraint
+        mid_ctl_constr = pm.parentConstraint(hips_control.transform, chest_control.transform, mid_control.group, mo=1)  # type: luna_rig.nt.ParentConstraint
         mid_control.transform.followChest.connect(mid_ctl_constr.getWeightAliasList()[0])
         mid_control.transform.followHips.connect(mid_ctl_constr.getWeightAliasList()[1])
         # Skin to curve
@@ -154,25 +152,25 @@ class FKIKSpineComponent(component.AnimComponent):
 
         # Create FK controls
         ctl_locator.translate.set(pm.pointOnCurve(ik_curve, pr=0.25, top=1))
-        fk1_control = control.Control.create(side=instance.side,
-                                             name="{0}_fk".format(instance.indexed_name),
-                                             object_to_match=ctl_locator,
-                                             delete_match_object=False,
-                                             parent=root_control,
-                                             joint=True,
-                                             attributes="r",
-                                             shape="circleCrossed",
-                                             orient_axis="y")
+        fk1_control = luna_rig.Control.create(side=instance.side,
+                                              name="{0}_fk".format(instance.indexed_name),
+                                              object_to_match=ctl_locator,
+                                              delete_match_object=False,
+                                              parent=root_control,
+                                              joint=True,
+                                              attributes="r",
+                                              shape="circleCrossed",
+                                              orient_axis="y")
         ctl_locator.translate.set(pm.pointOnCurve(ik_curve, pr=0.75, top=1))
-        fk2_control = control.Control.create(side=instance.side,
-                                             name="{0}_fk".format(instance.indexed_name),
-                                             object_to_match=ctl_locator,
-                                             delete_match_object=True,
-                                             parent=fk1_control,
-                                             joint=True,
-                                             attributes="r",
-                                             shape="circleCrossed",
-                                             orient_axis="y")
+        fk2_control = luna_rig.Control.create(side=instance.side,
+                                              name="{0}_fk".format(instance.indexed_name),
+                                              object_to_match=ctl_locator,
+                                              delete_match_object=True,
+                                              parent=fk1_control,
+                                              joint=True,
+                                              attributes="r",
+                                              shape="circleCrossed",
+                                              orient_axis="y")
         pm.matchTransform(fk2_control.joint, ctl_chain[-1])
         jointFn.rot_to_orient(fk2_control.joint)
         pm.parentConstraint(fk2_control.joint, chest_control.group, mo=1)
@@ -196,14 +194,14 @@ class FKIKSpineComponent(component.AnimComponent):
         chest_control.transform.metaParent.connect(instance.pynode.chestControl)
 
         # Store attach points
-        instance.add_attach_point(root_control.transform)
-        instance.add_attach_point(hips_control.transform)
-        instance.add_attach_point(mid_control.transform)
-        instance.add_attach_point(chest_control.transform)
+        instance.add_hook(root_control.transform)
+        instance.add_hook(hips_control.transform)
+        instance.add_hook(mid_control.transform)
+        instance.add_hook(chest_control.transform)
 
         # Connect to character, metaparent
         instance.connect_to_character(parent=True)
-        instance.attach_to_component(meta_parent, attach_point)
+        instance.attach_to_component(meta_parent, hook)
 
         # Store settings
         instance._store_settings(mid_control.transform.followChest)

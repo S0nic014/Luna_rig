@@ -1,7 +1,7 @@
 import os
 import pymel.core as pm
-from pymel.core import nodetypes
 
+import luna_rig
 from luna import Logger
 from luna.utils import fileFn
 from luna.utils import enumFn
@@ -19,15 +19,15 @@ class ShapeManager:
     def get_shapes(cls, node):
         node = pm.PyNode(node)
         shapes_list = []
-        if isinstance(node, pm.nodetypes.Transform):
+        if isinstance(node, luna_rig.nt.Transform):
             child_shapes = node.getShapes()
-        elif isinstance(node, pm.nodetypes.Shape):
+        elif isinstance(node, luna_rig.nt.Shape):
             child_shapes = node.getTransform().getShapes()
         if not child_shapes:
             Logger.warning("No child shapes found for {0}".format(node))
             return []
 
-        elif isinstance(child_shapes[0], pm.nodetypes.NurbsCurve):
+        elif isinstance(child_shapes[0], luna_rig.nt.NurbsCurve):
             for shape_node in child_shapes:
                 shape_data = curveFn.get_curve_data(shape_node)
                 shapes_list.append(shape_data)
@@ -42,9 +42,9 @@ class ShapeManager:
         old_color = default_color
 
         # Get child shapes
-        if isinstance(node, pm.nodetypes.Transform):
+        if isinstance(node, luna_rig.nt.Transform):
             child_shapes = node.getShapes()
-        elif isinstance(node, pm.nodetypes.Shape):
+        elif isinstance(node, luna_rig.nt.Shape):
             node = node.getTransform()
             child_shapes = node.getShapes()
         # Get old shapes color
@@ -61,7 +61,7 @@ class ShapeManager:
         if not pm.objExists(node):
             Logger.warning("Transform {0} no longer exists".format(node))
             return False
-        node = pm.PyNode(node)  # type: nodetypes.Transform
+        node = pm.PyNode(node)  # type: luna_rig.nt.Transform
         pm.delete(node.getShapes())
         for index, shape_dict in enumerate(shape_list):
             # Create temporary curve
@@ -121,7 +121,7 @@ class ShapeManager:
 
         shape_list = fileFn.load_json(saved_path)
         for obj in object_list:
-            if isinstance(obj, nodetypes.Transform):
+            if isinstance(obj, luna_rig.nt.Transform):
                 old_color = cls.get_color(obj)
                 cls.apply_shape(obj, shape_list, default_color=old_color)
 
@@ -164,9 +164,9 @@ class ShapeManager:
         # Get shape nodes
         shape_nodes = []
         for node in nodes:
-            if isinstance(node, pm.nodetypes.Transform):
+            if isinstance(node, luna_rig.nt.Transform):
                 shape_nodes += node.getShapes()
-            elif isinstance(node, pm.nodetypes.Shape):
+            elif isinstance(node, luna_rig.nt.Shape):
                 shape_nodes.append(node)
         # Apply color
         for shape in shape_nodes:
@@ -177,13 +177,13 @@ class ShapeManager:
     def get_color(cls, node):
         node = pm.PyNode(node)
         color = 0
-        if isinstance(node, pm.nodetypes.Transform):
+        if isinstance(node, luna_rig.nt.Transform):
             shapes = node.getShapes()
             if not shapes:
                 Logger.warning("No shapes found for {0}".format(node))
                 return color
             child_shape = shapes[0]
-            if isinstance(child_shape, pm.nodetypes.NurbsCurve):
+            if isinstance(child_shape, luna_rig.nt.NurbsCurve):
                 color = child_shape.overrideColor.get()
         else:
             Logger.error("Invalid transform {0}, cant't get color!".format(node))
