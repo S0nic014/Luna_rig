@@ -478,20 +478,7 @@ class Control(object):
     def mirror_shape(self, across="yz", behaviour=True, flip=False, flip_across="yz"):
         """Mirrors control's shape
         """
-        # Create temp transform, parent shapes to it and mirror
-        temp_transform = pm.createNode("transform", n="mirror_shape_grp", p=self.transform)
-        for shape in self.transform.getShapes():
-            shape.setParent(temp_transform, r=1)
-        transformFn.mirror_xform(temp_transform, across=across, behaviour=behaviour, space=self.transform)
-        # Flip shape
-        if flip:
-            curveFn.flip_shape(temp_transform, across=flip_across)
-        pm.makeIdentity(temp_transform, apply=1)
-        # Parent back to control
-        for shape in temp_transform.getShapes():
-            shape.setParent(self.transform, r=1)
-        pm.delete(temp_transform)
-        pm.select(cl=1)
+        curveFn.mirror_shape(self.transform, across=across, behaviour=behaviour, flip=flip, flip_across="yz")
 
     def mirror_shape_to_opposite(self, behaviour=True, across="yz", flip=False, flip_across="yz"):
         opposite_ctl = self.find_opposite()

@@ -25,7 +25,7 @@ def mirror_xform(transforms=[], across="yz", behaviour=True, space="world"):
 
     # Validate plane which to mirror across
     across = across.lower()
-    if across not in ('yz', 'yz', 'yz'):
+    if across not in ('xy', 'yz', 'xz'):
         raise ValueError("Keyword Argument: 'across' not of accepted value ('XY', 'YZ', 'XZ').")
 
     stored_matrices = {}
