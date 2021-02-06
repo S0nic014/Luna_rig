@@ -1,5 +1,6 @@
 import pymel.core as pm
 import pymel.api as pma
+import luna_rig
 
 
 # Modified from https://gist.github.com/rondreas/1c6d4e5fc6535649780d5b65fc5a9283
@@ -18,7 +19,7 @@ def mirror_xform(transforms=[], across="yz", behaviour=True, space="world"):
     """
     if isinstance(transforms, str) or isinstance(transforms, pm.PyNode):
         transforms = [transforms]
-    transforms = [pm.PyNode(node) for node in transforms]
+    transforms = [pm.PyNode(node) for node in transforms]  # type: list(luna_rig.nt.Transform])
     # Check to see all provided objects is an instance of pymel transform node,
     if not all(map(lambda x: isinstance(x, pm.nt.Transform), transforms)):
         raise ValueError("Passed node which wasn't of type: Transform")
@@ -26,7 +27,7 @@ def mirror_xform(transforms=[], across="yz", behaviour=True, space="world"):
     # Validate plane which to mirror across
     across = across.lower()
     if across not in ('xy', 'yz', 'xz'):
-        raise ValueError("Keyword Argument: 'across' not of accepted value ('XY', 'YZ', 'XZ').")
+        raise ValueError("Keyword Argument: 'across' not of accepted value ('xy', 'yz', 'xz').")
 
     stored_matrices = {}
     for transform in transforms:
@@ -61,7 +62,7 @@ def mirror_xform(transforms=[], across="yz", behaviour=True, space="world"):
                 mtx[2:11:4] = rz
         stored_matrices[transform] = mtx
     for transform in transforms:
-        transform.setMatrix(stored_matrices[transform], ws=space == "world")
+        transform.setMatrix(stored_matrices[transform], ws=(space == "world"))
 
 
 def world_matrix(transform):

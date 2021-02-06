@@ -712,41 +712,36 @@ class Control(object):
             Logger.info("{0}: No opposite control found.".format(self))
             return None
 
-    def mirror_pose_from_opposite(self, across="yz", space="character", behavior=True):
-        """Mirror control attributes from opposite control.
+    def mirror_pose(self, across="yz", space="character", behavior=True, direction="source"):
+        """Mirror control pose to opposite side
 
-        :param across: Mirror plan. Valid values: "YZ", "XY", "XZ", , defaults to "YZ"
+        :param across: Mirror plane, defaults to "yz"
         :type across: str, optional
-        :param space: Mirror space, takes any transform or str values: "world", "character", defaults to "character"
-        :type space: str, optional
-        :param behavior: If behaviour should be mirrored, defaults to True
+        :param space: Mirror space, any transform or str values: ("world", "character"), defaults to "character"
+        :type space: str or luna_rig.nt.Transform, optional
+        :param behavior: Mirror transform behaviour, defaults to True
         :type behavior: bool, optional
+        :param direction: Mirror direction, valid values ("source", "destination"), defaults to "source"
+        :type direction: str, optional
         """
         if space == "character":
             space = self.character.world_locator
         opposite_ctl = self.find_opposite()
         if not opposite_ctl:
             return
-        pm.matchTransform(self.transform, opposite_ctl.transform)
-        transformFn.mirror_xform(transforms=self.transform, across=across, behaviour=behavior, space=space)
+        # Define direction
+        if direction == "source":
+            source_transform = self.transform
+            destionation_transform = opposite_ctl.transform
+        else:
+            source_transform = opposite_ctl.transform
+            destionation_transform = self.transform
 
-    def mirror_pose_to_opposite(self, across="yz", space="character", behavior=True):
-        """Mirror control attributes to control on opposite side.
-
-        :param across: Mirror plan. Valid values: "YZ", "XY", "XZ", , defaults to "YZ"
-        :type across: str, optional
-        :param space: Mirror space, takes any transform or str values: "world", "character", defaults to "character"
-        :type space: str, optional
-        :param behavior: If behaviour should be mirrored, defaults to True
-        :type behavior: bool, optional
-        """
-        if space == "character":
-            space = self.character.world_locator
-        opposite_ctl = self.find_opposite()
-        if not opposite_ctl:
-            return
-        pm.matchTransform(opposite_ctl.transform, self.transform)
-        transformFn.mirror_xform(transforms=opposite_ctl.transform, across=across, behaviour=behavior, space=space)
+        helper_transform = pm.createNode("transform", n="mirror_transform")
+        pm.matchTransform(helper_transform, source_transform)
+        transformFn.mirror_xform(transforms=helper_transform, across=across, behaviour=behavior, space=space)
+        pm.matchTransform(destionation_transform, helper_transform)
+        pm.delete(helper_transform)
 
     def orient_shape(self, direction="x"):
         if direction.lower() not in "xyz" and direction.lower() not in ["-x", "-y", "-z"]:
