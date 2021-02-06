@@ -2,6 +2,7 @@ import pymel.core as pm
 from luna import Logger
 from luna import static
 from luna.utils import fileFn
+import luna_rig
 from luna_rig.importexport import manager
 
 
@@ -62,7 +63,7 @@ class BlendShapeManager(manager.AbstractManager):
         # Check if blendshape already exists and create one if not.
         geometry = pm.PyNode(geometry)  # type: luna_rig.nt.Shape
         if shape_name not in [str(node) for node in geometry.listHistory(type=self.data_type)]:
-            shape_node = pm.blendShape(geometry, n=shape_name, foc=1)  # type:  luna_rig.nt.BlendShape
+            shape_node = pm.blendShape(geometry, n=shape_name, foc=1)  # type: luna_rig.nt.BlendShape
         else:
             shape_node = pm.PyNode(shape_name)  # type:  luna_rig.nt.BlendShape
         # Import data

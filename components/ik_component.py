@@ -23,6 +23,11 @@ class IKComponent(luna_rig.AnimComponent):
         transform = self.pynode.poleVectorControl.listConnections(d=1)  # type: luna_rig.nt.Transform
         return luna_rig.Control(transform[0]) if transform else None
 
+    @property
+    def handle(self):
+        node = self.pynode.ikHandle.listConnections(d=1)[0]  # type:luna_rig.nt.IkHandle
+        return node
+
     @classmethod
     def create(cls,
                meta_parent=None,
@@ -40,8 +45,6 @@ class IKComponent(luna_rig.AnimComponent):
         for jnt in joint_chain:
             attrFn.add_meta_attr(jnt)
         ctl_chain = jointFn.duplicate_chain(original_chain=joint_chain, add_name="ctl", new_parent=instance.group_joints)
-        for jnt, ctl_jnt in zip(joint_chain, ctl_chain):
-            pm.parentConstraint(ctl_jnt, jnt, mo=1)
 
         # Create ik control
         ik_control = luna_rig.Control.create(side=instance.side,
@@ -52,10 +55,11 @@ class IKComponent(luna_rig.AnimComponent):
                                              parent=instance.group_ctls,
                                              shape="cube",
                                              tag="ik")
-        ik_handle = pm.ikHandle(n=nameFn.generate_name(instance.indexed_name, side=instance.side, suffix="ikh"),
+        ik_handle = pm.ikHandle(n=nameFn.generate_name(instance.name, side=instance.side, suffix="ikh"),
                                 sj=ctl_chain[0],
                                 ee=ctl_chain[-1],
                                 sol="ikRPsolver")[0]
+        attrFn.add_meta_attr(ik_handle)
         pm.parent(ik_handle, ik_control.transform)
 
         # Pole vector
@@ -82,8 +86,10 @@ class IKComponent(luna_rig.AnimComponent):
         # Store indiviual controls
         instance.pynode.addAttr("ikControl", at="message")
         instance.pynode.addAttr("poleVectorControl", at="message")
+        instance.pynode.addAttr("ikHandle", at="message")
         ik_control.transform.metaParent.connect(instance.pynode.ikControl)
         pv_control.transform.metaParent.connect(instance.pynode.poleVectorControl)
+        ik_handle.metaParent.connect(instance.pynode.ikHandle)
 
         # Store attach points
         instance.add_hook(ik_control.transform)
@@ -116,3 +122,8 @@ class IKComponent(luna_rig.AnimComponent):
             return
         # Component specific attach logic
         pm.parentConstraint(attach_obj, self.group_joints, mo=1)
+
+    def attach_to_skeleton(self):
+        """Override: attach to skeleton"""
+        for ctl_jnt, bind_jnt in zip(self.ctl_chain[:-1], self.bind_joints[:-1]):
+            pm.parentConstraint(ctl_jnt, bind_jnt, mo=1)

@@ -159,11 +159,5 @@ class FKDynamicsComponent(luna_rig.AnimComponent):
             pm.deleteAttr(attr)
         self.meta_parent.controls[0].transform.DYNAMICS.unlock()
         pm.deleteAttr(self.meta_parent.controls[0].transform.DYNAMICS)
-        # # Delete created offsets
-        # for offset in self.offsets:
-        #     offset.childAtIndex(0).setParent(offset.getParent())
-        # for offset in self.offsets:
-        #     pm.delete(offset)
-        #     Logger.info("Deleted dynamics offset: {0}".format(offset))
         super(FKDynamicsComponent, self).remove()
         self.signals.removed.emit()

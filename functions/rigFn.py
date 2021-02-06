@@ -37,7 +37,7 @@ def get_build_character():
     Logger.error("Failed to find build character!")
 
 
-def get_param_ctl_locator(side, joint_chain, move_axis="x", align_index=-1):
+def get_param_ctl_locator(side, anchor_transform, move_axis="x", mult=1):
     current_char = get_build_character()
     if not current_char:
         clamped_size = current_char.clamped_size
@@ -45,14 +45,17 @@ def get_param_ctl_locator(side, joint_chain, move_axis="x", align_index=-1):
         clamped_size = 1.0
 
     locator = pm.spaceLocator(n="param_loc")  # type: luna_rig.nt.Transform
-    end_jnt_vec = joint_chain[align_index].getTranslation(space="world")  # type:pma.MVector
+    end_jnt_vec = anchor_transform.getTranslation(space="world")  # type:pma.MVector
     side_mult = -1 if side == "r" else 1
-    if move_axis == "x":
-        end_jnt_vec.x += clamped_size * 20 * side_mult
-    elif move_axis == "y":
-        end_jnt_vec.y += clamped_size * 20 * side_mult
-    elif move_axis == "z":
-        end_jnt_vec.z += clamped_size * 20 * side_mult
+    # if move_axis == "x":
+    if "x" in move_axis:
+        end_jnt_vec.x += clamped_size * 20 * side_mult * mult
+    # elif move_axis == "y":
+    if "y" in move_axis:
+        end_jnt_vec.y += clamped_size * 20 * side_mult * mult
+    # elif move_axis == "z":
+    if "z" in move_axis:
+        end_jnt_vec.z += clamped_size * 20 * side_mult * mult
     locator.translate.set(end_jnt_vec)
     return locator
 

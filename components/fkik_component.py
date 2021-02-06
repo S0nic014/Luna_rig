@@ -44,6 +44,11 @@ class FKIKComponent(luna_rig.AnimComponent):
         return luna_rig.Control(transform)
 
     @property
+    def handle(self):
+        node = self.pynode.ikHandle.listConnections(d=1)[0]  # type:luna_rig.nt.IkHandle
+        return node
+
+    @property
     def matching_helper(self):
         transform = self.pynode.matchingHelper.listConnections(d=1)[0]  # type: luna_rig.nt.Transform
         return transform
@@ -106,10 +111,11 @@ class FKIKComponent(luna_rig.AnimComponent):
                                              shape="cube",
                                              match_orient=not ik_world_orient,
                                              tag="ik")
-        ik_handle = pm.ikHandle(n=nameFn.generate_name(instance.indexed_name, side=instance.side, suffix="ikh"),
+        ik_handle = pm.ikHandle(n=nameFn.generate_name(instance.name, side=instance.side, suffix="ikh"),
                                 sj=ik_chain[0],
                                 ee=ik_chain[-1],
                                 sol="ikRPsolver")[0]
+        attrFn.add_meta_attr(ik_handle)
         pm.parent(ik_handle, ik_control.transform)
         # Matching helper
         matching_helper = pm.createNode("transform",
@@ -137,7 +143,7 @@ class FKIKComponent(luna_rig.AnimComponent):
 
         # Params control
         if not param_locator:
-            param_locator = rigFn.get_param_ctl_locator(instance.side, joint_chain, move_axis="x")
+            param_locator = rigFn.get_param_ctl_locator(instance.side, joint_chain[-1], move_axis="x")
         param_control = luna_rig.Control.create(side=instance.side,
                                                 name="{0}_param".format(instance.indexed_name),
                                                 object_to_match=param_locator,
@@ -148,7 +154,7 @@ class FKIKComponent(luna_rig.AnimComponent):
                                                 offset_grp=False,
                                                 shape="small_cog",
                                                 orient_axis="y")
-        pm.pointConstraint(joint_chain[-1], param_control.group, mo=1)
+        pm.parentConstraint(joint_chain[-1], param_control.group, mo=1)
 
         # Create blend
         param_control.transform.addAttr("fkik", nn="IK/FK", at="float", min=0.0, max=1.0, dv=default_state, k=True)
@@ -176,6 +182,7 @@ class FKIKComponent(luna_rig.AnimComponent):
         instance.pynode.addAttr("poleVectorControl", at="message")
         instance.pynode.addAttr("paramControl", at="message")
         instance.pynode.addAttr("matchingHelper", at="message")
+        instance.pynode.addAttr("ikHandle", at="message")
         for fk_jnt in fk_chain:
             fk_jnt.metaParent.connect(instance.pynode.fkChain, na=1)
         for ik_jnt in ik_chain:
@@ -184,12 +191,15 @@ class FKIKComponent(luna_rig.AnimComponent):
             fk_ctl.transform.metaParent.connect(instance.pynode.fkControls, na=1)
         ik_control.transform.metaParent.connect(instance.pynode.ikControl)
         matching_helper.metaParent.connect(instance.pynode.matchingHelper)
+        ik_handle.metaParent.connect(instance.pynode.ikHandle)
         pv_control.transform.metaParent.connect(instance.pynode.poleVectorControl)
         param_control.transform.metaParent.connect(instance.pynode.paramControl)
 
         # Store attach points
         instance.add_hook(ctl_chain[0])
         instance.add_hook(ctl_chain[-1])
+        instance.add_hook(ik_control.transform)
+        instance.add_hook(pv_control.transform)
 
         # Connect to character, parent
         instance.connect_to_character(parent=True)
