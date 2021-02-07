@@ -775,9 +775,11 @@ class Control(object):
             pm.parent(each, self.transform, s=1, r=1)
         pm.delete(temp_transform)
 
-    def add_orient_switch(self, space_target, local_parent, default_state=1.0):
+    def add_orient_switch(self, space_target, local_parent=None, default_state=1.0):
         if isinstance(local_parent, Control):
             local_parent = local_parent.transform
+        if not local_parent and self.connected_component:
+            local_parent = self.connected_component.attach_object
         # Crete orient transforms
         space_group = pm.createNode("transform", n=nameFn.generate_name([self.name, "orient_space"], side=self.side, suffix="grp"), p=self.group)  # type: luna_rig.nt.Transform
         local_group = pm.createNode("transform", n=nameFn.generate_name([self.name, "orient_local"], side=self.side, suffix="grp"), p=self.group)  # type: luna_rig.nt.Transform

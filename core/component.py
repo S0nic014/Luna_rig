@@ -198,7 +198,7 @@ class AnimComponent(Component):
     @property
     def attach_object(self):
         connections = self.pynode.attachObject.listConnections()
-        result = connections[0] if connections else None  # type: luna_rig.nt.PyNode
+        result = connections[0] if connections else None  # type: luna_rig.nt.Transform
         return result
 
     def set_outliner_color(self, color):
