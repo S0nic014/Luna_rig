@@ -712,7 +712,7 @@ class Control(object):
             Logger.info("{0}: No opposite control found.".format(self))
             return None
 
-    def mirror_pose(self, behavior=True, direction="source"):
+    def mirror_pose(self, behavior=True, direction="source", skip_translate=[False, False, False], skip_rotate=[False, False, False]):
         """Mirror control pose to opposite side
 
         :param across: Mirror plane, defaults to "yz"
@@ -734,10 +734,23 @@ class Control(object):
         else:
             source_transform = opposite_ctl.transform
             destination_transform = self.transform
+        # Store old values
+        old_translate = destination_transform.translate.get()
+        old_rotate = destination_transform.rotate.get()
+        # Apply matrix
         if behavior:
             destination_transform.setMatrix(source_transform.getMatrix(os=1).inverse(), os=1)
         else:
             destination_transform.setMatrix(source_transform.getMatrix(os=1), os=1)
+        # Apply skipped values
+        if any(skip_translate):
+            for is_skipped, attr_name, old_value in zip(skip_translate, ["tx", "ty", "tz"], old_translate):
+                if is_skipped:
+                    destination_transform.attr(attr_name).set(old_value)
+        if any(skip_rotate):
+            for is_skipped, attr_name, old_value in zip(skip_rotate, ["rx", "ry", "rz"], old_rotate):
+                if is_skipped:
+                    destination_transform.attr(attr_name).set(old_value)
 
     def orient_shape(self, direction="x"):
         if direction.lower() not in "xyz" and direction.lower() not in ["-x", "-y", "-z"]:
