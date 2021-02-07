@@ -475,10 +475,10 @@ class Control(object):
                 break
         return result
 
-    def mirror_shape(self, across="yz", behaviour=True, flip=False, flip_across="yz"):
+    def mirror_shape(self, behaviour=True, flip=False, flip_across="yz"):
         """Mirrors control's shape
         """
-        curveFn.mirror_shape(self.transform, across=across, behaviour=behaviour, flip=flip, flip_across="yz")
+        curveFn.mirror_shape(self.transform, behaviour=behaviour, flip=flip, flip_across="yz")
 
     def mirror_shape_to_opposite(self, behaviour=True, across="yz", flip=False, flip_across="yz"):
         opposite_ctl = self.find_opposite()
@@ -487,7 +487,7 @@ class Control(object):
             return
         old_color = opposite_ctl.color
         ShapeManager.apply_shape(opposite_ctl.transform, self.shape)
-        opposite_ctl.mirror_shape(across=across, behaviour=behaviour, flip=flip, flip_across=flip_across)
+        opposite_ctl.mirror_shape(behaviour=behaviour, flip=flip, flip_across=flip_across)
         opposite_ctl.color = old_color
 
     def add_space(self, target, name, method="matrix"):
@@ -624,7 +624,7 @@ class Control(object):
         """Adds staight line curve connecting source object and controls' transform
 
         :param source: Wire source object
-        :type source: str or pm.luna_rig.nt.Transform
+        :type source: str or luna_rig.nt.Transform
         """
         # Curve
         curve_points = [source.getTranslation(space="world"), self.transform.getTranslation(space="world")]
@@ -712,7 +712,7 @@ class Control(object):
             Logger.info("{0}: No opposite control found.".format(self))
             return None
 
-    def mirror_pose(self, across="yz", space="character", behavior=True, direction="source"):
+    def mirror_pose(self, behavior=True, direction="source"):
         """Mirror control pose to opposite side
 
         :param across: Mirror plane, defaults to "yz"
@@ -724,24 +724,20 @@ class Control(object):
         :param direction: Mirror direction, valid values ("source", "destination"), defaults to "source"
         :type direction: str, optional
         """
-        if space == "character":
-            space = self.character.world_locator
         opposite_ctl = self.find_opposite()
         if not opposite_ctl:
-            return
+            opposite_ctl = self
         # Define direction
         if direction == "source":
             source_transform = self.transform
-            destionation_transform = opposite_ctl.transform
+            destination_transform = opposite_ctl.transform
         else:
             source_transform = opposite_ctl.transform
-            destionation_transform = self.transform
-
-        helper_transform = pm.createNode("transform", n="mirror_transform")
-        pm.matchTransform(helper_transform, source_transform)
-        transformFn.mirror_xform(transforms=helper_transform, across=across, behaviour=behavior, space=space)
-        pm.matchTransform(destionation_transform, helper_transform)
-        pm.delete(helper_transform)
+            destination_transform = self.transform
+        if behavior:
+            destination_transform.setMatrix(source_transform.getMatrix(os=1).inverse(), os=1)
+        else:
+            destination_transform.setMatrix(source_transform.getMatrix(os=1), os=1)
 
     def orient_shape(self, direction="x"):
         if direction.lower() not in "xyz" and direction.lower() not in ["-x", "-y", "-z"]:

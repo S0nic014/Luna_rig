@@ -36,33 +36,41 @@ def mirror_xform(transforms=[], across="yz", behaviour=True, space="world"):
             mtx = pm.xform(transform, q=True, ws=True, m=True)
         else:
             mtx = matrix_to_list(relative_world_matrix(transform, space))
-        # Invert rotation columns,
-        rx = [n * -1 for n in mtx[0:9:4]]
-        ry = [n * -1 for n in mtx[1:10:4]]
-        rz = [n * -1 for n in mtx[2:11:4]]
-        # Invert translation row,
-        t = [n * -1 for n in mtx[12:15]]
-        # Set matrix based on given plane, and whether to include behaviour or not.
-        if across == "xy":
-            mtx[14] = t[2]    # set inverse of the Z translation
-            # Set inverse of all rotation columns but for the one we've set translate to.
-            if behaviour:
-                mtx[0:9:4] = rx
-                mtx[1:10:4] = ry
-        elif across == "yz":
-            mtx[12] = t[0]    # set inverse of the X translation
-            if behaviour:
-                mtx[1:10:4] = ry
-                mtx[2:11:4] = rz
-        else:
-            mtx[13] = t[1]    # set inverse of the Y translation
-
-            if behaviour:
-                mtx[0:9:4] = rx
-                mtx[2:11:4] = rz
+        mtx = mirror_matrix(mtx, behaviour=behaviour, across=across)
         stored_matrices[transform] = mtx
     for transform in transforms:
         transform.setMatrix(stored_matrices[transform], ws=(space == "world"))
+
+
+def mirror_matrix(mtx, behaviour=True, across="yz"):
+    if not isinstance(mtx, list):
+        mtx = matrix_to_list(mtx)
+    # Invert rotation columns,
+    rx = [n * -1 for n in mtx[0:9:4]]
+    ry = [n * -1 for n in mtx[1:10:4]]
+    rz = [n * -1 for n in mtx[2:11:4]]
+    # Invert translation row,
+    t = [n * -1 for n in mtx[12:15]]
+    # Set matrix based on given plane, and whether to include behaviour or not.
+    if across == "xy":
+        mtx[14] = t[2]    # set inverse of the Z translation
+        # Set inverse of all rotation columns but for the one we've set translate to.
+        if behaviour:
+            mtx[0:9:4] = rx
+            mtx[1:10:4] = ry
+    elif across == "yz":
+        mtx[12] = t[0]    # set inverse of the X translation
+        if behaviour:
+            mtx[1:10:4] = ry
+            mtx[2:11:4] = rz
+    else:
+        mtx[13] = t[1]    # set inverse of the Y translation
+
+        if behaviour:
+            mtx[0:9:4] = rx
+            mtx[2:11:4] = rz
+
+    return mtx
 
 
 def world_matrix(transform):

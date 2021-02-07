@@ -133,7 +133,7 @@ class FootComponent(luna_rig.AnimComponent):
         # Store objects
         instance._store_bind_joints(joint_chain)
         instance._store_ctl_chain(ctl_chain)
-        instance._store_controls(fk_control)
+        instance._store_controls([fk_control])
         # Store chains
         fk_control.transform.metaParent.connect(instance.pynode.fkControl)
         for jnt in ik_chain:
