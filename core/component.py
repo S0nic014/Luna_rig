@@ -277,6 +277,7 @@ class AnimComponent(Component):
         """Delete component from scene"""
         pm.delete(self.root)
         self.delete_util_nodes()
+        pm.delete(self.pynode)
         Logger.info("Removed {0}".format(self))
         self.signals.removed.emit()
 

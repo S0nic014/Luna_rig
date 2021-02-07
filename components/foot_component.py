@@ -9,19 +9,23 @@ from luna_rig.functions import nameFn
 class FootComponent(luna_rig.AnimComponent):
     ROLL_ATTRS = ["footRoll", "toeRoll", "heelRoll", "bank", "heelTwist", "toeTwist", "toeTap"]
 
-    # @property
-    # def ik_chain(self):
-    #     return self.pynode.ikChain.listConnections(d=1)
+    @property
+    def ik_chain(self):
+        return self.pynode.ikChain.listConnections(d=1)
 
-    # @property
-    # def fk_chain(self):
-    #     return self.pynode.fkChain.listConnections(d=1)
+    @property
+    def fk_chain(self):
+        return self.pynode.fkChain.listConnections(d=1)
+
+    @property
+    def fk_control(self):
+        return luna_rig.Control(self.pynode.fkControl.listConnections(d=1))
 
     @classmethod
     def create(cls,
                meta_parent=None,
                side=None,
-               name="rv_foot",
+               name="foot",
                start_joint=None,
                end_joint=None,
                rv_chain=None,
@@ -37,6 +41,7 @@ class FootComponent(luna_rig.AnimComponent):
         instance = super(FootComponent, cls).create(meta_parent=meta_parent, side=side, name=name)  # type: FootComponent
         instance.pynode.addAttr("fkChain", at="message", multi=1, im=0)
         instance.pynode.addAttr("ikChain", at="message", multi=1, im=0)
+        instance.pynode.addAttr("fkControl", at="message")
 
         # Chains
         joint_chain = jointFn.joint_chain(start_joint, end_joint)
@@ -128,7 +133,9 @@ class FootComponent(luna_rig.AnimComponent):
         # Store objects
         instance._store_bind_joints(joint_chain)
         instance._store_ctl_chain(ctl_chain)
+        instance._store_controls(fk_control)
         # Store chains
+        fk_control.transform.metaParent.connect(instance.pynode.fkControl)
         for jnt in ik_chain:
             jnt.metaParent.connect(instance.pynode.ikChain, na=1)
         for jnt in fk_chain:
@@ -146,9 +153,16 @@ class FootComponent(luna_rig.AnimComponent):
         return instance
 
     def remove(self):
+        # Delete chains
         pm.delete(self.ctl_chain[0])
         pm.delete(self.ik_chain[0])
         pm.delete(self.fk_chain[0])
+        if self.fk_control.transform.numChildren():
+            self.fk_control.transform.childAtIndex(0).setParent(self.fk_control.transform.getParent())
+        pm.delete(self.fk_control.group)
+
+        # Delete attrs
+        self.meta_parent.ik_control.transform.FOOT.unlock()
         pm.deleteAttr(self.meta_parent.ik_control.transform.FOOT)
         for attr_name in self.ROLL_ATTRS:
             pm.deleteAttr(self.meta_parent.ik_control.transform.attr(attr_name))
