@@ -95,8 +95,11 @@ class Component(luna_rig.MetaRigNode):
     def delete_util_nodes(self):
         for util_node in self.util_nodes:
             if isinstance(util_node, luna_rig.nt.DagNode):
-                if util_node.numChildren:
-                    util_node.childAtIndex(0).setParent(util_node.getParent())
+                if util_node.numChildren():
+                    try:
+                        util_node.childAtIndex(0).setParent(util_node.getParent())
+                    except RuntimeError:
+                        Logger.warning("Failed to parent {0} children ({1}) to {2}".format(util_node, util_node.getChildren(), util_node.getParent()))
             pm.delete(util_node)
             Logger.debug("{0}: Deleted util node {1}".format(self, util_node))
 
@@ -246,6 +249,9 @@ class AnimComponent(Component):
     def attach_to_skeleton(self):
         """Override: attach to skeleton"""
         for ctl_jnt, bind_jnt in zip(self.ctl_chain, self.bind_joints):
+            if bind_jnt.listConnections(type="parentConstraint"):
+                Logger.info("Replacing {0} attachment to {1}".format(bind_jnt, ctl_jnt))
+                pm.delete(bind_jnt.listConnections(type="parentConstraint"))
             pm.parentConstraint(ctl_jnt, bind_jnt, mo=1)
 
     def bake_to_skeleton(self, time_range=None, *args, **kwargs):
@@ -260,7 +266,7 @@ class AnimComponent(Component):
     def bake_and_detach(self, time_range=None, *args, **kwargs):
         self.bake_to_skeleton(time_range, *args, **kwargs)
         for skel_jnt in self.bind_joints:
-            pconstr = skel_jnt.listHistory(type="parentConstraint")
+            pconstr = skel_jnt.listConnections(type="parentConstraint")
             pm.delete(pconstr)
         Logger.info("{0}: Detached from skeleton.".format(self))
 
@@ -275,6 +281,8 @@ class AnimComponent(Component):
 
     def remove(self):
         """Delete component from scene"""
+        for child in self.meta_children:
+            child.remove()
         pm.delete(self.root)
         self.delete_util_nodes()
         pm.delete(self.pynode)

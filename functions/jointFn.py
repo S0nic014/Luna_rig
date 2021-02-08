@@ -3,7 +3,8 @@ import pymel.core as pm
 import pymel.api as pma
 from luna import Logger
 import luna_rig
-from luna_rig.functions import nameFn
+import luna_rig.functions.curveFn as curveFn
+import luna_rig.functions.nameFn as nameFn
 
 
 def duplicate_chain(original_chain=[],
@@ -70,6 +71,22 @@ def joint_chain(start_joint, end_joint=None):
     return cut_chain
 
 
+def create_chain(joint_list=[], reverse=False):
+    if reverse:
+        joint_list.reverse()
+    for index in range(1, len(joint_list)):
+        joint_list[index].setParent(joint_list[index - 1])
+
+    return joint_list
+
+
+def reverse_chain(joint_list=[]):
+    for jnt in joint_list:
+        jnt.setParent()
+    joint_list.reverse()
+    create_chain(joint_list)
+
+
 def along_curve(curve, amount, joint_name="joint", joint_side="c", joint_suffix="jnt", delete_curve=False):
     joints = []
     for index in range(amount + 1):
@@ -95,6 +112,14 @@ def rot_to_orient(jnt):
     jnt.rotateY.set(0)
     jnt.rotateZ.set(0)
     return newOrient
+
+
+def copy_orient(source, destination):
+    if not isinstance(destination, list):
+        destination = [destination]
+    source = pm.PyNode(source)  # type: luna_rig.nt.Joint
+    for dest_joint in destination:
+        dest_joint.jointOrient.set(source.jointOrient.get())
 
 
 def validate_rotations(joint_chain):

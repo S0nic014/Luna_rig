@@ -253,11 +253,6 @@ class FKIKComponent(luna_rig.AnimComponent):
                 pm.matchTransform(fk_ctl.transform, ik_jnt, rot=1)
             pm.select(self.fk_controls[-1].transform, r=1)
 
-    def add_twist(self, upper=True, lower=True, num_joints=2):
-        # TODO: Add twist
-        # Ref: https://bindpose.com/maya-matrix-nodes-part-2-node-based-matrix-twist-calculator/
-        pass
-
     def add_stretch(self, default_value=False):
         # TODO: Add stretch
         pass
