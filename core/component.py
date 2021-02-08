@@ -178,7 +178,7 @@ class AnimComponent(Component):
 
     @property
     def controls(self):
-        connected_nodes = self.pynode.controls.listConnections()
+        connected_nodes = self.pynode.controls.listConnections()  # type: list[luna_rig.nt.Transform]
         all_ctls = [luna_rig.Control(node) for node in connected_nodes]
         return all_ctls
 
@@ -248,6 +248,7 @@ class AnimComponent(Component):
 
     def attach_to_skeleton(self):
         """Override: attach to skeleton"""
+        Logger.info("{0}: Attaching to skeleton...".format(self))
         for ctl_jnt, bind_jnt in zip(self.ctl_chain, self.bind_joints):
             if bind_jnt.listConnections(type="parentConstraint"):
                 Logger.info("Replacing {0} attachment to {1}".format(bind_jnt, ctl_jnt))

@@ -154,6 +154,7 @@ class TwistComponent(luna_rig.AnimComponent):
         return instance
 
     def attach_to_skeleton(self):
+        Logger.info("{0}: Attaching to skeleton...".format(self))
         if not self.twist_start_object == self.start_joint:
             constraints = self.meta_parent.bind_joints[0].listConnections(type="parentConstraint")
             if constraints:

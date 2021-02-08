@@ -154,7 +154,7 @@ class FKIKComponent(luna_rig.AnimComponent):
                                                 offset_grp=False,
                                                 shape="small_cog",
                                                 orient_axis="y")
-        pm.parentConstraint(joint_chain[-1], param_control.group, mo=1)
+        pm.parentConstraint(ctl_chain[-1], param_control.group, mo=1)
 
         # Create blend
         param_control.transform.addAttr("fkik", nn="IK/FK", at="float", min=0.0, max=1.0, dv=default_state, k=True)
@@ -172,7 +172,7 @@ class FKIKComponent(luna_rig.AnimComponent):
         instance._store_bind_joints(joint_chain)
         instance._store_ctl_chain(ctl_chain)
         instance._store_controls(fk_controls)
-        instance._store_controls([ik_control, pv_control])
+        instance._store_controls([ik_control, pv_control, param_control])
 
         # Store indiviual items
         instance.pynode.addAttr("fkChain", at="message", multi=1, im=0)
