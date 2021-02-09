@@ -1,6 +1,6 @@
 import pymel.core as pm
-
 import luna_rig
+from luna_rig.importexport.key_pose import KeyPoseManager
 
 
 class HandComponent(luna_rig.AnimComponent):
@@ -10,6 +10,13 @@ class HandComponent(luna_rig.AnimComponent):
         connections = self.pynode.fingers.listConnections()  # type: list
         finger_comps = [luna_rig.MetaRigNode(node) for node in connections]
         return finger_comps
+
+    @property
+    def controls(self):
+        finger_controls = []
+        for finger in self.fingers:
+            finger_controls += finger.controls
+        return finger_controls
 
     @classmethod
     def create(cls,
@@ -43,7 +50,12 @@ class HandComponent(luna_rig.AnimComponent):
             ctl.shape = "cube"
             ctl.scale(1.0, 2)
 
+        return fk_component
+
     def attach_to_component(self, other_comp, hook=0):
         attach_obj = super(HandComponent, self).attach_to_component(other_comp, hook=hook)
         pm.matchTransform(self.root, attach_obj)
         pm.parentConstraint(attach_obj, self.group_ctls)
+
+    def import_poses(self, drive_value=10):
+        KeyPoseManager().import_component_poses(self, driver_value=drive_value)

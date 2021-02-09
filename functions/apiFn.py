@@ -1,20 +1,5 @@
 from PySide2 import QtWidgets
-from shiboken2 import wrapInstance
 import pymel.api as pma
-
-
-def maya_main_window():
-    """Get maya main window as QWidget
-
-    :return: Maya main window as QWidget
-    :rtype: QtWidgets.QWidget
-    """
-    #
-    mainWindowPtr = pma.MQtUtil_mainWindow()
-    if mainWindowPtr:
-        return wrapInstance(long(mainWindowPtr), QtWidgets.QWidget)
-    else:
-        maya_main_window()
 
 
 def get_MObject(name):

@@ -809,3 +809,12 @@ class Control(object):
         # Store util nodes
         if self.connected_component:
             self.connected_component._store_util_nodes([local_group, space_group])
+
+    def add_key_pose(self, driven_dict, driver_attr, driver_value):
+        pose_offset = self.find_offset("key_pose")
+        if not pose_offset:
+            pose_offset = self.insert_offset(extra_name="key_pose")
+        for attr_name, value in driven_dict.items():
+            pm.setDrivenKeyframe(pose_offset.attr(attr_name), cd=driver_attr, v=pose_offset.attr(attr_name).get(), dv=0)
+            pm.setDrivenKeyframe(pose_offset.attr(attr_name), cd=driver_attr, v=value, dv=driver_value)
+        return pose_offset
