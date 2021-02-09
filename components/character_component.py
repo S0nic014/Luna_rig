@@ -219,3 +219,8 @@ class Character(luna_rig.Component):
         self.deformation_rig.setParent(None)
         pm.delete(self.root_ctl.group)
         self.delete_util_nodes()
+
+    def set_interesting(self, value):
+        for ctl in self.list_controls():
+            for connected_node in ctl.transform.listConnections():
+                connected_node.ihi.set(value)

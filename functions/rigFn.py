@@ -64,3 +64,10 @@ def delete_all_meta_nodes():
     for node in luna_rig.MetaRigNode.list_nodes():
         if pm.objExists(node.pynode):
             pm.delete(node.pynode)
+
+
+def set_node_selectable(node, value):
+    state_values = {True: 0,
+                    False: 2}
+    node.overrideEnabled.set(1)
+    node.overrideDisplayType.set(state_values.get(value, 0))
