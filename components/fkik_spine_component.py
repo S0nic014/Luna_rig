@@ -56,7 +56,13 @@ class FKIKSpineComponent(luna_rig.AnimComponent):
                name='spine',
                start_joint=None,
                end_joint=None):
+        # Create instance and add attrs
         instance = super(FKIKSpineComponent, cls).create(meta_parent, side, name)  # type: FKIKSpineComponent
+        instance.pynode.addAttr("fkControls", at="message", multi=1, im=0)
+        instance.pynode.addAttr("rootControl", at="message")
+        instance.pynode.addAttr("hipsControl", at="message")
+        instance.pynode.addAttr("midControl", at="message")
+        instance.pynode.addAttr("chestControl", at="message")
 
         # Joint chains
         joint_chain = jointFn.joint_chain(start_joint, end_joint)
@@ -181,11 +187,6 @@ class FKIKSpineComponent(luna_rig.AnimComponent):
         instance._store_controls([root_control, hips_control, mid_control, chest_control, fk1_control, fk2_control])
 
         # Store indiviual items
-        instance.pynode.addAttr("fkControls", at="message", multi=1, im=0)
-        instance.pynode.addAttr("rootControl", at="message")
-        instance.pynode.addAttr("hipsControl", at="message")
-        instance.pynode.addAttr("midControl", at="message")
-        instance.pynode.addAttr("chestControl", at="message")
         fk1_control.transform.metaParent.connect(instance.pynode.fkControls, na=1)
         fk2_control.transform.metaParent.connect(instance.pynode.fkControls, na=1)
         root_control.transform.metaParent.connect(instance.pynode.rootControl)

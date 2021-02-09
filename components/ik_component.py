@@ -36,7 +36,11 @@ class IKComponent(luna_rig.AnimComponent):
                name="ik_component",
                start_joint=None,
                end_joint=None):
+        # Create instance and add attrs
         instance = super(IKComponent, cls).create(meta_parent, side, name)  # type: IKComponent
+        instance.pynode.addAttr("ikControl", at="message")
+        instance.pynode.addAttr("poleVectorControl", at="message")
+        instance.pynode.addAttr("ikHandle", at="message")
         # Joint chain
         joint_chain = jointFn.joint_chain(start_joint, end_joint)
         jointFn.validate_rotations(joint_chain)
@@ -84,9 +88,6 @@ class IKComponent(luna_rig.AnimComponent):
         instance._store_ctl_chain(ctl_chain)
         instance._store_controls([ik_control, pv_control])
         # Store indiviual controls
-        instance.pynode.addAttr("ikControl", at="message")
-        instance.pynode.addAttr("poleVectorControl", at="message")
-        instance.pynode.addAttr("ikHandle", at="message")
         ik_control.transform.metaParent.connect(instance.pynode.ikControl)
         pv_control.transform.metaParent.connect(instance.pynode.poleVectorControl)
         ik_handle.metaParent.connect(instance.pynode.ikHandle)

@@ -29,8 +29,8 @@ class FKDynamicsComponent(luna_rig.AnimComponent):
             Logger.exception("Dynamics component requires FKComponent instance as meta_parent")
             return
 
+        # Create instance and add attrs
         instance = super(FKDynamicsComponent, cls).create(meta_parent, meta_parent.side, name)
-        # Add attributes
         instance.pynode.addAttr("hairSystem", at="message")
 
         # Joint chain

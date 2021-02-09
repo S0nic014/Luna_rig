@@ -74,7 +74,16 @@ class FKIKComponent(luna_rig.AnimComponent):
                ik_world_orient=False,
                default_state=1,
                param_locator=None):
+        # Create instance and add attrs
         instance = super(FKIKComponent, cls).create(meta_parent, side, name)  # type: FKIKComponent
+        instance.pynode.addAttr("fkChain", at="message", multi=1, im=0)
+        instance.pynode.addAttr("ikChain", at="message", multi=1, im=0)
+        instance.pynode.addAttr("fkControls", at="message", multi=1, im=0)
+        instance.pynode.addAttr("ikControl", at="message")
+        instance.pynode.addAttr("poleVectorControl", at="message")
+        instance.pynode.addAttr("paramControl", at="message")
+        instance.pynode.addAttr("matchingHelper", at="message")
+        instance.pynode.addAttr("ikHandle", at="message")
         # Joint chain
         joint_chain = jointFn.joint_chain(start_joint, end_joint)
         jointFn.validate_rotations(joint_chain)
@@ -176,14 +185,6 @@ class FKIKComponent(luna_rig.AnimComponent):
         instance._store_controls([ik_control, pv_control, param_control])
 
         # Store indiviual items
-        instance.pynode.addAttr("fkChain", at="message", multi=1, im=0)
-        instance.pynode.addAttr("ikChain", at="message", multi=1, im=0)
-        instance.pynode.addAttr("fkControls", at="message", multi=1, im=0)
-        instance.pynode.addAttr("ikControl", at="message")
-        instance.pynode.addAttr("poleVectorControl", at="message")
-        instance.pynode.addAttr("paramControl", at="message")
-        instance.pynode.addAttr("matchingHelper", at="message")
-        instance.pynode.addAttr("ikHandle", at="message")
         for fk_jnt in fk_chain:
             fk_jnt.metaParent.connect(instance.pynode.fkChain, na=1)
         for ik_jnt in ik_chain:

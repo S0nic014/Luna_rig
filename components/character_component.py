@@ -12,33 +12,38 @@ class Character(luna_rig.Component):
     def __repr__(self):
         return "Character component: ({0})".format(self.pynode.characterName.get())
 
-    @ property
+    @property
     def root_ctl(self):
         return luna_rig.Control(self.pynode.rootCtl.listConnections()[0])
 
-    @ property
+    @property
     def control_rig(self):
         node = self.pynode.controlRig.listConnections()[0]  # type: luna_rig.nt.Transform
         return node
 
-    @ property
+    @property
     def deformation_rig(self):
         node = self.pynode.deformationRig.listConnections()[0]  # type: luna_rig.nt.Transform
         return node
 
-    @ property
+    @property
     def geometry_grp(self):
         node = self.pynode.geometryGroup.listConnections()[0]  # type: luna_rig.nt.Transform
         return node
 
-    @ property
+    @property
     def locators_grp(self):
         node = self.pynode.locatorsGroup.listConnections()[0]  # type: luna_rig.nt.Transform
         return node
 
-    @ property
+    @property
     def world_locator(self):
         node = self.pynode.worldLocator.listConnections()[0]  # type:luna_rig.nt.Locator
+        return node
+
+    @property
+    def util_grp(self):
+        node = self.pynode.utilGrp.listConnections()[0]  # type: luna_rig.nt.Transform
         return node
 
     @property
@@ -67,7 +72,17 @@ class Character(luna_rig.Component):
         :return: New character instance.
         :rtype: Character
         """
+        # Add message attrs to meta node
         instance = super(Character, cls).create(meta_parent, name=name, side="char")  # type: Character
+        instance.pynode.addAttr("characterName", dt="string")
+        instance.pynode.addAttr("rootCtl", at="message")
+        instance.pynode.addAttr("controlRig", at="message")
+        instance.pynode.addAttr("deformationRig", at="message")
+        instance.pynode.addAttr("geometryGroup", at="message")
+        instance.pynode.addAttr("locatorsGroup", at="message")
+        instance.pynode.addAttr("worldLocator", at="message")
+        instance.pynode.addAttr("utilGrp", at="message")
+
         # Create main members
         root_ctl = luna_rig.Control.create(name="character_node",
                                            side="c",
@@ -81,6 +96,7 @@ class Character(luna_rig.Component):
         deformation_rig = pm.createNode('transform', n=static.CharacterMembers.deformation_rig.value, p=root_ctl.transform)  # type: luna_rig.nt.Transform
         locators_grp = pm.createNode('transform', n=static.CharacterMembers.locators.value, p=root_ctl.transform)  # type: luna_rig.nt.Transform
         world_locator = pm.spaceLocator(n=static.CharacterMembers.world_space.value)  # type: luna_rig.nt.Locator
+        util_grp = pm.createNode('transform', n=static.CharacterMembers.util_group.value, p=root_ctl.transform)  # type: luna_rig.nt.Transform
         pm.parent(world_locator, locators_grp)
 
         # Handle geometry group
@@ -91,18 +107,10 @@ class Character(luna_rig.Component):
             pm.parent(geometry_grp, root_ctl.transform)
             geometry_grp.inheritsTransform.set(0)
 
-        # Add message attrs to meta node
-        instance.pynode.addAttr("characterName", dt="string")
-        instance.pynode.addAttr("rootCtl", at="message")
-        instance.pynode.addAttr("controlRig", at="message")
-        instance.pynode.addAttr("deformationRig", at="message")
-        instance.pynode.addAttr("geometryGroup", at="message")
-        instance.pynode.addAttr("locatorsGroup", at="message")
-        instance.pynode.addAttr("worldLocator", at="message")
-
         # Add meta parent attrs to nodes
-        for node in [control_rig, deformation_rig, geometry_grp, locators_grp, world_locator]:
-            node.addAttr("metaParent", at="message")
+        attrFn.add_meta_attr([control_rig, deformation_rig, geometry_grp, locators_grp, world_locator, util_grp])
+        # for node in [control_rig, deformation_rig, geometry_grp, locators_grp, world_locator]:
+        #     node.addAttr("metaParent", at="message")
 
         # Connect to meta node
         instance.pynode.characterName.set(name)
@@ -112,6 +120,7 @@ class Character(luna_rig.Component):
         geometry_grp.metaParent.connect(instance.pynode.geometryGroup)
         locators_grp.metaParent.connect(instance.pynode.locatorsGroup)
         world_locator.metaParent.connect(instance.pynode.worldLocator)
+        util_grp.metaParent.connect(instance.pynode.utilGrp)
 
         # Edit attributes
         # Merge scale to make uniform

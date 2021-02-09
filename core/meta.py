@@ -187,3 +187,9 @@ class MetaRigNode(object):
         else:
             result = all_nodes
         return result
+
+    @staticmethod
+    def get_connected_metanode(node):
+        node = pm.PyNode(node)
+        connected_nodes = [MetaRigNode(network) for network in node.listConnections(type="network") if network.hasAttr("metaRigType")]
+        return connected_nodes
