@@ -78,7 +78,7 @@ class FKComponent(luna_rig.AnimComponent):
         if not attach_obj:
             return
         # Component specific attach logic
-        pm.parentConstraint(attach_obj, self.root, mo=1)
+        pm.parentConstraint(attach_obj, self.group_ctls, mo=1)
 
     def add_auto_aim(self, follow_control, mirrored_chain=False):
         if not isinstance(follow_control, luna_rig.Control):

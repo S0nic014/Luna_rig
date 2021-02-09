@@ -127,6 +127,7 @@ class FKIKComponent(luna_rig.AnimComponent):
                                 sol="ikRPsolver")[0]
         attrFn.add_meta_attr(ik_handle)
         pm.parent(ik_handle, ik_control.transform)
+        pm.orientConstraint(ik_control.transform, ik_chain[-1], mo=1)
         # Matching helper
         matching_helper = pm.createNode("transform",
                                         n=nameFn.generate_name([instance.indexed_name, "matching_helper"], side=instance.side, suffix="grp"),

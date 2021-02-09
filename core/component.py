@@ -126,7 +126,8 @@ class AnimComponent(Component):
         :return: New instance of AnimComponent.
         :rtype: AnimComponent
         """
-
+        if not side:
+            side = meta_parent.side
         instance = super(AnimComponent, cls).create(meta_parent, side, name)  # type: AnimComponent
         # Create hierarchy
         root_grp = pm.group(n=nameFn.generate_name(instance.name, instance.side, suffix="comp"), em=1)
@@ -335,7 +336,7 @@ class AnimComponent(Component):
         # Fetch attach point from component if int
         if hook is None:
             attach_obj = None
-        if isinstance(hook, str):
+        elif isinstance(hook, str):
             attach_obj = pm.PyNode(hook)
         elif isinstance(hook, luna_rig.Control):
             attach_obj = hook.transform

@@ -6,3 +6,4 @@ from luna_rig.components.fk_dynamics_component import FKDynamicsComponent
 from luna_rig.components.fkik_spine_component import FKIKSpineComponent
 from luna_rig.components.foot_component import FootComponent
 from luna_rig.components.twist_component import TwistComponent
+from luna_rig.components.hand_component import HandComponent
