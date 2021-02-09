@@ -3,9 +3,10 @@ from PySide2 import QtCore
 
 import luna_rig
 from luna import Logger
-from luna.utils import enumFn
-from luna_rig.functions import nameFn
-from luna_rig.functions import outlinerFn
+import luna.utils.enumFn as enumFn
+import luna_rig.functions.nameFn as nameFn
+import luna_rig.functions.outlinerFn as outlinerFn
+import luna_rig.functions.animFn as animFn
 
 
 class _compSignals(QtCore.QObject):
@@ -260,7 +261,7 @@ class AnimComponent(Component):
         if not self.bind_joints:
             return
         if not time_range:
-            time_range = (int(pm.playbackOptions(min=1, q=1)), int(pm.playbackOptions(max=1, q=1)))
+            time_range = animFn.get_playback_range()
         pm.bakeResults(self.bind_joints, t=time_range, simulation=True, *args, **kwargs)
         Logger.info("{0}: Baked to skeleton.".format(self))
 

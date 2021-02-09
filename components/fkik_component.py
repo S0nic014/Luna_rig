@@ -2,10 +2,11 @@ import pymel.core as pm
 from luna import Logger
 from luna.utils import enumFn
 import luna_rig
-from luna_rig.functions import jointFn
-from luna_rig.functions import attrFn
-from luna_rig.functions import rigFn
-from luna_rig.functions import nameFn
+import luna_rig.functions.jointFn as jointFn
+import luna_rig.functions.attrFn as attrFn
+import luna_rig.functions.rigFn as rigFn
+import luna_rig.functions.nameFn as nameFn
+import luna_rig.functions.animFn as animFn
 
 
 class FKIKComponent(luna_rig.AnimComponent):
@@ -238,20 +239,43 @@ class FKIKComponent(luna_rig.AnimComponent):
 
     def switch_fkik(self, matching=True):
         # If in FK -> match IK to FK and switch to IK
-        if not self.fkik_state:
-            self.fkik_state = 1
-            pm.matchTransform(self.ik_control.transform, self.matching_helper)
-            # Pole vector
-            pole_locator = jointFn.get_pole_vector(self.fk_chain)
-            pm.matchTransform(self.pv_control.transform, pole_locator)
-            pm.delete(pole_locator)
-            pm.select(self.ik_control.transform, r=1)
+        if not matching:
+            self.fkik_state = not self.fkik_state
+
         else:
-            # If in IK -> match FK to IK and switch to FK
-            self.fkik_state = 0
-            for ik_jnt, fk_ctl in zip(self.ik_chain, self.fk_controls):
-                pm.matchTransform(fk_ctl.transform, ik_jnt, rot=1)
-            pm.select(self.fk_controls[-1].transform, r=1)
+            if not self.fkik_state:
+                self.fkik_state = 1
+                pm.matchTransform(self.ik_control.transform, self.matching_helper)
+                # Pole vector
+                pole_locator = jointFn.get_pole_vector(self.fk_chain)
+                pm.matchTransform(self.pv_control.transform, pole_locator)
+                pm.delete(pole_locator)
+                pm.select(self.ik_control.transform, r=1)
+            else:
+                # If in IK -> match FK to IK and switch to FK
+                self.fkik_state = 0
+                for ik_jnt, fk_ctl in zip(self.ik_chain, self.fk_controls):
+                    pm.matchTransform(fk_ctl.transform, ik_jnt, rot=1)
+                pm.select(self.fk_controls[-1].transform, r=1)
+
+    def bake_fkik(self, source="fk", time_range=None, bake_pv=True, step=1):
+        Logger.info("{0}: baking {1} to {2}...".format(self, source.upper(), "IK" if source.lower() == "fk" else "FK"))
+        if not time_range:
+            time_range = animFn.get_playback_range()
+        for frame in range(time_range[0], time_range[1] + 1, step):
+            pm.setCurrentTime(frame)
+            if source == "fk":
+                self.fkik_state = 0
+                self.switch_fkik(matching=True)
+                self.ik_control.transform.translate.setKey()
+                self.ik_control.transform.rotate.setKey()
+                if bake_pv:
+                    self.pv_control.transform.translate.setKey()
+            elif source == "ik":
+                self.fkik_state = 1
+                self.switch_fkik(matching=True)
+                for fk_control in self.fk_controls:
+                    fk_control.transform.rotate.setKey()
 
     def add_stretch(self, default_value=False):
         # TODO: Add stretch

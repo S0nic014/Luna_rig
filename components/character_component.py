@@ -2,10 +2,10 @@ import pymel.core as pm
 from luna import Logger
 from luna import static
 import luna_rig
-from luna_rig.functions import attrFn
-from luna_rig.functions import outlinerFn
-from luna_rig.functions import rigFn
-from luna_rig.functions import nameFn
+import luna_rig.functions.attrFn as attrFn
+import luna_rig.functions.outlinerFn as outlinerFn
+import luna_rig.functions.rigFn as rigFn
+import luna_rig.functions.nameFn as nameFn
 
 
 class Character(luna_rig.Component):
