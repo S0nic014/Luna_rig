@@ -71,3 +71,28 @@ def set_node_selectable(node, value):
                     False: 2}
     node.overrideEnabled.set(1)
     node.overrideDisplayType.set(state_values.get(value, 0))
+
+
+def selected_control_bind_pose():
+    selected = pm.selected()
+    if not selected:
+        return
+    controls = []
+    for item in selected:
+        if luna_rig.Control.is_control(item):
+            controls.append(luna_rig.Control(item))
+    for ctl in controls:
+        ctl.to_bind_pose()
+
+
+def asset_bind_pose():
+    selected = pm.selected()
+    if not selected:
+        return
+    if not luna_rig.Control.is_control(selected[-1]):
+        return
+    character = luna_rig.Control(selected[-1]).character
+    if not character:
+        Logger.warning("{0}: connected character not found.")
+        return
+    character.to_bind_pose()

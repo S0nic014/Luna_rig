@@ -109,9 +109,6 @@ class Control(object):
 
         # Transform
         transform_node = pm.createNode('transform', n=nameFn.generate_name(name, side, suffix="ctl"), p=temp_parent)
-        transform_node.addAttr("bindPose", dt="string", keyable=False)
-        transform_node.bindPose.set(json.dumps({}))
-        transform_node.bindPose.lock()
         temp_parent = transform_node
 
         # Joint
@@ -121,11 +118,14 @@ class Control(object):
 
         # Tag node
         pm.controller(transform_node)
-        tag_node = transform_node.listConnections(t="controller")[0]
+        tag_node = transform_node.listConnections(t="controller")[0]  # type: luna_rig.nt.Controller
         tag_node.addAttr("group", at="message")
         tag_node.addAttr("offset", at="message", multi=1, im=0)
         tag_node.addAttr("joint", at="message")
         tag_node.addAttr("tag", dt="string")
+        tag_node.addAttr("bindPose", dt="string", keyable=False)
+        tag_node.bindPose.set(json.dumps({}))
+        tag_node.bindPose.lock()
         tag_node.tag.set(tag)
         # Add meta parent attribs
         for node in [group_node, offset_node, transform_node, ctl_joint]:
@@ -313,8 +313,8 @@ class Control(object):
         :rtype: dict
         """
         pose_dict = {}
-        if pm.hasAttr(self.transform, "bindPose"):
-            pose_dict = json.loads(self.transform.bindPose.get())
+        if pm.hasAttr(self.tag_node, "bindPose"):
+            pose_dict = json.loads(self.tag_node.bindPose.get())
         else:
             Logger.warning("{0}: missing bind pose!".format(self))
         return pose_dict
@@ -669,14 +669,14 @@ class Control(object):
 
     def write_bind_pose(self):
         """Writes current control pose to bindPose attribute on Control.transform"""
-        if not pm.hasAttr(self.transform, "bindPose"):
-            self.transform.addAttr("bindPose", dt="string", keyable=False)
-            self.transform.bindPose.set(json.dumps(self.pose))
-            self.transform.bindPose.lock()
+        if not pm.hasAttr(self.tag_node, "bindPose"):
+            self.tag_node.addAttr("bindPose", dt="string", keyable=False)
+            self.tag_node.bindPose.set(json.dumps(self.pose))
+            self.tag_node.bindPose.lock()
         else:
-            self.transform.bindPose.unlock()
-            self.transform.bindPose.set(json.dumps(self.pose))
-            self.transform.bindPose.lock()
+            self.tag_node.bindPose.unlock()
+            self.tag_node.bindPose.set(json.dumps(self.pose))
+            self.tag_node.bindPose.lock()
         Logger.debug("Bind pose written for {0}".format(self))
 
     def to_bind_pose(self):
