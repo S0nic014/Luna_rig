@@ -483,7 +483,7 @@ class Control(object):
     def mirror_shape_to_opposite(self, behaviour=True, across="yz", flip=False, flip_across="yz"):
         opposite_ctl = self.find_opposite()
         if not opposite_ctl:
-            Logger.warning("{0}: No opposite control was found.")
+            Logger.warning("{0}: No opposite control was found.".format(self))
             return
         old_color = opposite_ctl.color
         ShapeManager.apply_shape(opposite_ctl.transform, self.shape)

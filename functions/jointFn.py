@@ -3,6 +3,7 @@ import pymel.core as pm
 import pymel.api as pma
 from luna import Logger
 import luna_rig
+import luna.static as static
 import luna_rig.functions.curveFn as curveFn
 import luna_rig.functions.nameFn as nameFn
 
@@ -85,6 +86,18 @@ def reverse_chain(joint_list=[]):
         jnt.setParent()
     joint_list.reverse()
     create_chain(joint_list)
+
+
+def mirror_chain(chains=[]):
+    if not chains:
+        chains = pm.selected()
+    valid_chains = [obj for obj in chains if isinstance(obj, luna_rig.nt.Joint)]
+    for joint in valid_chains:
+        side = joint.name().split("_")[0]
+        if side in ["l", "r"]:
+            pm.mirrorJoint(joint, mb=1, myz=1, sr=(side + "_", static.OppositeSide[side].value + "_"))
+        else:
+            pm.mirrorJoint(joint, mb=1, myz=1)
 
 
 def along_curve(curve, amount, joint_name="joint", joint_side="c", joint_suffix="jnt", delete_curve=False):

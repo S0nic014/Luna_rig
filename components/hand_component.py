@@ -37,7 +37,8 @@ class HandComponent(luna_rig.AnimComponent):
                                                               add_end_ctl=False,
                                                               lock_translate=False)
         fk_component.pynode.metaParent.connect(self.pynode.fingers, na=1)
-        fk_component.controls[0].shape = "circle"
+        fk_component.controls[0].shape = "markerDiamond"
+        fk_component.controls[0].scale(1.0, 0.5)
         for ctl in fk_component.controls[1:]:
             ctl.shape = "cube"
             ctl.scale(1.0, 2)
