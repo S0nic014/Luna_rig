@@ -176,10 +176,10 @@ class Control(object):
         return name
 
     @property
-    def unsuffixed_name(self):
+    def indexed_name(self):
         name_parts = nameFn.deconstruct_name(self.transform)
         name = "_".join(name_parts.name)
-        return "_".join([name_parts.side, name, name_parts.index])
+        return "_".join((name, name_parts.index))
 
     @property
     def side(self):
@@ -459,12 +459,11 @@ class Control(object):
         else:
             parent = self.group
         if extra_name:
-            new_name = "_".join([self.name, extra_name])
+            new_name = "_".join([self.indexed_name, extra_name])
         new_offset = pm.createNode("transform", n=nameFn.generate_name(new_name, side=self.side, suffix="ofs"), p=parent)  # type: luna_rig.nt.Transform
         pm.parent(self.transform, new_offset)
         new_offset.addAttr("metaParent", at="message")
         new_offset.metaParent.connect(self.tag_node.offset, na=1)
-        Logger.debug("Updated {0}".format(self))
         return new_offset
 
     def find_offset(self, extra_name):
@@ -559,20 +558,20 @@ class Control(object):
             self.transform.addAttr("spaceUseScale", at="bool", dv=True, k=1)
 
         # Get offset matrix
-        mult_mtx = pm.createNode("multMatrix", n="{0}_{1}_mmtx".format(self.unsuffixed_name, name.lower()))
+        mult_mtx = pm.createNode("multMatrix", n=nameFn.generate_name([self.indexed_name, name.lower()], side=self.side, suffix="mmtx"))
         offset_mtx = transformFn.matrix_to_list(self.transform.worldMatrix.get() * self.transform.matrix.get().inverse() * target.worldInverseMatrix.get())
         mult_mtx.matrixIn[0].set(offset_mtx)
         target.worldMatrix.connect(mult_mtx.matrixIn[1])
         self.transform.getParent().worldInverseMatrix.connect(mult_mtx.matrixIn[2])
         index = len(self.spaces) - 1
         # Condition
-        condition = pm.createNode("condition", n="{0}_{1}_cond".format(self.unsuffixed_name, name.lower()))
+        condition = pm.createNode("condition", n=nameFn.generate_name([self.indexed_name, name.lower()], side=self.side, suffix="cond"))
         condition.secondTerm.set(index)
         condition.colorIfTrueR.set(1)
         condition.colorIfFalseR.set(0)
         self.transform.space.connect(condition.firstTerm)
         # Blend matrix
-        blend_name = "{0}_space_blend".format(self.unsuffixed_name)
+        blend_name = "{0}_{1}_space_00_blend".format(self.side, self.indexed_name)
         if not pm.objExists(blend_name):
             blend_mtx = pm.createNode("blendMatrix", n=blend_name)
         else:
@@ -592,11 +591,11 @@ class Control(object):
         if not space_offset:
             space_offset = self.insert_offset(extra_name="space")
         # Create space transforms
-        space_node = pm.createNode("transform", n="{0}_{1}_space".format(self.unsuffixed_name, name.lower()), p=self.transform)
+        space_node = pm.createNode("transform", n=nameFn.generate_name([self.indexed_name, name.lower()], side=self.side, suffix="space"), p=self.transform)
         pm.parent(space_node, world=True)
         parent_constr = pm.parentConstraint(space_node, space_offset)
         # Condition node
-        condition = pm.createNode("condition", n="{0}_{1}_cond".format(self.unsuffixed_name, name.lower()))
+        condition = pm.createNode("condition", n=nameFn.generate_name([self.indexed_name, name.lower()], side=self.side, suffix="cond"))
         self.transform.space.connect(condition.firstTerm)
         condition.secondTerm.set(len(parent_constr.getTargetList()) - 1)
         condition.colorIfTrueR.set(1)
@@ -628,15 +627,15 @@ class Control(object):
         """
         # Curve
         curve_points = [source.getTranslation(space="world"), self.transform.getTranslation(space="world")]
-        wire_curve = curveFn.curve_from_points(name="{0}_wire_crv".format(self.unsuffixed_name), degree=1, points=curve_points)
+        wire_curve = curveFn.curve_from_points(name=nameFn.generate_name([self.indexed_name, "wire"], side=self.side, suffix="crv"), degree=1, points=curve_points)
         wire_curve.inheritsTransform.set(0)
         # Clusters
-        src_cluster = pm.cluster(wire_curve.getShape().controlPoints[0], n="{0}_wire_src_clst".format(self.unsuffixed_name))
-        dest_cluster = pm.cluster(wire_curve.getShape().controlPoints[1], n="{0}_wire_dest_clst".format(self.unsuffixed_name))
-        pm.pointConstraint(source, src_cluster, n="{0}_wire_src_pconstr".format(self.unsuffixed_name))
-        pm.pointConstraint(self.transform, dest_cluster, n="{0}_wire_dest_pconstr".format(self.unsuffixed_name))
+        src_cluster = pm.cluster(wire_curve.getShape().controlPoints[0], n=nameFn.generate_name([self.indexed_name, "wire", "src"], side=self.side, suffix="clst"))
+        dest_cluster = pm.cluster(wire_curve.getShape().controlPoints[1], n=nameFn.generate_name([self.indexed_name, "wire", "dest"], side=self.side, suffix="clst"))
+        pm.pointConstraint(source, src_cluster, n=nameFn.generate_name([self.indexed_name, "wire", "src"], side=self.side, suffix="ptcon"))
+        pm.pointConstraint(self.transform, dest_cluster, n=nameFn.generate_name([self.indexed_name, "wire", "dest"], side=self.side, suffix="ptcon"))
         # Grouping
-        wire_grp = pm.group(src_cluster, dest_cluster, n="{0}_wire_grp".format(self.unsuffixed_name))
+        wire_grp = pm.group(src_cluster, dest_cluster, n=nameFn.generate_name([self.indexed_name, "wire"], side=self.side, suffix="grp"))
         pm.parent(wire_curve, wire_grp)
         pm.parent(wire_grp, self.group)
         # Housekeeping
@@ -811,9 +810,9 @@ class Control(object):
             self.connected_component._store_util_nodes([local_group, space_group])
 
     def add_driven_pose(self, driven_dict, driver_attr, driver_value):
-        pose_offset = self.find_offset("driven_pose")
+        pose_offset = self.find_offset("driven")
         if not pose_offset:
-            pose_offset = self.insert_offset(extra_name="driven_pose")
+            pose_offset = self.insert_offset(extra_name="driven")
         for attr_name, value in driven_dict.items():
             pm.setDrivenKeyframe(pose_offset.attr(attr_name), cd=driver_attr, v=pose_offset.attr(attr_name).get(), dv=0)
             pm.setDrivenKeyframe(pose_offset.attr(attr_name), cd=driver_attr, v=value, dv=driver_value)
