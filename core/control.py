@@ -161,8 +161,7 @@ class Control(object):
 
     @property
     def namespace_list(self):
-        name_parts = nameFn.deconstruct_name(self.transform)
-        return name_parts.namespaces
+        return nameFn.deconstruct_name(self.transform).namespaces
 
     @property
     def name(self):
@@ -171,15 +170,11 @@ class Control(object):
         :return: Name
         :rtype: str
         """
-        name_parts = nameFn.deconstruct_name(self.transform)
-        name = "_".join(name_parts.name)
-        return name
+        return nameFn.deconstruct_name(self.transform).name
 
     @property
     def indexed_name(self):
-        name_parts = nameFn.deconstruct_name(self.transform)
-        name = "_".join(name_parts.name)
-        return "_".join((name, name_parts.index))
+        return nameFn.deconstruct_name(self.transform).indexed_name
 
     @property
     def side(self):
@@ -661,7 +656,7 @@ class Control(object):
             nameFn.rename(node, side, name, index, suffix)
         for node in self.offset_list:
             if name:
-                name_parts = nameFn.deconstruct_name(node).name
+                name_parts = nameFn.deconstruct_name(node).name.split("_")
                 extra_parts = [substr for substr in name_parts if substr not in old_name.split("_")]
                 name = "_".join([name] + extra_parts)
             nameFn.rename(node, side, name, index, suffix)
@@ -700,9 +695,10 @@ class Control(object):
         :return: [description]
         :rtype: [type]
         """
+        template = nameFn.get_current_template()
         if self.side not in ["l", "r"]:
             return None
-        opposite_transform = "{0}_{1}_{2}_{3}".format(static.OppositeSide[self.side].value, self.name, self.index, "ctl")
+        opposite_transform = template.format(side=static.OppositeSide[self.side].value, name=self.indexed_name, suffix="ctl")
         # Handle namespaces
         opposite_transform = ":".join(self.transform.namespaceList() + [opposite_transform])
         if pm.objExists(opposite_transform):

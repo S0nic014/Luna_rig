@@ -56,6 +56,3 @@ class HandComponent(luna_rig.AnimComponent):
         attach_obj = super(HandComponent, self).attach_to_component(other_comp, hook=hook)
         pm.matchTransform(self.root, attach_obj)
         pm.parentConstraint(attach_obj, self.group_ctls)
-
-    def import_poses(self, drive_value=10):
-        DrivenPoseManager().import_component_poses(self, driver_value=drive_value)

@@ -1,32 +1,72 @@
+import re
 import pymel.core as pm
+import luna
 from luna import Logger
 
 
 def deconstruct_name(node):
-    """Deconstruct node name
-
-    :param node: Node to deconstruct name for.
-    :type node: str or PyNode
-    :return: Name struct {namespaces, side, name, index, suffix}
-    :rtype: nameStruct
-    """
+    template = get_current_template()
     node = pm.PyNode(node)
-    full_name = node.name(stripNamespace=True)
+    full_name = node.stripNamespace()
     name_parts = full_name.split("_")
+    # Find last index
+    re_index = re.compile(r"\d+|^$")
+    all_indexes = list(filter(re_index.match, name_parts))
+    index_index = len(name_parts) - name_parts[::-1].index(all_indexes[-1]) - 1
+    index = name_parts[index_index]  # type: str
+    # Find name
+    name_start_index = template.split("_").index("{name}")
+    name = "_".join(name_parts[name_start_index:index_index])
+    indexed_name = "_".join(name_parts[name_start_index:index_index + 1])
+    # Find suffix and side
+    temp_name = full_name.replace(indexed_name, "name")
+    side_index = template.split("_").index("{side}")
+    suffix_index = template.split("_").index("{suffix}")
+    side = temp_name.split("_")[side_index]  # type: str
+    suffix = temp_name.split("_")[suffix_index]  # type: str
 
     class _nameStruct:
         def __init__(self):
-            self.namespaces = node.namespaceList()  # type :list
-            self.side = name_parts[0]  # type :str
-            self.name = name_parts[1:-2]  # type :list
-            self.index = name_parts[-2]  # type: str
-            self.suffix = name_parts[-1]  # type: str
-    try:
-        name_struct = _nameStruct()
-    except IndexError:
-        Logger.exception("Failed to deconstruct name: {0}".format(full_name))
+            self.namespaces = node.namespaceList()  # type: list
+            self.side = side
+            self.name = name
+            self.indexed_name = indexed_name
+            self.index = index
+            self.suffix = suffix
 
-    return name_struct  # type: _nameStruct
+    return _nameStruct()  # type: _nameStruct
+
+
+def generate_name(name, side, suffix, override_index=None):
+    template = get_current_template()
+    naming_profile = luna.Config.get(luna.LunaVars.naming_profile, stored=True, default={})  # type: dict
+
+    if isinstance(name, list):
+        name = "_".join(name)
+    # Prepare for name generation
+    timeout = 300
+    index = naming_profile.get("start_index", 0)
+    zfill = naming_profile.get("index_padding", 2)
+    # Construct base name
+    index_str = str(index).zfill(zfill) if override_index is None else override_index
+    indexed_name = name + "_" + index_str
+    full_name = template.format(side=side, name=indexed_name, suffix=suffix)
+    while pm.objExists(full_name):
+        index += 1
+        index_str = str(index).zfill(zfill) if override_index is None else override_index
+        indexed_name = name + "_" + index_str
+        full_name = template.format(side=side, name=indexed_name, suffix=suffix)
+        if index == timeout:
+            Logger.warning("Reached max iterations of {0}".format(timeout))
+            break
+    return full_name
+
+
+def get_current_template():
+    naming_profile = luna.Config.get(luna.LunaVars.naming_profile, stored=True, default={})  # type: dict
+    all_templates = luna.Config.get(luna.LunaVars.naming_templates, stored=True, default={})  # type: dict
+    template = all_templates.get(naming_profile.get("template", "default"), "{side}_{name}_{suffix}")  # type: str
+    return template
 
 
 def rename(node, side=None, name=None, index=None, suffix=None):
@@ -46,52 +86,18 @@ def rename(node, side=None, name=None, index=None, suffix=None):
     if node is None:
         return
 
-    old_name = str(node)
-    name_parts = deconstruct_name(old_name)
+    name_parts = deconstruct_name(node)
     if side is not None:
         name_parts.side = side
     if name is not None:
         name_parts.name = name
-    if index is not None:
-        name_parts.index = str(index)
     if suffix is not None:
         name_parts.suffix = suffix
+    if index is not None:
+        name_parts.index = index
 
-    if isinstance(name_parts.name, list):
-        name_parts.name = "_".join(name_parts.name)
-    new_name = "_".join([name_parts.side, name_parts.name, name_parts.index, name_parts.suffix])
+    new_name = generate_name(name_parts.name, name_parts.side, name_parts.suffix, override_index=name_parts.index)
     pm.rename(node, new_name)
-
-
-def generate_name(name, side="", suffix=""):
-    """Generate unique node name using format "side_name_index_suffix".
-
-    :param name: Node name
-    :type name: str or (str, list)
-    :param side: Side prefix, defaults to ""
-    :type side: str, optional
-    :param suffix: Name suffix, defaults to ""
-    :type suffix: str, optional
-    :return: Unique node name
-    :rtype: str
-    """
-    if side:
-        side += "_"
-    if suffix:
-        suffix = "_" + suffix
-    if isinstance(name, list):
-        name = "_".join(name)
-
-    index = 0
-    version = '_{0:02}'.format(index)
-
-    full_name = side + name + version + suffix
-    while pm.objExists(full_name):
-        index += 1
-        version = '_{0:02}'.format(index)
-        full_name = side + name + version + suffix
-
-    return full_name
 
 
 def add_namespaces(name, namespaces):

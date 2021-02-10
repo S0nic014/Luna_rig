@@ -22,11 +22,11 @@ def duplicate_chain(original_chain=[],
 
     new_chain = pm.duplicate(original_chain, po=1, rc=1)  # type :list
     for old_jnt, new_jnt in zip(original_chain, new_chain):
-        original_name = nameFn.deconstruct_name(str(old_jnt))
+        original_name = nameFn.deconstruct_name(old_jnt)
         if replace_name:
             original_name.name = replace_name
         if add_name:
-            original_name.name.append(add_name)
+            original_name.name = "_".join([original_name.name, add_name])
         if replace_side:
             original_name.side = replace_side
         if replace_suffix:

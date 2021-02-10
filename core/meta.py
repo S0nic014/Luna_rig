@@ -62,32 +62,30 @@ class MetaRigNode(object):
 
     @property
     def namespace_list(self):
-        name_parts = nameFn.deconstruct_name(self.pynode.name())
+        name_parts = nameFn.deconstruct_name(self.pynode)
         return name_parts.namespaces
 
     @property
     def name(self):
-        name_parts = nameFn.deconstruct_name(self.pynode.name())
-        name = "_".join(name_parts.name)
-        return name
+        name_parts = nameFn.deconstruct_name(self.pynode)
+        return name_parts.name
 
     @property
     def side(self):
-        return nameFn.deconstruct_name(self.pynode.name()).side
+        return nameFn.deconstruct_name(self.pynode).side
 
     @property
     def index(self):
-        return nameFn.deconstruct_name(self.pynode.name()).index
+        return nameFn.deconstruct_name(self.pynode).index
 
     @property
     def indexed_name(self):
-        name_parts = nameFn.deconstruct_name(self.pynode.name())
-        name = "_".join(name_parts.name)
-        return "_".join((name, name_parts.index))
+        name_parts = nameFn.deconstruct_name(self.pynode)
+        return name_parts.indexed_name
 
     @property
     def suffix(self):
-        return nameFn.deconstruct_name(self.pynode.name()).suffix
+        return nameFn.deconstruct_name(self.pynode).suffix
 
     @property
     def meta_type(self):
