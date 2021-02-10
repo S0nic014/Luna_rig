@@ -6,28 +6,22 @@ import luna.utils.fileFn as fileFn
 from luna_rig.importexport import manager
 
 
-class KeyPoseManager(manager.AbstractManager):
+class DrivenPoseManager(manager.AbstractManager):
     def __init__(self):
-        super(KeyPoseManager, self).__init__("pose", "json")
+        super(DrivenPoseManager, self).__init__("pose", "json")
 
     @property
     def path(self):
         return self.asset.data.poses
 
-    def get_component_dir(self, component_node):
-        return os.path.join(self.path, component_node)
-
-    def get_base_name(self, pose_name):
-        return pose_name
+    def get_base_name(self, component_name, pose_name):
+        return "{0}-{1}".format(component_name, pose_name)
 
     def get_new_file(self, node_name, pose_name):
-        node_dir = self.get_component_dir(node_name)
-        if not os.path.isdir(node_dir):
-            os.mkdir(node_dir)
-        return fileFn.get_new_versioned_file(self.get_base_name(pose_name), node_dir, extension=self.extension, full_path=True)
+        return fileFn.get_new_versioned_file(self.get_base_name(node_name, pose_name), self.path, extension=self.extension, full_path=True)
 
     def get_latest_file(self, node_name, pose_name):
-        return fileFn.get_latest_file(self.get_base_name(pose_name), self.get_component_dir(node_name), extension=self.extension, full_path=True)
+        return fileFn.get_latest_file(self.get_base_name(node_name, pose_name), self.path, extension=self.extension, full_path=True)
 
     def export_pose(self, component_node, controls_list, driver_ctl, pose_name):
         pose_dict = {}
@@ -73,14 +67,17 @@ class KeyPoseManager(manager.AbstractManager):
                 axis_dict = {attr + "X": value_list[0],
                              attr + "Y": value_list[1],
                              attr + "Z": value_list[2]}
-                control.add_key_pose(axis_dict, driver_ctl.attr(pose_name), driver_value)
-        Logger.info("{0}: Imported key poses: {1}".format(component, latest_file))
+                control.add_driven_pose(axis_dict, driver_ctl.attr(pose_name), driver_value)
+        Logger.info("{0}: Imported driven pose: {1}".format(component, latest_file))
 
     def import_component_poses(self, component_node, driver_value=10):
         if isinstance(component_node, luna_rig.AnimComponent):
             component_node = component_node.pynode.name()
-        if not os.path.isdir(self.get_component_dir(component_node)):
-            return
-        for pose_file in os.listdir(os.path.join(self.path, component_node)):
-            pose_name = pose_file.split(".")[0]
+        for pose_path in fileFn.get_latest_from_sub_name(component_node, self.path, extension=self.extension, sub_index=0, sub_split="-"):
+            file_name = os.path.basename(pose_path)
+            pose_name = file_name.split(".")[0].split("-")[-1]
             self.import_pose(component_node, pose_name, driver_value)
+
+    def import_all(self, driver_value=10):
+        for component in luna_rig.MetaRigNode.list_nodes(of_type=luna_rig.AnimComponent):
+            self.import_component_poses(component, driver_value)

@@ -1,6 +1,6 @@
 import pymel.core as pm
 import luna_rig
-from luna_rig.importexport.key_pose import KeyPoseManager
+from luna_rig.importexport.driven_pose import DrivenPoseManager
 
 
 class HandComponent(luna_rig.AnimComponent):
@@ -58,4 +58,4 @@ class HandComponent(luna_rig.AnimComponent):
         pm.parentConstraint(attach_obj, self.group_ctls)
 
     def import_poses(self, drive_value=10):
-        KeyPoseManager().import_component_poses(self, driver_value=drive_value)
+        DrivenPoseManager().import_component_poses(self, driver_value=drive_value)
