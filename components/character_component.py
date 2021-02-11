@@ -211,21 +211,21 @@ class Character(luna_rig.Component):
             node = pm.PyNode(nucleus_name)  # type: luna_rig.nt.Nucleus
         return node
 
-    def bake_to_skeleton(self, time_range, *args, **kwargs):
+    def bake_to_skeleton(self, *args, **kwargs):
         for anim_comp in self.get_meta_children(of_type=luna_rig.AnimComponent):
-            anim_comp.bake_to_skeleton(time_range, *args, **kwargs)
+            anim_comp.bake_to_skeleton(*args, **kwargs)
 
-    def bake_and_detach(self, time_range, *args, **kwargs):
+    def bake_and_detach(self, *args, **kwargs):
         for anim_comp in self.get_meta_children(of_type=luna_rig.AnimComponent):
             anim_comp.bake_and_detach(*args, **kwargs)
 
-    def remove(self, bake=True, *args, **kwargs):
-        if bake:
-            self.bake_and_detach(*args, **kwargs)
+    def remove(self, time_range=None):
+        self.bake_and_detach(time_range)
         self.geometry_grp.setParent(None)
         self.deformation_rig.setParent(None)
         pm.delete(self.root_ctl.group)
         self.delete_util_nodes()
+        pm.delete(self.pynode)
 
     def set_interesting(self, value):
         for ctl in self.list_controls():
