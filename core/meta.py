@@ -4,6 +4,7 @@ import pymel.core as pm
 import luna_rig
 from luna import Logger
 from luna_rig.functions import nameFn
+import luna.utils.inspectFn as inspectFn
 
 
 class MetaRigNode(object):
@@ -185,6 +186,18 @@ class MetaRigNode(object):
         else:
             result = all_nodes
         return result
+
+    @staticmethod
+    def get_existing_nodes():
+        scene_dict = {}
+        for comp_name, comp_type in inspectFn.get_classes(luna_rig.components):
+            existing_nodes = MetaRigNode.list_nodes(of_type=comp_type)
+            if existing_nodes:
+                scene_dict[comp_type] = existing_nodes
+        anim_comps = MetaRigNode.list_nodes(of_type=luna_rig.AnimComponent)
+        if anim_comps:
+            scene_dict[luna_rig.AnimComponent] = anim_comps
+        return scene_dict
 
     @staticmethod
     def get_connected_metanode(node):
