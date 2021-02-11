@@ -257,13 +257,16 @@ class AnimComponent(Component):
                 pm.delete(bind_jnt.listConnections(type="parentConstraint"))
             pm.parentConstraint(ctl_jnt, bind_jnt, mo=1)
 
-    def bake_to_skeleton(self, time_range=None, *args, **kwargs):
+    def bake_to_skeleton(self, *args, **kwargs):
         """Override: bake animation to skeleton"""
         if not self.bind_joints:
             return
-        if not time_range:
-            time_range = animFn.get_playback_range()
-        pm.bakeResults(self.bind_joints, t=time_range, simulation=True, *args, **kwargs)
+        if "time" not in kwargs.keys():
+            kwargs["time"] = animFn.get_playback_range()
+        if "bake" in kwargs.keys():
+            kwargs.pop("bake")
+
+        pm.bakeResults(self.bind_joints, **kwargs)
         Logger.info("{0}: Baked to skeleton.".format(self))
 
     def bake_and_detach(self, time_range=None, *args, **kwargs):
