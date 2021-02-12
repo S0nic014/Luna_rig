@@ -37,8 +37,6 @@ class PsdManager(manager_base.AbstractManager):
                     pose_blendshapes.append()
         bs_manager = BlendShapeManager()
         for bs_node in pose_blendshapes:
-            if not bs_node.name().endswith("_pose"):
-                bs_node.rename(bs_node.name() + "_pose")
             bs_manager.export_single(bs_node)
         # Export interpolators
         export_path = self.get_new_file()

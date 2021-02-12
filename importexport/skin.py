@@ -2,21 +2,22 @@ import os
 import pymel.core as pm
 import pymel.api as pma
 
+import luna_rig
 from luna import Logger
 from luna import static
 from luna.utils import fileFn
-from luna_rig.importexport import manager
-from luna_rig.functions import nameFn
-reload(manager)
+from luna_rig.importexport.manager import AbstractManager
+import luna_rig.functions.nameFn as nameFn
+import luna_rig.functions.deformerFn as deformerFn
 
 
-class SkinClusterManager(manager.DeformerManager):
+class SkinManager(AbstractManager):
     def __init__(self):
-        super(SkinClusterManager, self).__init__("skinCluster", "skin")
+        super(SkinManager, self).__init__("skinCluster", "skin")
 
     @property
     def path(self):
-        return self.asset.weights.skin_cluster
+        return self.asset.weights.skin
 
     def get_base_name(self, node):
         return str(node)
@@ -28,40 +29,30 @@ class SkinClusterManager(manager.DeformerManager):
         return fileFn.get_latest_file(self.get_base_name(node), self.path, extension=self.extension, full_path=True)
 
     @classmethod
-    def get_deformer_data(cls, node):
-        skin_data = {
-            "name": str(node),
-            "weights": node.getWeights(node.getGeometry()[0]),
-            # "blendWeights": node.getBlendWeights(node.getGeometry()[0]), #TODO: Add blend weights
-            "skinMethod": node.getSkinMethod(),
-            "normalizeWeights": node.getNormalizeWeights(),
-            "influenceObjects": [str(obj) for obj in node.influenceObjects()]
-        }
+    def get_skin_data(cls, node):
+        skin_data = {}
         return skin_data
 
     def export_all(self, under_group=static.CharacterMembers.geometry.value):
-        for deformer_node in self.list_deformers(under_group):
+        for deformer_node in deformerFn.list_deformers(self.data_type, under_group=under_group):
             geo_nodes = deformer_node.getGeometry()
             for geo in geo_nodes:
                 self.export_single(geo.getTransform())
 
     def import_all(self):
-        Logger.info("Importing skinCluster weights...")
-        count = 0
+        Logger.info("Importing skin weights...")
         for geo_name in self.versioned_files.keys():
             if not pm.objExists(geo_name):
                 Logger.warning("Object {0} no longer exists, skipping...".format(geo_name))
                 continue
             self.import_single(geo_name)
-            count += 1
-        Logger.info("Imported {0} skinClusters.".format(count))
 
     def export_single(self, node):
-        deformer = self.get_deformer(node)
+        deformer = deformerFn.get_deformer(node, self.data_type)
         if not deformer:
             Logger.error("No {0} deformer found in {1} history".format(self.data_type, node))
             return
-        if not self.is_painted(deformer):
+        if not deformerFn.is_painted(deformer):
             Logger.warning("{0} on {1} has no weights initialized, nothing to export.")
             return
         new_file = self.get_new_file(node)
@@ -76,17 +67,11 @@ class SkinClusterManager(manager.DeformerManager):
     def import_single(self, geo_name):
         latest_file = self.get_latest_file(geo_name)
         if not latest_file:
-            Logger.warning("No saved skinCluster weights found found for {0}".format(geo_name))
+            Logger.warning("No saved skin weights found found for {0}".format(geo_name))
             return
 
         skin_data = fileFn.load_json(latest_file)
-        # TODO: Handle not existing influences
-        deformer = self.get_deformer(geo_name)
-        if not deformer:
-            deformer = pm.skinCluster(skin_data.get("influenceObjects"), geo_name, n=geo_name + "_skin")  # type: luna_rig.nt.SkinCluster
-        weights = deformer.getWeights(deformer.getGeometry()[0])
-        deformer.setWeights(geo_name, [pm.PyNode(name) for name in skin_data.get("influenceObjects")], weights, skin_data.get("normalizeWeights"))
-        Logger.info("Imported {0} skinCluster weights: {1}".format(geo_name, latest_file))
+        Logger.info("Imported {0} skin weights: {1}".format(geo_name, latest_file))
 
     @classmethod
     def export_selected(cls):
@@ -102,5 +87,5 @@ class SkinClusterManager(manager.DeformerManager):
 
 
 if __name__ == "__main__":
-    skin_manager = SkinClusterManager()
+    skin_manager = SkinManager()
     skin_manager.import_all()

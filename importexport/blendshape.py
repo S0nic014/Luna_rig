@@ -4,6 +4,7 @@ from luna import static
 from luna.utils import fileFn
 import luna_rig
 from luna_rig.importexport import manager
+import luna_rig.functions.deformerFn as deformerFn
 
 
 class BlendShapeManager(manager.AbstractManager):
@@ -39,14 +40,7 @@ class BlendShapeManager(manager.AbstractManager):
 
     def export_all(self, under_group=static.CharacterMembers.geometry.value):
         export_list = []
-        # Gather shapes to export
-        if under_group:
-            for child_node in pm.listRelatives(under_group, ad=1):
-                for bs_node in child_node.listHistory(type=self.data_type):
-                    if bs_node not in export_list:
-                        export_list.append(bs_node)
-        else:
-            export_list = pm.ls(typ=self.data_type)
+        export_list = deformerFn.list_deformers(self.data_type, under_group=under_group)
         for shape in export_list:
             self.export_single(shape)
 
