@@ -79,5 +79,5 @@ class DrivenPoseManager(manager.AbstractManager):
             self.import_pose(component_node, pose_name, driver_value)
 
     def import_all(self, driver_value=10):
-        for component in luna_rig.MetaRigNode.list_nodes(of_type=luna_rig.AnimComponent):
+        for component in luna_rig.MetaNode.list_nodes(of_type=luna_rig.AnimComponent):
             self.import_component_poses(component, driver_value)

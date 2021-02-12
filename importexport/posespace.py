@@ -49,7 +49,7 @@ class PsdManager(manager_base.AbstractManager):
         pm.poseInterpolator(im=interpolator_file)
         for interpolator_shape in pm.ls(typ="poseInterpolator"):
             driver = interpolator_shape.getTransform().driver.listConnections()[0]
-            driver_parent_component = luna_rig.MetaRigNode.get_connected_metanode(driver)
+            driver_parent_component = luna_rig.MetaNode.get_connected_metanode(driver)
             if driver_parent_component:
                 pm.parent(interpolator_shape.getTransform(), driver_parent_component.character.util_grp)
         Logger.info("Imported PSD interpolator: {0}".format(interpolator_file))

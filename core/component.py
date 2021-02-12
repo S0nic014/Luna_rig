@@ -14,7 +14,7 @@ class _compSignals(QtCore.QObject):
     attached = QtCore.Signal(object)
 
 
-class Component(luna_rig.MetaRigNode):
+class Component(luna_rig.MetaNode):
 
     def __new__(cls, node=None):
         return object.__new__(cls, node)
@@ -54,7 +54,7 @@ class Component(luna_rig.MetaRigNode):
         :rtype: Component
         """
         Logger.info("Building {0}({1}_{2})...".format(cls.as_str(name_only=True), side, name))
-        if isinstance(meta_parent, luna_rig.MetaRigNode):
+        if isinstance(meta_parent, luna_rig.MetaNode):
             meta_parent = meta_parent.pynode
         instance = super(Component, cls).create(meta_parent)  # type: Component
         instance.pynode.rename(nameFn.generate_name(name, side, suffix="meta"))
@@ -72,7 +72,7 @@ class Component(luna_rig.MetaRigNode):
         :type other_comp: Component
         """
         if not isinstance(other_comp, Component):
-            other_comp = luna_rig.MetaRigNode(other_comp)
+            other_comp = luna_rig.MetaNode(other_comp)
         if other_comp.pynode not in self.pynode.metaParent.listConnections():
             self.set_meta_parent(other_comp)
 
@@ -197,7 +197,7 @@ class AnimComponent(Component):
     @property
     def character(self):
         connections = self.pynode.character.listConnections()
-        result = luna_rig.MetaRigNode(connections[0]) if connections else None  # type: luna_rig.components.Character
+        result = luna_rig.MetaNode(connections[0]) if connections else None  # type: luna_rig.components.Character
         return result
 
     @property
@@ -359,7 +359,7 @@ class AnimComponent(Component):
         :type character_name: str, optional
         """
         character = None
-        all_characters = luna_rig.MetaRigNode.list_nodes(luna_rig.components.Character)
+        all_characters = luna_rig.MetaNode.list_nodes(luna_rig.components.Character)
         if not all_characters:
             Logger.error("No characters found in the scene!")
             return

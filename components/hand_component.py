@@ -8,7 +8,7 @@ class HandComponent(luna_rig.AnimComponent):
     @property
     def fingers(self):
         connections = self.pynode.fingers.listConnections()  # type: list
-        finger_comps = [luna_rig.MetaRigNode(node) for node in connections]
+        finger_comps = [luna_rig.MetaNode(node) for node in connections]
         return finger_comps
 
     @property

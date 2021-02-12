@@ -30,7 +30,7 @@ def get_build_character():
     :rtype: Character
     """
     current_asset = environFn.get_asset_var()
-    all_characters = luna_rig.MetaRigNode.list_nodes(of_type=luna_rig.components.Character)
+    all_characters = luna_rig.MetaNode.list_nodes(of_type=luna_rig.components.Character)
     for char_node in all_characters:
         if char_node.pynode.characterName.get() == current_asset.name:
             return char_node
@@ -61,7 +61,7 @@ def get_param_ctl_locator(side, anchor_transform, move_axis="x", mult=1):
 
 
 def delete_all_meta_nodes():
-    for node in luna_rig.MetaRigNode.list_nodes():
+    for node in luna_rig.MetaNode.list_nodes():
         if pm.objExists(node.pynode):
             pm.delete(node.pynode)
 

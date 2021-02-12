@@ -7,7 +7,7 @@ from luna_rig.functions import nameFn
 import luna.utils.inspectFn as inspectFn
 
 
-class MetaRigNode(object):
+class MetaNode(object):
 
     @classmethod
     def as_str(cls, name_only=False):
@@ -30,7 +30,7 @@ class MetaRigNode(object):
         return self.pynode == other.pynode
 
     def __new__(cls, node=None):
-        """Initialize class stored in metaRigType attribute and return a intance of it.
+        """Initialize class stored in metaType attribute and return a intance of it.
 
         :param node: Network node, defaults to None
         :type node: str or PyNode, optional
@@ -41,11 +41,11 @@ class MetaRigNode(object):
         result = None
         if node:
             node = pm.PyNode(node)
-            class_string = node.metaRigType.get()
+            class_string = node.metaType.get()
             eval_class = eval(class_string, globals(), locals())
             result = eval_class.__new__(eval_class, node)
         else:
-            result = super(MetaRigNode, cls)
+            result = super(MetaNode, cls)
 
         return result
 
@@ -54,7 +54,7 @@ class MetaRigNode(object):
 
         :param node: Network node
         :type node: str or PyNode
-        :raises TypeError: If node has no metaRigType attribute
+        :raises TypeError: If node has no metaType attribute
         """
         node = pm.PyNode(node)
         if not self.is_metanode(node):
@@ -90,7 +90,7 @@ class MetaRigNode(object):
 
     @property
     def meta_type(self):
-        attr_val = self.pynode.metaRigType.get()  # type: str
+        attr_val = self.pynode.metaType.get()  # type: str
         return attr_val
 
     @property
@@ -98,12 +98,12 @@ class MetaRigNode(object):
         """Get instance of meta parent
 
         :return: Meta parent node instance.
-        :rtype: MetaRigNode
+        :rtype: MetaNode
         """
         result = None
         connections = self.pynode.metaParent.listConnections()
         if connections:
-            result = MetaRigNode(connections[0])
+            result = MetaNode(connections[0])
         return result
 
     @property
@@ -113,29 +113,29 @@ class MetaRigNode(object):
     @classmethod
     def is_metanode(cls, node):
         node = pm.PyNode(node)
-        return node.hasAttr("metaRigType")
+        return node.hasAttr("metaType")
 
     @classmethod
     def create(cls, meta_parent):
-        """Creates meta node and calls constructor for MetaRigNode using meta_type.
+        """Creates meta node and calls constructor for MetaNode using meta_type.
 
         :param meta_parent: Meta parent node to connect to
         :type meta_parent: str or PyNode
         :return: Instance of meta_type class
-        :rtype: MetaRigNode
+        :rtype: MetaNode
         """
         if meta_parent:
-            meta_parent = MetaRigNode(meta_parent)
+            meta_parent = MetaNode(meta_parent)
 
         # Create node
         node = pm.createNode("network")
 
         # Add attributes
-        node.addAttr("metaRigType", dt="string")
+        node.addAttr("metaType", dt="string")
         node.addAttr("metaChildren", at="message", multi=1, im=0)
         node.addAttr("metaParent", at="message")
-        node.metaRigType.set(cls.as_str())
-        meta_node = MetaRigNode(node)
+        node.metaType.set(cls.as_str())
+        meta_node = MetaNode(node)
         if meta_parent:
             meta_node.set_meta_parent(meta_parent)
         return meta_node
@@ -149,13 +149,13 @@ class MetaRigNode(object):
         :param of_type: Only list children of specific type, defaults to None
         :type of_type: class, optional
         :return: List of meta children instances
-        :rtype: list[MetaRigNode]
+        :rtype: list[MetaNode]
         """
         result = []
         if self.pynode.hasAttr("metaChildren"):
             connections = self.pynode.metaChildren.listConnections()
             if connections:
-                children = [MetaRigNode(connection_node) for connection_node in connections if pm.hasAttr(connection_node, "metaRigType")]
+                children = [MetaNode(connection_node) for connection_node in connections if pm.hasAttr(connection_node, "metaType")]
                 if not of_type:
                     result = children
                 else:
@@ -169,15 +169,15 @@ class MetaRigNode(object):
 
     @staticmethod
     def list_nodes(of_type=None):
-        """List Metarig nodes
+        """List existing meta nodes
 
         :param of_type: List only specific type, defaults to None
         :type of_type: str, class, optional
-        :return: List of MetaRigNode instances.
-        :rtype: list[MetaRigNode]
+        :return: List of MetaNode instances.
+        :rtype: list[MetaNode]
         """
         result = []
-        all_nodes = [MetaRigNode(node) for node in pm.ls(typ="network") if node.hasAttr("metaRigType")]
+        all_nodes = [MetaNode(node) for node in pm.ls(typ="network") if node.hasAttr("metaType")]
         if of_type:
             if isinstance(of_type, str):
                 result = [node for node in all_nodes if of_type in node.as_str()]
@@ -191,10 +191,10 @@ class MetaRigNode(object):
     def get_existing_nodes():
         scene_dict = {}
         for comp_name, comp_type in inspectFn.get_classes(luna_rig.components):
-            existing_nodes = MetaRigNode.list_nodes(of_type=comp_type)
+            existing_nodes = MetaNode.list_nodes(of_type=comp_type)
             if existing_nodes:
                 scene_dict[comp_type] = existing_nodes
-        anim_comps = MetaRigNode.list_nodes(of_type=luna_rig.AnimComponent)
+        anim_comps = MetaNode.list_nodes(of_type=luna_rig.AnimComponent)
         if anim_comps:
             scene_dict[luna_rig.AnimComponent] = anim_comps
         return scene_dict
@@ -202,5 +202,5 @@ class MetaRigNode(object):
     @staticmethod
     def get_connected_metanode(node):
         node = pm.PyNode(node)
-        connected_nodes = [MetaRigNode(network) for network in node.listConnections(type="network") if network.hasAttr("metaRigType")]
+        connected_nodes = [MetaNode(network) for network in node.listConnections(type="network") if network.hasAttr("metaType")]
         return connected_nodes

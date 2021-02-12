@@ -1,5 +1,5 @@
 # Core classes
-from luna_rig.core.meta import MetaRigNode
+from luna_rig.core.meta import MetaNode
 from luna_rig.core.component import Component
 from luna_rig.core.component import AnimComponent
 from luna_rig.core.control import Control

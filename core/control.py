@@ -340,10 +340,10 @@ class Control(object):
         result = None
         connections = self.transform.metaParent.listConnections()
         for node in connections:
-            if not luna_rig.MetaRigNode.is_metanode(node):
+            if not luna_rig.MetaNode.is_metanode(node):
                 Logger.warning("Strange connection on {0}.metaParent: {1}".format(self, node))
                 continue
-            result = luna_rig.MetaRigNode(node)  # type: luna_rig.AnimComponent
+            result = luna_rig.MetaNode(node)  # type: luna_rig.AnimComponent
         return result
 
     @property
