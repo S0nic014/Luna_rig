@@ -5,9 +5,23 @@ from luna.utils import fileFn
 
 
 class AbstractManager(object):
+    """Base for importing/exporting asset data
+    Following members must be implemented:
+    - property: path
+    - method: get_base_name
+    - method: get_new_file
+    - method: get_latest_file
+    """
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, data_type, extension):
+        """
+        :param data_type: Deformer type. Must match Maya's nodetype.
+        :type data_type: str
+        :param extension: Export file extension without dot.
+        :type extension: str
+        :raises RuntimeError: If luna asset is not set
+        """
         self.data_type = data_type  # type :str
         self.extension = extension  # type: str
         self.asset = environFn.get_asset_var()
@@ -19,16 +33,20 @@ class AbstractManager(object):
 
     @abc.abstractproperty
     def path(self):
+        """Path to asset sub directory. Example: self.asset.weights.skin """
         pass
 
     @abc.abstractmethod
     def get_base_name(self):
+        """Name for versioned dictionary key"""
         pass
 
     @abc.abstractmethod
     def get_new_file(self):
+        """Returns path to new file version"""
         pass
 
     @abc.abstractmethod
     def get_latest_file(self):
+        """Returns path to latest versioned file"""
         pass
