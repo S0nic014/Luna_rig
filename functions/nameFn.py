@@ -38,15 +38,14 @@ def deconstruct_name(node):
 
 
 def generate_name(name, side, suffix, override_index=None):
-    template = get_current_template()
-    naming_profile = luna.Config.get(luna.LunaVars.naming_profile, stored=True, default={})  # type: dict
 
     if isinstance(name, list):
         name = "_".join(name)
     # Prepare for name generation
     timeout = 300
-    index = naming_profile.get("start_index", 0)
-    zfill = naming_profile.get("index_padding", 2)
+    template = get_current_template()
+    index = luna.Config.get(luna.NamingVars.start_index, default=0, stored=True)
+    zfill = luna.Config.get(luna.NamingVars.index_padding, default=2, stored=True)
     # Construct base name
     index_str = str(index).zfill(zfill) if override_index is None else override_index
     indexed_name = name + "_" + index_str
@@ -63,9 +62,10 @@ def generate_name(name, side, suffix, override_index=None):
 
 
 def get_current_template():
-    naming_profile = luna.Config.get(luna.LunaVars.naming_profile, stored=True, default={})  # type: dict
-    all_templates = luna.Config.get(luna.LunaVars.naming_templates, stored=True, default={})  # type: dict
-    template = all_templates.get(naming_profile.get("template", "default"), "{side}_{name}_{suffix}")  # type: str
+    default_template = "{side}_{name}_{suffix}"
+    all_templates = luna.Config.get(luna.NamingVars.templates_dict, stored=True, default={"default": default_template})
+    current_template_name = luna.Config.get(luna.NamingVars.current_template, stored=True, default="default")
+    template = all_templates.get(current_template_name)
     return template
 
 
