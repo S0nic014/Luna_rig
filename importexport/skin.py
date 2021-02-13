@@ -1,23 +1,28 @@
-import os
+# Derived from https://github.com/mgear-dev/mgear/blob/master/scripts/mgear/maya/skin.py
+
 import pymel.core as pm
-import pymel.api as pma
+import maya.OpenMaya as om
 
 import luna_rig
+import luna
 from luna import Logger
 from luna import static
 from luna.utils import fileFn
-import luna_rig.functions.apiFn as apiFn
 from luna_rig.importexport.manager import AbstractManager
+import luna_rig.functions.outlinerFn as outlinerFn
 import luna_rig.functions.nameFn as nameFn
 import luna_rig.functions.deformerFn as deformerFn
-reload(deformerFn)
 
 
 class SkinManager(AbstractManager):
     """Manager for skinCluster deformer."""
 
-    def __init__(self):
+    def __init__(self, file_format=None):
         super(SkinManager, self).__init__("skinCluster", "skin")
+        if not file_format:
+            self.file_format = luna.Config.get(luna.RigVars.skin_export_type, default="pickle")  # type: str
+        else:
+            self.file_format = file_format
 
     @property
     def path(self):
@@ -71,7 +76,7 @@ class SkinManager(AbstractManager):
         new_file = self.get_new_file(node)
         try:
             skin = SkinCluster(deformer)
-            skin.export(new_file)
+            skin.export_data(new_file, fmt=self.file_format)
             Logger.info("Exported {0} skin: {1}".format(node, new_file))
         except Exception:
             Logger.exception("Failed to export {0} skin {1}".format(node, deformer))
@@ -86,19 +91,11 @@ class SkinManager(AbstractManager):
         if not latest_file:
             Logger.warning("No saved skin weights found found for {0}".format(geo_name))
             return
-
-        skin_data = fileFn.load_json(latest_file)
-        deformer = deformerFn.get_deformer(geo_name, self.data_type)
-        if not deformer:
-            try:
-                geo_name_parts = nameFn.deconstruct_name(geo_name)
-                cluster_name = "{0}_{1}_skin".format(geo_name_parts.side, geo_name_parts.indexed_name)
-            except Exception:
-                cluster_name = str(geo_name) + "_skin"
-
-            Logger.debug("skinCluster name: " + cluster_name)
-            # pm.skinCluster(skin_data.get("influences"), geo_name, n=cluster_name)
-        Logger.info("Imported {0} skin weights: {1}".format(geo_name, latest_file))
+        try:
+            SkinCluster.import_data(latest_file, geo_name, fmt=self.file_format)
+            Logger.info("Imported {0} skin weights: {1}".format(geo_name, latest_file))
+        except Exception:
+            Logger.exception("Failed to import skin weights for: {0}".format(geo_name))
 
     @classmethod
     def export_selected(cls):
@@ -117,61 +114,117 @@ class SkinManager(AbstractManager):
 
 class SkinCluster(object):
     def __init__(self, pynode):
-        super(SkinCluster, self).__init__()
         self.pynode = pynode  # type: luna_rig.nt.SkinCluster
+        self.data = {"weights": {},
+                     "blendWeights": []}
 
-    def get_data(self):
-        data_dict = {}
-        # Get weights
-        weight_dict = self.get_influence_weights()
-        blend_weights_list = self.get_blend_weights()
-        # Store collected data
-        data_dict.update(weight_dict)
-        data_dict["blendWeights"] = blend_weights_list
-        # Store attributes
-        for attr_name in ["skinningMethod", "normalizeWeights", "deformUserNormals"]:
-            data_dict[attr_name] = self.pynode.attr(attr_name).get()
-        return data_dict
+    def get_geometry_components(self):
+        fn_set = om.MFnSet(self.pynode.__apimfn__().deformerSet())
+        members = om.MSelectionList()
+        fn_set.getMembers(members, False)
+        dag_path = om.MDagPath()
+        components = om.MObject()
+        members.getDagPath(0, dag_path, components)
+        return dag_path, components
+    # Collection
 
-    def get_influence_weights(self):
-        """Get dictionary of inluence : weight list
+    def get_current_weights(self):
+        dag_path, components = self.get_geometry_components()
+        weights = om.MDoubleArray()
+        util = om.MScriptUtil()
+        util.createFromInt(0)
+        uint_ptr = util.asUintPtr()
+        self.pynode.__apimfn__().getWeights(dag_path, components, weights, uint_ptr)
+        return weights
 
-        :return: Inluence weights
-        :rtype: dict
-        """
-        weight_dict = {"weights": {}}
-        weights = self.pynode.getWeights(self.pynode.getGeometry()[0])
-        influence_objects = self.pynode.getInfluence()
-        for influence, weight_list in zip(influence_objects, weights):
-            weight_dict["weights"][influence.stripNamespace()] = weight_list
-        return weight_dict
+    def collect_inluence_weights(self):
+        weights = self.get_current_weights()
+        influence_paths = om.MDagPathArray()
+        num_inluences = self.pynode.__apimfn__().influenceObjects(influence_paths)
+        num_comps_per_influence = weights.length() / num_inluences
+        for ii in range(influence_paths.length()):
+            influence_name = influence_paths[ii].partialPathName()
+            influence_name_no_ns = pm.PyNode(influence_name).stripNamespace()
+            inf_weight = [weights[jj * num_inluences + ii] for jj in range(num_comps_per_influence)]
+            self.data["weights"][influence_name_no_ns] = inf_weight
 
-    def get_blend_weights(self):
-        """Get blend weights list for affected geometry
+    def collect_blend_weights(self):
+        dag_path, components = self.get_geometry_components()
+        weights = om.MDoubleArray()
+        self.pynode.__apimfn__().getBlendWeights(dag_path, components, weights)
+        self.data["blendWeights"] = [weights[i] for i in range(weights.length())]
 
-        :return: Blend weights. List of floats.
-        :rtype: list
-        """
-        deformer_set = self.pynode.deformerSet()  # type: luna_rig.nt.ObjectSet
-        members = deformer_set.members()
-        blend_weights = self.pynode.getBlendWeights(self.pynode.getGeometry()[0], members[0])
-        return blend_weights
+    def collect_data(self):
+        self.collect_inluence_weights()
+        self.collect_blend_weights()
+        for attr_name in ["skinningMethod", "normalizeWeights"]:
+            self.data[attr_name] = self.pynode.attr(attr_name).get()
 
-    def export(self, path, file_type="json"):
-        """Export skin data to given file path.
+    def export_data(self, file_path, fmt="json"):
+        self.collect_data()
+        if fmt == "json":
+            fileFn.write_json(file_path, self.data, sort_keys=False)
+        elif fmt == "pickle":
+            fileFn.write_cpickle(file_path, self.data)
 
-        :param path: Export path
-        :type path: str
-        :param file_type: Export file type, supported types: "json", "pickle", defaults to "json"
-        :type file_type: str, optional
-        """
-        skin_data = self.get_data()
-        if file_type == "json":
-            fileFn.write_json(path, skin_data, sort_keys=True)
-        elif file_type == "pickle":
-            Logger.info("Exporing as pickle...")
+    # Setters
+    def set_influence_weights(self, skin_data):
+        unused_imports = []
+        dag_path, components = self.get_geometry_components()
+        weights = self.get_current_weights()
+        influence_paths = om.MDagPathArray()
+        num_influences = self.pynode.__apimfn__().influenceObjects(influence_paths)
+        num_comps_per_influence = weights.length() / num_influences
+        for imported_influence, imported_weights in skin_data["weights"].items():
+            for ii in range(influence_paths.length()):
+                influence_name = influence_paths[ii].partialPathName()
+                influence_name_no_ns = pm.PyNode(influence_name).stripNamespace()
+                if influence_name_no_ns == imported_influence:
+                    for jj in range(num_comps_per_influence):
+                        weights.set(imported_weights[jj], jj * num_influences + ii)
+                    break
+            else:
+                unused_imports.append(imported_influence)
+        influence_indices = om.MIntArray(num_influences)
+        for ii in range(num_influences):
+            influence_indices.set(ii, ii)
+        self.pynode.__apimfn__().setWeights(dag_path, components, influence_indices, weights, False)
 
+        # Show unsused imports
+        if unused_imports:
+            unused_grp = pm.createNode("unsused_joints")
+            outlinerFn.set_color(unused_grp, color=[1.0, 0.3, 0.3])
+            for unused_name in unused_imports:
+                pm.createNode("joint", n=unused_name, p=unused_grp)
 
-if __name__ == "__main__":
-    skin_manager = SkinManager()
-    skin_manager.export_all()
+    def set_blend_weights(self, skin_data):
+        dag_path, components = self.get_geometry_components()
+        blend_weights = om.MDoubleArray(len(skin_data["blendWeights"]))
+        for index, weight in enumerate(skin_data["blendWeights"]):
+            blend_weights.set(weight, index)
+        self.pynode.__apimfn__().setBlendWeights(dag_path, components, blend_weights)
+
+    def set_data(self, skin_data):
+        self.set_influence_weights(skin_data)
+        self.set_blend_weights(skin_data)
+        for attr_name in ["skinningMethod", "normalizeWeights"]:
+            self.pynode.attr(attr_name).set(skin_data[attr_name])
+
+    @classmethod
+    def import_data(cls, file_path, geometry, fmt="json"):
+        if fmt == "json":
+            skin_data = fileFn.load_json(file_path)
+        elif fmt == "pickle":
+            skin_data = fileFn.load_cpickle(file_path)  # type: dict
+
+        # Find or create skin cluster
+        deformer = deformerFn.get_deformer(geometry, "skinCluster")
+        if not deformer:
+            try:
+                geo_name_parts = nameFn.deconstruct_name(geometry)
+                cluster_name = "{0}_{1}_skin".format(geo_name_parts.side, geo_name_parts.indexed_name)
+            except Exception:
+                cluster_name = str(geometry) + "_skin"
+            deformer = pm.skinCluster(skin_data["weights"].keys(), geometry, tsb=True, nw=2, n=cluster_name)
+        skin = SkinCluster(deformer)
+        skin.set_data(skin_data)

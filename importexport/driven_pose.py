@@ -12,7 +12,7 @@ class DrivenPoseManager(manager.AbstractManager):
 
     @property
     def path(self):
-        return self.asset.data.poses
+        return self.asset.data.driven_poses
 
     def get_base_name(self, component_name, pose_name):
         return "{0}-{1}".format(component_name, pose_name)
