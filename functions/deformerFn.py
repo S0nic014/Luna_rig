@@ -1,13 +1,14 @@
 import pymel.core as pm
 
 
-def is_painted(cls, deformer_node):
+def is_painted(deformer_node):
+    if isinstance(deformer_node, str):
+        deformer_node = pm.PyNode(deformer_node)
     return deformer_node.weightList.get(size=True) > 0
 
 
 def get_deformer(node, type):
-    node = pm.PyNode(node)
-    def_list = node.listHistory(type=type)
+    def_list = pm.listHistory(node, type=type)
     return def_list[0] if def_list else None
 
 

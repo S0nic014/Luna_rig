@@ -6,9 +6,11 @@ import luna_rig
 from luna import Logger
 from luna import static
 from luna.utils import fileFn
+import luna_rig.functions.apiFn as apiFn
 from luna_rig.importexport.manager import AbstractManager
 import luna_rig.functions.nameFn as nameFn
 import luna_rig.functions.deformerFn as deformerFn
+reload(deformerFn)
 
 
 class SkinManager(AbstractManager):
@@ -29,11 +31,6 @@ class SkinManager(AbstractManager):
 
     def get_latest_file(self, node):
         return fileFn.get_latest_file(self.get_base_name(node), self.path, extension=self.extension, full_path=True)
-
-    @classmethod
-    def get_skin_data(cls, node):
-        skin_data = {}
-        return skin_data
 
     def export_all(self, under_group=static.CharacterMembers.geometry.value):
         """Export all skinCluster weights to skin folder.
@@ -70,12 +67,14 @@ class SkinManager(AbstractManager):
         if not deformerFn.is_painted(deformer):
             Logger.warning("{0} on {1} has no weights initialized, nothing to export.")
             return
-        # Get ready to export
-        new_file = self.get_new_file(node)
-        skin_data = self.get_skin_data(deformer)
         # Export
-        fileFn.write_json(new_file, skin_data, sort_keys=False)
-        Logger.info("Exported {0} weights: {1}".format(deformer, new_file))
+        new_file = self.get_new_file(node)
+        try:
+            skin = SkinCluster(deformer)
+            skin.export(new_file)
+            Logger.info("Exported {0} skin: {1}".format(node, new_file))
+        except Exception:
+            Logger.exception("Failed to export {0} skin {1}".format(node, deformer))
 
     def import_single(self, geo_name):
         """Import skinCluster weights for given shape.
@@ -116,6 +115,63 @@ class SkinManager(AbstractManager):
             instance.import_single(node.stripNamespace())
 
 
+class SkinCluster(object):
+    def __init__(self, pynode):
+        super(SkinCluster, self).__init__()
+        self.pynode = pynode  # type: luna_rig.nt.SkinCluster
+
+    def get_data(self):
+        data_dict = {}
+        # Get weights
+        weight_dict = self.get_influence_weights()
+        blend_weights_list = self.get_blend_weights()
+        # Store collected data
+        data_dict.update(weight_dict)
+        data_dict["blendWeights"] = blend_weights_list
+        # Store attributes
+        for attr_name in ["skinningMethod", "normalizeWeights", "deformUserNormals"]:
+            data_dict[attr_name] = self.pynode.attr(attr_name).get()
+        return data_dict
+
+    def get_influence_weights(self):
+        """Get dictionary of inluence : weight list
+
+        :return: Inluence weights
+        :rtype: dict
+        """
+        weight_dict = {"weights": {}}
+        weights = self.pynode.getWeights(self.pynode.getGeometry()[0])
+        influence_objects = self.pynode.getInfluence()
+        for influence, weight_list in zip(influence_objects, weights):
+            weight_dict["weights"][influence.stripNamespace()] = weight_list
+        return weight_dict
+
+    def get_blend_weights(self):
+        """Get blend weights list for affected geometry
+
+        :return: Blend weights. List of floats.
+        :rtype: list
+        """
+        deformer_set = self.pynode.deformerSet()  # type: luna_rig.nt.ObjectSet
+        members = deformer_set.members()
+        blend_weights = self.pynode.getBlendWeights(self.pynode.getGeometry()[0], members[0])
+        return blend_weights
+
+    def export(self, path, file_type="json"):
+        """Export skin data to given file path.
+
+        :param path: Export path
+        :type path: str
+        :param file_type: Export file type, supported types: "json", "pickle", defaults to "json"
+        :type file_type: str, optional
+        """
+        skin_data = self.get_data()
+        if file_type == "json":
+            fileFn.write_json(path, skin_data, sort_keys=True)
+        elif file_type == "pickle":
+            Logger.info("Exporing as pickle...")
+
+
 if __name__ == "__main__":
     skin_manager = SkinManager()
-    skin_manager.import_all()
+    skin_manager.export_all()
