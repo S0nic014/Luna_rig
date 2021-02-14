@@ -23,7 +23,7 @@ class DrivenPoseManager(manager.AbstractManager):
     def get_latest_file(self, node_name, pose_name):
         return fileFn.get_latest_file(self.get_base_name(node_name, pose_name), self.path, extension=self.extension, full_path=True)
 
-    def export_pose(self, component_node, controls_list, driver_ctl, pose_name):
+    def export_pose(self, component_node, controls_list, driver_ctl, pose_name, driver_value=10.0):
         pose_dict = {}
         for control in controls_list:
             pose_dict[control.transform.name()] = {}
@@ -33,13 +33,14 @@ class DrivenPoseManager(manager.AbstractManager):
                     continue
                 pose_dict[control.transform.name()][attr_name] = list(attr_value)
         pose_dict["driver"] = driver_ctl
+        pose_dict["driver_value"] = driver_value
         export_path = self.get_new_file(component_node.pynode.name(), pose_name)
         fileFn.write_json(export_path, data=pose_dict)
         Logger.info("Exported {0} key pose: {1}".format(component_node, export_path))
 
         return pose_dict
 
-    def import_pose(self, component, pose_name, driver_value=10):
+    def import_pose(self, component, pose_name):
         if isinstance(component, luna_rig.AnimComponent):
             component_node = component.pynode.name()
         else:
@@ -48,6 +49,7 @@ class DrivenPoseManager(manager.AbstractManager):
         latest_file = self.get_latest_file(component_node, pose_name)
         pose_dict = fileFn.load_json(latest_file)  # type:dict
         driver_ctl = pose_dict.pop("driver")
+        driver_value = pose_dict.get("driver_value", 10.0)
         if not pm.objExists(driver_ctl):
             Logger.error("Pose {0} driver {1} doesnt exist!".format(pose_name, driver_ctl))
             return
@@ -70,14 +72,14 @@ class DrivenPoseManager(manager.AbstractManager):
                 control.add_driven_pose(axis_dict, driver_ctl.attr(pose_name), driver_value)
         Logger.info("{0}: Imported driven pose: {1}".format(component, latest_file))
 
-    def import_component_poses(self, component_node, driver_value=10):
+    def import_component_poses(self, component_node):
         if isinstance(component_node, luna_rig.AnimComponent):
             component_node = component_node.pynode.name()
         for pose_path in fileFn.get_latest_from_sub_name(component_node, self.path, extension=self.extension, sub_index=0, sub_split="-"):
             file_name = os.path.basename(pose_path)
             pose_name = file_name.split(".")[0].split("-")[-1]
-            self.import_pose(component_node, pose_name, driver_value)
+            self.import_pose(component_node, pose_name)
 
-    def import_all(self, driver_value=10):
+    def import_all(self):
         for component in luna_rig.MetaNode.list_nodes(of_type=luna_rig.AnimComponent):
-            self.import_component_poses(component, driver_value)
+            self.import_component_poses(component)

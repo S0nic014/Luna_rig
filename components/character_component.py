@@ -47,6 +47,14 @@ class Character(luna_rig.Component):
         return node
 
     @property
+    def controls(self):
+        return self.list_controls()
+
+    @property
+    def bind_joints(self):
+        return self.list_bind_joints()
+
+    @property
     def clamped_size(self):
         size = max(self.get_size(axis="y") * 0.1, self.get_size(axis="x") * 0.1)
         return size
