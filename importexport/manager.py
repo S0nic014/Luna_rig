@@ -14,6 +14,9 @@ class AbstractManager(object):
     """
     __metaclass__ = abc.ABCMeta
 
+    def __repr__(self):
+        return self.__class__.__name__
+
     def __init__(self, data_type, extension):
         """
         :param data_type: Deformer type. Must match Maya's nodetype.

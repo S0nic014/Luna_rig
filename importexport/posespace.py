@@ -7,6 +7,7 @@ from luna_rig.importexport import BlendShapeManager
 
 
 class PsdManager(manager_base.AbstractManager):
+
     def __init__(self):
         super(PsdManager, self).__init__("psd", "pose")
 
@@ -26,7 +27,7 @@ class PsdManager(manager_base.AbstractManager):
     def export_all(self):
         interpolators = pm.ls(typ="poseInterpolator")
         if not interpolators:
-            Logger.warning("No pose interpolators found in the scene.")
+            Logger.warning("{0}: No pose interpolators found in the scene.".format(self))
             return False
         # Export pose blendshapes
         pose_blendshapes = []
@@ -41,7 +42,7 @@ class PsdManager(manager_base.AbstractManager):
         # Export interpolators
         export_path = self.get_new_file()
         pm.poseInterpolator(interpolators, e=1, ex=export_path)
-        Logger.info("Exported pose interpolators: {0}".format(export_path))
+        Logger.info("{0}: Exported pose interpolators: {1}".format(self, export_path))
         return export_path
 
     def import_all(self):
@@ -52,4 +53,4 @@ class PsdManager(manager_base.AbstractManager):
             driver_parent_component = luna_rig.MetaNode.get_connected_metanode(driver)
             if driver_parent_component:
                 pm.parent(interpolator_shape.getTransform(), driver_parent_component.character.util_grp)
-        Logger.info("Imported PSD interpolator: {0}".format(interpolator_file))
+        Logger.info("{0}: Imported pose interpolators: {1}".format(self, interpolator_file))

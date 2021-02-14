@@ -7,6 +7,7 @@ from luna_rig.importexport import manager
 
 
 class DrivenPoseManager(manager.AbstractManager):
+
     def __init__(self):
         super(DrivenPoseManager, self).__init__("pose", "json")
 
@@ -36,7 +37,7 @@ class DrivenPoseManager(manager.AbstractManager):
         pose_dict["driver_value"] = driver_value
         export_path = self.get_new_file(component_node.pynode.name(), pose_name)
         fileFn.write_json(export_path, data=pose_dict)
-        Logger.info("Exported {0} key pose: {1}".format(component_node, export_path))
+        Logger.info("{0}: Exported {1} pose: {2}".format(self, component_node, export_path))
 
         return pose_dict
 
@@ -51,7 +52,7 @@ class DrivenPoseManager(manager.AbstractManager):
         driver_ctl = pose_dict.pop("driver")
         driver_value = pose_dict.get("driver_value", 10.0)
         if not pm.objExists(driver_ctl):
-            Logger.error("Pose {0} driver {1} doesnt exist!".format(pose_name, driver_ctl))
+            Logger.error("{0}: Pose {1} driver {2} doesnt exist, skipping...".format(self, pose_name, driver_ctl))
             return
         # Add pose name to driver
         driver_ctl = pm.PyNode(driver_ctl)
@@ -70,7 +71,7 @@ class DrivenPoseManager(manager.AbstractManager):
                              attr + "Y": value_list[1],
                              attr + "Z": value_list[2]}
                 control.add_driven_pose(axis_dict, driver_ctl.attr(pose_name), driver_value)
-        Logger.info("{0}: Imported driven pose: {1}".format(component, latest_file))
+        Logger.info("{0}: Imported {1} pose: {2}".format(self, component, latest_file))
 
     def import_component_poses(self, component_node):
         if isinstance(component_node, luna_rig.AnimComponent):

@@ -20,9 +20,13 @@ class SkinManager(AbstractManager):
     def __init__(self, file_format=None):
         super(SkinManager, self).__init__("skinCluster", "skin")
         if not file_format:
-            self.file_format = luna.Config.get(luna.RigVars.skin_export_type, default="pickle")  # type: str
+            self.file_format = luna.Config.get(luna.RigVars.skin_export_format, default="pickle")  # type: str
         else:
             self.file_format = file_format
+        # Verify format
+        if self.file_format not in ["json", "pickle"]:
+            Logger.error("{0}: Invalid file format: {1}".format(self, self.file_format))
+            raise ValueError
 
     @property
     def path(self):
@@ -51,10 +55,10 @@ class SkinManager(AbstractManager):
     def import_all(self):
         """Import asset skin weights.
         """
-        Logger.info("Importing skin weights...")
+        Logger.info("{0}: Importing weights...".format(self))
         for geo_name in self.versioned_files.keys():
             if not pm.objExists(geo_name):
-                Logger.warning("Object {0} no longer exists, skipping...".format(geo_name))
+                Logger.warning("{0}: Object {1} no longer exists, skipping...".format(self, geo_name))
                 continue
             self.import_single(geo_name)
 
@@ -67,19 +71,19 @@ class SkinManager(AbstractManager):
         deformer = deformerFn.get_deformer(node, self.data_type)
         # Do before export checks
         if not deformer:
-            Logger.warning("No {0} deformer found in {1} history".format(self.data_type, node))
+            Logger.warning("{0}: No {1} deformer found in {2} history".format(self, self.data_type, node))
             return
         if not deformerFn.is_painted(deformer):
-            Logger.warning("{0} on {1} has no weights initialized, nothing to export.")
+            Logger.warning("{0}: {1} on {2} has no weights initialized, nothing to export.".format(self, deformer, node))
             return
         # Export
         new_file = self.get_new_file(node)
         try:
             skin = SkinCluster(deformer)
             skin.export_data(new_file, fmt=self.file_format)
-            Logger.info("Exported {0} skin: {1}".format(node, new_file))
+            Logger.info("{0}: Exported {1} skin: {2}".format(self, node, new_file))
         except Exception:
-            Logger.exception("Failed to export {0} skin {1}".format(node, deformer))
+            Logger.exception("{0}: Failed to export {1} skin {2}".format(self, node, deformer))
 
     def import_single(self, geo_name):
         """Import skinCluster weights for given shape.
@@ -89,13 +93,13 @@ class SkinManager(AbstractManager):
         """
         latest_file = self.get_latest_file(geo_name)
         if not latest_file:
-            Logger.warning("No saved skin weights found found for {0}".format(geo_name))
+            Logger.warning("{0}: No saved skin weights found found for {1}".format(self, geo_name))
             return
         try:
             SkinCluster.import_data(latest_file, geo_name, fmt=self.file_format)
-            Logger.info("Imported {0} skin weights: {1}".format(geo_name, latest_file))
+            Logger.info("{0}: Imported {1} weights: {2}".format(self, geo_name, latest_file))
         except Exception:
-            Logger.exception("Failed to import skin weights for: {0}".format(geo_name))
+            Logger.exception("{0}: Failed to import weights for: {1}".format(self, geo_name))
 
     @classmethod
     def export_selected(cls):

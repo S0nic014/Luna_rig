@@ -8,6 +8,7 @@ import luna_rig.functions.deformerFn as deformerFn
 
 
 class BlendShapeManager(manager.AbstractManager):
+
     def __init__(self):
         super(BlendShapeManager, self).__init__("blendShape", "shape")
 
@@ -32,10 +33,10 @@ class BlendShapeManager(manager.AbstractManager):
         export_path = self.get_new_file(node.getGeometry()[0], node.name())
         try:
             node.export(export_path)
-            Logger.info("Exported blendshape: {0}".format(export_path))
+            Logger.info("{0}: Exported blendshape {1}".format(self, export_path))
             return export_path
         except RuntimeError:
-            Logger.exception("Failed to export blendshape: {0}".format(node))
+            Logger.exception("{0}: Failed to export blendshape {1}".format(self, node))
             return False
 
     def export_all(self, under_group=static.CharacterMembers.geometry.value):
@@ -47,12 +48,12 @@ class BlendShapeManager(manager.AbstractManager):
     def import_single(self, full_name):
         latest_path = self.get_latest_file(full_name, full_path=True)
         if not latest_path:
-            Logger.warning("No saved blendshape found: {0}".format(full_name))
+            Logger.warning("{0}:No saved blendshape found {1}".format(self, full_name))
             return False
         # Find existing geometry
         geometry, shape_name = self.get_latest_file(full_name, full_path=False).split(".")[0].split("-")
         if not pm.objExists(geometry):
-            Logger.warning("Geometry {0} for shape {1} no longer exists, skipping...".format(geometry, shape_name))
+            Logger.warning("{0}: Geometry {1} for shape {2} no longer exists, skipping...".format(self, geometry, shape_name))
             return False
         # Check if blendshape already exists and create one if not.
         geometry = pm.PyNode(geometry)  # type: luna_rig.nt.Shape
@@ -63,10 +64,10 @@ class BlendShapeManager(manager.AbstractManager):
         # Import data
         try:
             pm.blendShape(shape_node, e=1, ip=latest_path)
-            Logger.info("Imported blendshape: {0}".format(latest_path))
+            Logger.info("{0}: Imported blendshape {1}".format(self, latest_path))
             return True
         except RuntimeError:
-            Logger.exception("Failed to import blendshape: {0}".format(latest_path))
+            Logger.exception("{0}: Failed to import blendshape {1}".format(self, latest_path))
             return False
 
     def import_all(self):
