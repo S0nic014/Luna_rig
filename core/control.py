@@ -352,9 +352,8 @@ class Control(object):
         if not comp:
             Logger.warning("{0}: Failed to find connected component!".format(self))
             return None
-        if isinstance(comp, luna_rig.components.Character):
-            return comp
-        return comp.character
+        char = comp if isinstance(comp, luna_rig.components.Character) else comp.character  # type: luna_rig.components.Character
+        return char
 
     @classmethod
     def is_control(cls, node):

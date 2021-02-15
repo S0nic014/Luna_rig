@@ -67,3 +67,15 @@ def mirror_shape(transform, across="yz", behaviour=True, flip=False, flip_across
         shape.setParent(transform, r=1)
     pm.delete(temp_transform)
     pm.select(cl=1)
+
+
+def select_cvs(transform=None):
+    if not transform:
+        transform = pm.selected()
+    if not transform:
+        return
+    else:
+        transform = transform[-1]  # type:luna_rig.nt.Transform
+    pm.select(cl=1)
+    for shape in transform.getShapes():
+        pm.select(shape + ".cv[0:]", add=1)

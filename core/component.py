@@ -206,6 +206,11 @@ class AnimComponent(Component):
         result = connections[0] if connections else None  # type: luna_rig.nt.Transform
         return result
 
+    @property
+    def actions_dict(self):
+        actions = {}
+        return actions
+
     def set_outliner_color(self, color):
         outlinerFn.set_color(self.root, color)
 
@@ -387,3 +392,6 @@ class AnimComponent(Component):
 
         for ctl, factor in scale_dict.items():
             ctl.scale(clamped_size, factor=factor)
+
+    def get_actions_dict(self):
+        pass
