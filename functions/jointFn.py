@@ -4,7 +4,6 @@ import pymel.api as pma
 from luna import Logger
 import luna_rig
 import luna.static as static
-import luna_rig.functions.curveFn as curveFn
 import luna_rig.functions.nameFn as nameFn
 
 
@@ -102,8 +101,8 @@ def mirror_chain(chains=[]):
 
 def along_curve(curve, amount, joint_name="joint", joint_side="c", joint_suffix="jnt", delete_curve=False):
     joints = []
-    for index in range(amount + 1):
-        param = index / amount
+    for index in range(amount):
+        param = float(index) / float(amount - 1)
         point = pm.pointOnCurve(curve, pr=param, top=1)
         jnt = pm.createNode("joint", n=nameFn.generate_name(joint_name, joint_side, joint_suffix))  # type: luna_rig.nt.Joint
         jnt.setTranslation(point, space="world")

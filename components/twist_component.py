@@ -92,7 +92,7 @@ class TwistComponent(luna_rig.AnimComponent):
                                              parent=instance.group_parts)
         pm.rebuildCurve(ik_curve, d=3, ch=0)
         ctl_chain = jointFn.along_curve(ik_curve,
-                                        num_joints + 1,
+                                        num_joints + 2,
                                         joint_name=instance.name,
                                         joint_side=instance.side,
                                         joint_suffix="jnt",
