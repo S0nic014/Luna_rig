@@ -92,11 +92,16 @@ def mirror_chain(chains=[]):
         chains = pm.selected()
     valid_chains = [obj for obj in chains if isinstance(obj, luna_rig.nt.Joint)]
     for joint in valid_chains:
-        side = joint.name().split("_")[0]
-        if side in ["l", "r"]:
-            pm.mirrorJoint(joint, mb=1, myz=1, sr=(side + "_", static.OppositeSide[side].value + "_"))
-        else:
-            pm.mirrorJoint(joint, mb=1, myz=1)
+        result_chain = pm.mirrorJoint(joint, mb=1, myz=1)
+        try:
+            for new_joint in result_chain:
+                new_joint = pm.PyNode(new_joint)
+                name_parts = nameFn.deconstruct_name(new_joint)
+                if name_parts.side in ["l", "r"]:
+                    clean_suffix = nameFn.remove_digits(name_parts.suffix)
+                    new_joint.rename(nameFn.generate_name(name_parts.name, static.OppositeSide[name_parts.side].value, clean_suffix))
+        except Exception:
+            Logger.exception("Failed to rename")
 
 
 def along_curve(curve, amount, joint_name="joint", joint_side="c", joint_suffix="jnt", delete_curve=False):
@@ -179,3 +184,12 @@ def get_pole_vector(joint_chain):
     pole_locator = pm.spaceLocator(n="polevector_loc")
     pole_locator.translate.set(pol_vec_pos)
     return pole_locator
+
+
+def create_root_joint(side="c", name="root", suffix="jnt", parent=None, children=[]):
+    root = pm.createNode("joint", n=nameFn.generate_name(name, side, suffix))  # type: luna_rig.nt.Joint
+    if parent:
+        root.setParent(parent)
+    for child in children:
+        pm.parent(child, root)
+    return root

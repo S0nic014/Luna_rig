@@ -670,7 +670,6 @@ class Control(object):
             self.tag_node.bindPose.unlock()
             self.tag_node.bindPose.set(json.dumps(self.pose))
             self.tag_node.bindPose.lock()
-        Logger.debug("Bind pose written for {0}".format(self))
 
     def to_bind_pose(self):
         """Reset control to pose stored in bindPose attribute"""

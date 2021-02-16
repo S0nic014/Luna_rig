@@ -6,6 +6,7 @@ import luna_rig.functions.attrFn as attrFn
 import luna_rig.functions.outlinerFn as outlinerFn
 import luna_rig.functions.rigFn as rigFn
 import luna_rig.functions.nameFn as nameFn
+import luna_rig.functions.jointFn as jointFn
 
 
 class Character(luna_rig.Component):
@@ -55,6 +56,12 @@ class Character(luna_rig.Component):
         return self.list_bind_joints()
 
     @property
+    def root_motion(self):
+        connections = self.pynode.rootMotionJoint.listConnections(d=1)
+        joint = connections[0] if connections else None  # type: luna_rig.nt.Joint
+        return joint
+
+    @property
     def clamped_size(self):
         size = max(self.get_size(axis="y") * 0.1, self.get_size(axis="x") * 0.1)
         return size
@@ -90,6 +97,7 @@ class Character(luna_rig.Component):
         instance.pynode.addAttr("locatorsGroup", at="message")
         instance.pynode.addAttr("worldLocator", at="message")
         instance.pynode.addAttr("utilGrp", at="message")
+        instance.pynode.addAttr("rootMotionJoint", at="message")
 
         # Create main members
         root_ctl = luna_rig.Control.create(name="character_node",
@@ -202,13 +210,21 @@ class Character(luna_rig.Component):
             ctl.to_bind_pose()
 
     def create_controls_set(self, name="controls_set", tag=None):
-        nameFn.add_namespaces(name, self.namespace_list)
-        result = pm.sets([ctl.transform for ctl in self.list_controls(tag)], n=name)  # type: luna_rig.nt.ObjectSet
+        name = nameFn.add_namespaces(name, self.namespace_list)
+        result = None
+        if not pm.objExists(name):
+            result = pm.sets([ctl.transform for ctl in self.list_controls(tag)], n=name)  # type: luna_rig.nt.ObjectSet
+        else:
+            Logger.warning("Object set {0} already exists.".format(name))
         return result
 
     def create_joints_set(self, name="bind_joints_set"):
-        nameFn.add_namespaces(name, self.namespace_list)
-        result = pm.sets(self.list_bind_joints(), n=name)  # type: luna_rig.nt.ObjectSet
+        name = nameFn.add_namespaces(name, self.namespace_list)
+        result = None
+        if not pm.objExists(name):
+            result = pm.sets(self.list_bind_joints(), n=name)  # type: luna_rig.nt.ObjectSet
+        else:
+            Logger.warning("Object set {0} already exists.".format(name))
         return result
 
     def get_nucleus(self):
@@ -239,3 +255,24 @@ class Character(luna_rig.Component):
         for ctl in self.list_controls():
             for connected_node in ctl.transform.listConnections():
                 connected_node.ihi.set(value)
+
+    def add_root_motion(self, follow_object, root_joint=None, children=[]):
+        if not root_joint:
+            root_joint = jointFn.create_root_joint(parent=self.deformation_rig, children=children)
+        elif not isinstance(root_joint, pm.PyNode):
+            root_joint = pm.PyNode(root_joint)  # type: luna_rig.nt.Joint
+            root_joint.setParent(self.deformation_rig)
+        pm.pointConstraint(follow_object, root_joint, mo=1, skip="y")
+        attrFn.add_meta_attr(root_joint)
+        root_joint.metaParent.connect(self.pynode.rootMotionJoint)
+        return root_joint
+
+    def set_publish_mode(self, value):
+        self.set_interesting(not value)
+        rigFn.set_node_selectable(self.geometry_grp, not value)
+        rigFn.set_node_selectable(self.deformation_rig, not value)
+        self.deformation_rig.visibility.set(not value)
+        self.util_grp.visibility.set(not value)
+        if value:
+            self.create_controls_set()
+            self.create_joints_set()

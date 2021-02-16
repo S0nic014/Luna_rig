@@ -132,3 +132,8 @@ def get_namespace(node):
         return ""
     else:
         return ":".join(namespaces) + ":"
+
+
+def remove_digits(string):
+    result = "".join(filter(lambda x: not x.isdigit(), string))
+    return result

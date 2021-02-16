@@ -147,7 +147,6 @@ class FKDynamicsComponent(luna_rig.AnimComponent):
         for fk_ctl, jnt in zip(self.meta_parent.controls, self.ctl_chain):
             dynam_offset = fk_ctl.insert_offset("dynamics")
             self._store_util_nodes(dynam_offset)
-            # dynam_offset.message.connect(self.pynode.offsets, na=1)
             jnt.rotate.connect(dynam_offset.rotate)
 
     def attach_to_skeleton(self):
