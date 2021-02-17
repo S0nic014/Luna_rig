@@ -74,7 +74,23 @@ class BlendShapeManager(manager.AbstractManager):
         for full_name in self.versioned_files.keys():
             self.import_single(full_name)
 
+    @classmethod
+    def export_selected(cls):
+        manager = BlendShapeManager()
+        seleted = pm.selected(type=manager.data_type)
+        for bs_node in seleted:
+            manager.export_single(bs_node)
+
+    @classmethod
+    def import_selected(cls):
+        manager = BlendShapeManager()
+        seleted = pm.selected(type=manager.data_type)
+        for bs_node in seleted:
+            base_name = manager.get_base_name(bs_node.getGeometry()[0], bs_node.name())
+            manager.import_single(base_name)
+
 
 if __name__ == "__main__":
     bs_manager = BlendShapeManager()
-    bs_manager.export_all()
+    # bs_manager.export_all()
+    BlendShapeManager.export_selected()
