@@ -16,23 +16,38 @@ class BlendShapeManager(manager.AbstractManager):
     def path(self):
         return self.asset.data.blendshapes
 
-    def get_base_name(self, geo_name, bs_name):
-        return "{0}-{1}".format(geo_name, bs_name)
+    def get_base_name(self, bs_node):
+        return str(bs_node)
 
-    def get_latest_file(self, base_name, full_path=False):
-        return fileFn.get_latest_file(base_name, self.path, extension=self.extension, full_path=full_path)
+    def get_latest_file(self, bs_name, full_path=False):
+        return fileFn.get_latest_file(self.get_base_name(bs_name), self.path, extension=self.extension, full_path=full_path)
 
-    def get_new_file(self, geo_name, bs_name):
-        return fileFn.get_new_versioned_file(self.get_base_name(geo_name, bs_name), self.path, extension=self.extension, full_path=True)
+    def get_new_file(self, bs_node):
+        return fileFn.get_new_versioned_file(self.get_base_name(bs_node), self.path, extension=self.extension, full_path=True)
+
+    def get_mapping(self):
+        return fileFn.load_json(self.asset.mapping.blendshapes)
+
+    def save_mapping(self, bs_node):
+        mapping = self.get_mapping()
+        mapping[bs_node.name()] = bs_node.getGeometry()[0]
+        fileFn.write_json(self.asset.mapping.blendshapes, mapping)
+
+    def get_mapped_geometry(self, bs_node):
+        if not isinstance(bs_node, str):
+            bs_node = str(bs_node)
+        mapping = self.get_mapping()
+        return mapping.get(bs_node)
 
     def export_single(self, node):
         node = pm.PyNode(node)  # type:  luna_rig.nt.BlendShape
         if not isinstance(node, luna_rig.nt.BlendShape):
             Logger.error("{0} is not a blendShape node.".format(node))
             return False
-        export_path = self.get_new_file(node.getGeometry()[0], node.name())
+        export_path = self.get_new_file(node.name())
         try:
             node.export(export_path)
+            self.save_mapping(node)
             Logger.info("{0}: Exported blendshape {1}".format(self, export_path))
             return export_path
         except RuntimeError:
@@ -45,22 +60,24 @@ class BlendShapeManager(manager.AbstractManager):
         for shape in export_list:
             self.export_single(shape)
 
-    def import_single(self, full_name):
-        latest_path = self.get_latest_file(full_name, full_path=True)
+    def import_single(self, bs_node):
+        if not isinstance(bs_node, str):
+            bs_node = str(bs_node)
+        latest_path = self.get_latest_file(bs_node, full_path=True)
         if not latest_path:
-            Logger.warning("{0}:No saved blendshape found {1}".format(self, full_name))
+            Logger.warning("{0}:No saved blendshape found {1}".format(self, bs_node))
             return False
         # Find existing geometry
-        geometry, shape_name = self.get_latest_file(full_name, full_path=False).split(".")[0].split("-")
+        geometry = self.get_mapped_geometry(bs_node)
         if not pm.objExists(geometry):
-            Logger.warning("{0}: Geometry {1} for shape {2} no longer exists, skipping...".format(self, geometry, shape_name))
+            Logger.warning("{0}: Geometry {1} for shape {2} no longer exists, skipping...".format(self, geometry, bs_node))
             return False
         # Check if blendshape already exists and create one if not.
         geometry = pm.PyNode(geometry)  # type: luna_rig.nt.Shape
-        if shape_name not in [str(node) for node in geometry.listHistory(type=self.data_type)]:
-            shape_node = pm.blendShape(geometry, n=shape_name, foc=1)  # type: luna_rig.nt.BlendShape
+        if bs_node not in [str(node) for node in geometry.listHistory(type=self.data_type)]:
+            shape_node = pm.blendShape(geometry, n=bs_node, foc=1)  # type: luna_rig.nt.BlendShape
         else:
-            shape_node = pm.PyNode(shape_name)  # type:  luna_rig.nt.BlendShape
+            shape_node = pm.PyNode(bs_node)  # type:  luna_rig.nt.BlendShape
         # Import data
         try:
             pm.blendShape(shape_node, e=1, ip=latest_path)
@@ -71,8 +88,8 @@ class BlendShapeManager(manager.AbstractManager):
             return False
 
     def import_all(self):
-        for full_name in self.versioned_files.keys():
-            self.import_single(full_name)
+        for bs_name in self.versioned_files.keys():
+            self.import_single(bs_name)
 
     @classmethod
     def export_selected(cls):
@@ -86,11 +103,11 @@ class BlendShapeManager(manager.AbstractManager):
         manager = BlendShapeManager()
         seleted = pm.selected(type=manager.data_type)
         for bs_node in seleted:
-            base_name = manager.get_base_name(bs_node.getGeometry()[0], bs_node.name())
-            manager.import_single(base_name)
+            manager.import_single(bs_node)
 
 
 if __name__ == "__main__":
     bs_manager = BlendShapeManager()
     # bs_manager.export_all()
-    BlendShapeManager.export_selected()
+    # BlendShapeManager.export_selected()
+    # BlendShapeManager.import_selected()
