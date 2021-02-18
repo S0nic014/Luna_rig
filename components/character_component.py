@@ -244,9 +244,16 @@ class Character(luna_rig.Component):
             anim_comp.bake_and_detach(*args, **kwargs)
 
     def remove(self, time_range=None):
+        # Bake root
+        if self.root_motion:
+            pm.bakeResults(self.root_motion, time=time_range, simulation=True)
+        # Bake components
         self.bake_and_detach(time_range)
-        self.geometry_grp.setParent(None)
-        self.deformation_rig.setParent(None)
+        # Remove rig
+        for child in self.geometry_grp.getChildren():
+            child.setParent(None)
+        for child in self.deformation_rig.getChildren():
+            child.setParent(None)
         pm.delete(self.root_ctl.group)
         self.delete_util_nodes()
         pm.delete(self.pynode)
