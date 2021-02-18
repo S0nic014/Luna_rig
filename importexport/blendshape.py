@@ -69,6 +69,8 @@ class BlendShapeManager(manager.AbstractManager):
             return False
         # Find existing geometry
         geometry = self.get_mapped_geometry(bs_node)
+        if not geometry:
+            Logger.error("{0}: Mapping missing for {1}".format(self, bs_node))
         if not pm.objExists(geometry):
             Logger.warning("{0}: Geometry {1} for shape {2} no longer exists, skipping...".format(self, geometry, bs_node))
             return False

@@ -78,7 +78,7 @@ class FKIKComponent(luna_rig.AnimComponent):
                name="fkik_component",
                start_joint=None,
                end_joint=None,
-               ik_world_orient=False,
+               ik_world_orient=True,
                default_state=1,
                param_locator=None):
         # Create instance and add attrs
@@ -175,7 +175,7 @@ class FKIKComponent(luna_rig.AnimComponent):
         pm.parentConstraint(ctl_chain[-1], param_control.group, mo=1)
 
         # Create blend
-        param_control.transform.addAttr("fkik", nn="IK/FK", at="float", min=0.0, max=1.0, dv=default_state, k=True)
+        param_control.transform.addAttr("fkik", nn="FK/IK", at="float", min=0.0, max=1.0, dv=default_state, k=True)
         revese_fkik = pm.createNode("reverse", n=nameFn.generate_name([instance.indexed_name, "fkik"], side=instance.side, suffix="rev"))
         param_control.transform.fkik.connect(revese_fkik.inputX)
         param_control.transform.fkik.connect(ik_control.group.visibility)
