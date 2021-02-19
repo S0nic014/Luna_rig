@@ -112,3 +112,7 @@ def matrix_to_list(mtx):
     mtx_list = list(mtx)
     flat_list = [value for array in mtx_list for value in list(array)]
     return flat_list
+
+
+def get_vector(source, destination, space="world"):
+    return source.getTranslation(space=space) - destination.getTranslation(space=space)

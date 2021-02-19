@@ -13,7 +13,10 @@ class FollicleRivet(object):
                  name="rivet"):
         # Create follicle
         self.name = nameFn.generate_name(name, side, "fol")
-        self.follicle_shape = pm.createNode("follicle", n=self.name)  # type: luna_rig.nt.Follicle
+        self.follicle_shape = pm.createNode("follicle")  # type: luna_rig.nt.Follicle
+        self.follicle_transform = self.follicle_shape.getTransform()
+        self.follicle_transform.rename(self.name)
+        self.follicle_transform.inheritsTransform.set(0)
         self.follicle_shape.pointLock.set(0)
         self.follicle_shape.simulationMethod.set(0)
         self.follicle_shape.collide.set(0)
@@ -24,7 +27,6 @@ class FollicleRivet(object):
         self.follicle_shape.sampleDensity.set(0)
         self.follicle_shape.degree.set(1)
         self.follicle_shape.clumpWidth.set(0)
-        self.follicle_shape.getTransform().inheritsTransform.set(0)
         # Connect shape to transform
         self.follicle_shape.outRotate.connect(self.follicle_shape.getTransform().rotate)
         self.follicle_shape.outTranslate.connect(self.follicle_shape.getTransform().translate)
@@ -105,12 +107,12 @@ class FollicleRivet(object):
         else:
             surface_shape = surface  # type: luna_rig.nt.NurbsSurface
         # Get spans
-        uv_spans = surface_shape.spansUV.get()  # type: list
+        uv_spans = [surface_shape.numSpansInU(), surface_shape.numSpansInV()]  # type: list
         if not amount:
             if use_span.lower() == "u":
-                amount = uv_spans[0]
+                amount = uv_spans[0] + 1
             else:
-                amount = uv_spans[1]
+                amount = uv_spans[1] + 1
         # Create rivets
         for span in range(0, amount):
             primary_value = float(span) / float(amount - 1)
@@ -120,6 +122,7 @@ class FollicleRivet(object):
                 pin_values = [secondary_value, primary_value]
             rivet = cls.create_and_pin(surface, uv_values=pin_values, side=side, name=name, parent=parent)
             created_rivets.append(rivet)
+        return created_rivets
 
     @classmethod
     def create_and_pin(cls,

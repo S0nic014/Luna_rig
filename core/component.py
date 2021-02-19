@@ -134,7 +134,9 @@ class AnimComponent(Component):
         ctls_grp = pm.group(n=nameFn.generate_name(instance.name, instance.side, suffix="ctls"), em=1, p=root_grp)
         joints_grp = pm.group(n=nameFn.generate_name(instance.name, instance.side, suffix="jnts"), em=1, p=root_grp)
         parts_grp = pm.group(n=nameFn.generate_name(instance.name, instance.side, suffix="parts"), em=1, p=root_grp)
-        for node in [root_grp, ctls_grp, joints_grp, parts_grp]:
+        noscale_grp = pm.group(n=nameFn.generate_name(instance.name, instance.side, suffix="noscale"), em=1, p=parts_grp)
+        noscale_grp.inheritsTransform.set(0)
+        for node in [root_grp, ctls_grp, joints_grp, parts_grp, noscale_grp]:
             node.addAttr("metaParent", at="message")
 
         # Add message attrs
@@ -143,6 +145,7 @@ class AnimComponent(Component):
         instance.pynode.addAttr("ctlsGroup", at="message")
         instance.pynode.addAttr("jointsGroup", at="message")
         instance.pynode.addAttr("partsGroup", at="message")
+        instance.pynode.addAttr("noScaleGroup", at="message")
         instance.pynode.addAttr("bindJoints", at="message", multi=1, im=0)
         instance.pynode.addAttr("ctlChain", at="message", multi=1, im=0)
         instance.pynode.addAttr("controls", at="message", multi=1, im=0)
@@ -154,6 +157,7 @@ class AnimComponent(Component):
         ctls_grp.metaParent.connect(instance.pynode.ctlsGroup)
         joints_grp.metaParent.connect(instance.pynode.jointsGroup)
         parts_grp.metaParent.connect(instance.pynode.partsGroup)
+        noscale_grp.metaParent.connect(instance.pynode.noScaleGroup)
         instance.set_outliner_color(17)
 
         return instance
@@ -176,6 +180,11 @@ class AnimComponent(Component):
     @property
     def group_parts(self):
         node = self.pynode.partsGroup.listConnections()[0]  # type: luna_rig.nt.Transform
+        return node
+
+    @property
+    def group_noscale(self):
+        node = self.pynode.noScaleGroup.listConnections()[0]  # type: luna_rig.nt.Transform
         return node
 
     @property

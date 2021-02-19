@@ -42,9 +42,8 @@ class FKDynamicsComponent(luna_rig.AnimComponent):
         joint_points = [pm.xform(jnt, q=1, t=1, ws=1) for jnt in ctl_chain]
         input_curve = curveFn.curve_from_points(nameFn.generate_name([name, "input"], side=instance.side, suffix="crv"),
                                                 points=joint_points,
-                                                parent=instance.group_parts)
+                                                parent=instance.group_noscale)
         pm.rebuildCurve(input_curve, d=3, end=1, kep=1, rpo=1, ch=0, tol=0.01)
-        input_curve.inheritsTransform.set(0)
         meta_parent.character.root_ctl.transform.scale.connect(input_curve.scale)
         # Create hair system
         input_curve.select(r=1)

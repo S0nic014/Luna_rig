@@ -139,6 +139,11 @@ def copy_orient(source, destination):
         dest_joint.jointOrient.set(source.jointOrient.get())
 
 
+def match_orient(destination_joint, source_joint):
+    pm.matchTransform(destination_joint, source_joint, rot=1)
+    rot_to_orient(destination_joint)
+
+
 def validate_rotations(joint_chain):
     is_valid = True
     for jnt in joint_chain:
