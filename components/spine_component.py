@@ -9,13 +9,7 @@ from luna_rig.functions import curveFn
 from luna_rig.functions import nameFn
 
 
-class FKIKSpineComponent(luna_rig.AnimComponent):
-
-    class Hooks(enumFn.Enum):
-        ROOT = 0
-        HIPS = 1
-        MID = 2
-        CHEST = 3
+class SpineComponent(luna_rig.AnimComponent):
 
     @property
     def root_control(self):
@@ -26,12 +20,39 @@ class FKIKSpineComponent(luna_rig.AnimComponent):
         return luna_rig.Control(self.pynode.hipsControl.listConnections()[0])
 
     @property
-    def mid_control(self):
-        return luna_rig.Control(self.pynode.midControl.listConnections()[0])
-
-    @property
     def chest_control(self):
         return luna_rig.Control(self.pynode.chestControl.listConnections()[0])
+
+    @classmethod
+    def create(cls,
+               meta_parent=None,
+               side='c',
+               name='spine'):
+        # Create instance and add attrs
+        instance = super(SpineComponent, cls).create(meta_parent, side, name)  # type: FKIKSpineComponent
+        instance.pynode.addAttr("rootControl", at="message")
+        instance.pynode.addAttr("hipsControl", at="message")
+        instance.pynode.addAttr("chestControl", at="message")
+        return instance
+
+    def add_stretch(self, default_value=False):
+        pass
+
+    def add_free_pivot(self):
+        pass
+
+
+class FKIKSpineComponent(SpineComponent):
+
+    class Hooks(enumFn.Enum):
+        ROOT = 0
+        HIPS = 1
+        MID = 2
+        CHEST = 3
+
+    @property
+    def mid_control(self):
+        return luna_rig.Control(self.pynode.midControl.listConnections()[0])
 
     @property
     def fk1_control(self):
@@ -59,10 +80,7 @@ class FKIKSpineComponent(luna_rig.AnimComponent):
         # Create instance and add attrs
         instance = super(FKIKSpineComponent, cls).create(meta_parent, side, name)  # type: FKIKSpineComponent
         instance.pynode.addAttr("fkControls", at="message", multi=1, im=0)
-        instance.pynode.addAttr("rootControl", at="message")
-        instance.pynode.addAttr("hipsControl", at="message")
         instance.pynode.addAttr("midControl", at="message")
-        instance.pynode.addAttr("chestControl", at="message")
 
         # Joint chains
         joint_chain = jointFn.joint_chain(start_joint, end_joint)
@@ -225,10 +243,33 @@ class FKIKSpineComponent(luna_rig.AnimComponent):
 
         return instance
 
-    def add_stretch(self, default_value=False):
-        # TODO: Add stretch
-        pass
 
-    def add_free_pivot(self):
-        # TODO: Add free pivot
-        pass
+class FKRibbonSpineComponent(SpineComponent):
+    class Hooks(enumFn.Enum):
+        ROOT = 0
+        HIPS = 1
+        MID = 2
+        CHEST = 3
+
+    @property
+    def mid_control(self):
+        return luna_rig.Control(self.pynode.midControl.listConnections()[0])
+
+    @classmethod
+    def create(cls,
+               meta_parent=None,
+               hook=0,
+               side='c',
+               name='spine',
+               start_joint=None,
+               end_joint=None):
+        # Create instance and add attrs
+        instance = super(FKRibbonSpineComponent, cls).create(meta_parent, side, name)  # type: FKIKSpineComponent
+        instance.pynode.addAttr("midControl", at="message")
+
+        # Joint chains
+        joint_chain = jointFn.joint_chain(start_joint, end_joint)
+        jointFn.validate_rotations(joint_chain)
+        for jnt in joint_chain:
+            attrFn.add_meta_attr(jnt)
+        ctl_chain = jointFn.duplicate_chain(original_chain=joint_chain, add_name="ctl", new_parent=instance.group_joints)
