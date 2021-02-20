@@ -141,7 +141,7 @@ class TwistComponent(luna_rig.AnimComponent):
 
         # Meta connections
         instance.connect_to_character(parent=True)
-        instance.attach_to_component(meta_parent)
+        instance.attach_to_component(meta_parent, hook_index=None)
         instance._store_ctl_chain(ctl_chain)
         instance._store_bind_joints(output_joints)
         instance._store_util_nodes([start_locator, end_locator, crv_ik_joint])

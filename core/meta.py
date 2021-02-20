@@ -142,6 +142,7 @@ class MetaNode(object):
 
     def set_meta_parent(self, parent):
         self.pynode.metaParent.connect(parent.pynode.metaChildren, na=1)
+        Logger.info("Meta parent connection: {0} ->> {1}".format(parent, self))
 
     def get_meta_children(self, of_type=None):
         """Get list of connected meta children
@@ -167,7 +168,7 @@ class MetaNode(object):
             Logger.warning("{0}: Missing metaChildren attribute.")
         return result
 
-    @staticmethod
+    @ staticmethod
     def list_nodes(of_type=None):
         """List existing meta nodes
 
@@ -187,7 +188,7 @@ class MetaNode(object):
             result = all_nodes
         return result
 
-    @staticmethod
+    @ staticmethod
     def get_existing_nodes():
         scene_dict = {}
         for comp_name, comp_type in inspectFn.get_classes(luna_rig.components):
@@ -199,7 +200,7 @@ class MetaNode(object):
             scene_dict[luna_rig.AnimComponent] = anim_comps
         return scene_dict
 
-    @staticmethod
+    @ staticmethod
     def get_connected_metanode(node):
         node = pm.PyNode(node)
         connected_nodes = [MetaNode(network) for network in node.listConnections(type="network") if network.hasAttr("metaType")]

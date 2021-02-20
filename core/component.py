@@ -7,6 +7,7 @@ import luna.utils.enumFn as enumFn
 import luna_rig.functions.nameFn as nameFn
 import luna_rig.functions.outlinerFn as outlinerFn
 import luna_rig.functions.animFn as animFn
+from luna_rig.core.hook import Hook
 
 
 class _compSignals(QtCore.QObject):
@@ -136,7 +137,8 @@ class AnimComponent(Component):
         parts_grp = pm.group(n=nameFn.generate_name(instance.name, instance.side, suffix="parts"), em=1, p=root_grp)
         noscale_grp = pm.group(n=nameFn.generate_name(instance.name, instance.side, suffix="noscale"), em=1, p=parts_grp)
         noscale_grp.inheritsTransform.set(0)
-        for node in [root_grp, ctls_grp, joints_grp, parts_grp, noscale_grp]:
+        out_grp = pm.group(n=nameFn.generate_name(instance.name, instance.side, suffix="out"), em=1, p=root_grp)
+        for node in [root_grp, ctls_grp, joints_grp, parts_grp, noscale_grp, out_grp]:
             node.addAttr("metaParent", at="message")
 
         # Add message attrs
@@ -146,11 +148,12 @@ class AnimComponent(Component):
         instance.pynode.addAttr("jointsGroup", at="message")
         instance.pynode.addAttr("partsGroup", at="message")
         instance.pynode.addAttr("noScaleGroup", at="message")
+        instance.pynode.addAttr("outGroup", at="message")
         instance.pynode.addAttr("bindJoints", at="message", multi=1, im=0)
         instance.pynode.addAttr("ctlChain", at="message", multi=1, im=0)
         instance.pynode.addAttr("controls", at="message", multi=1, im=0)
         instance.pynode.addAttr("hooks", at="message", multi=1, im=0)
-        instance.pynode.addAttr("attachObject", at="message")
+        instance.pynode.addAttr("inHook", at="message")
 
         # Connect hierarchy to meta
         root_grp.metaParent.connect(instance.pynode.rootGroup)
@@ -158,64 +161,75 @@ class AnimComponent(Component):
         joints_grp.metaParent.connect(instance.pynode.jointsGroup)
         parts_grp.metaParent.connect(instance.pynode.partsGroup)
         noscale_grp.metaParent.connect(instance.pynode.noScaleGroup)
+        out_grp.metaParent.connect(instance.pynode.outGroup)
         instance.set_outliner_color(17)
 
         return instance
 
-    @property
+    @ property
     def root(self):
         node = self.pynode.rootGroup.listConnections()[0]  # type: luna_rig.nt.Transform
         return node
 
-    @property
+    @ property
     def group_ctls(self):
         node = self.pynode.ctlsGroup.listConnections()[0]  # type: luna_rig.nt.Transform
         return node
 
-    @property
+    @ property
     def group_joints(self):
         node = self.pynode.jointsGroup.listConnections()[0]  # type: luna_rig.nt.Transform
         return node
 
-    @property
+    @ property
     def group_parts(self):
         node = self.pynode.partsGroup.listConnections()[0]  # type: luna_rig.nt.Transform
         return node
 
-    @property
+    @ property
     def group_noscale(self):
         node = self.pynode.noScaleGroup.listConnections()[0]  # type: luna_rig.nt.Transform
         return node
 
-    @property
+    @ property
+    def group_out(self):
+        node = self.pynode.outGroup.listConnections(d=1)[0]  # type: luna_rig.nt.Transform
+        return node
+
+    @ property
     def controls(self):
         connected_nodes = self.pynode.controls.listConnections()  # type: list[luna_rig.nt.Transform]
         all_ctls = [luna_rig.Control(node) for node in connected_nodes]
         return all_ctls
 
-    @property
+    @ property
     def bind_joints(self):
         joint_list = self.pynode.bindJoints.listConnections()  # type: list[luna_rig.nt.Joint]
         return joint_list
 
-    @property
+    @ property
     def ctl_chain(self):
         ctl_chain = self.pynode.ctlChain.listConnections()  # type: list[luna_rig.nt.Joint]
         return ctl_chain
 
-    @property
+    @ property
     def character(self):
         connections = self.pynode.character.listConnections()
         result = luna_rig.MetaNode(connections[0]) if connections else None  # type: luna_rig.components.Character
         return result
 
-    @property
-    def attach_object(self):
-        connections = self.pynode.attachObject.listConnections()
-        result = connections[0] if connections else None  # type: luna_rig.nt.Transform
+    @ property
+    def hooks(self):
+        hooks = [Hook(node) for node in self.pynode.hooks.listConnections()]
+        return hooks
+
+    @ property
+    def in_hook(self):
+        connections = self.pynode.inHook.listConnections()
+        result = Hook(connections[0]) if connections else None  # type: Hook
         return result
 
-    @property
+    @ property
     def actions_dict(self):
         actions = {}
         return actions
@@ -306,14 +320,14 @@ class AnimComponent(Component):
         Logger.info("Removed {0}".format(self))
         self.signals.removed.emit()
 
-    def add_hook(self, node):
+    def add_hook(self, node, name):
         """Set given node as attach point
 
         :param node: Dag node
         :type node: str or pm.PyNode
         """
-        node = pm.PyNode(node)
-        node.message.connect(self.pynode.hooks, na=1)
+        hook = Hook.create(self, node, name)
+        return hook
 
     def get_hook(self, index=0):
         """Get component attach point from index
@@ -325,16 +339,13 @@ class AnimComponent(Component):
         """
         if isinstance(index, enumFn.Enum):
             index = index.value
-
-        connected_points = self.pynode.hooks.listConnections()
         try:
-            point = connected_points[index]
+            hook = self.hooks[index]
         except IndexError:
-            Logger.error("{0}: No attach point at index {1}".format(self, index))
-            point = None
-        return point
+            raise
+        return hook
 
-    def attach_to_component(self, other_comp, hook=0):
+    def attach_to_component(self, other_comp, hook_index=None):
         """Attach to other AnimComponent
 
         :param other_comp: Component to attach to.
@@ -347,24 +358,16 @@ class AnimComponent(Component):
         if not other_comp:
             return
         super(AnimComponent, self).attach_to_component(other_comp)
-        # Fetch attach point from component if int
-        if hook is None:
-            attach_obj = None
-        elif isinstance(hook, str):
-            attach_obj = pm.PyNode(hook)
-        elif isinstance(hook, luna_rig.Control):
-            attach_obj = hook.transform
-        elif isinstance(hook, pm.PyNode):
-            attach_obj = hook
+        if hook_index is None:
+            pass
         else:
-            attach_obj = other_comp.get_hook(index=hook)
-            if not attach_obj:
+            try:
+                hook = other_comp.get_hook(index=hook_index)  # type: Hook
+                hook.add_output(self)
+            except Exception:
                 Logger.error("Failed to connect {0} to {1} at point {2}".format(self, other_comp, hook))
-        if attach_obj:
-            attach_obj.message.connect(self.pynode.attachObject)
-        Logger.info("Attached: {0} ->> {1}".format(self, other_comp))
+                raise
         self.signals.attached.emit(other_comp)
-        return attach_obj
 
     def connect_to_character(self, character_name="", parent=False):
         """Connect component to character

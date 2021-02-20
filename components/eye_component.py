@@ -45,6 +45,7 @@ class EyeComponent(luna_rig.AnimComponent):
         instance.attach_to_component(meta_parent, hook)
         return instance
 
-    def attach_to_component(self, other_comp, hook=0):
-        attach_obj = super(EyeComponent, self).attach_to_component(other_comp, hook=hook)
-        pm.parentConstraint(attach_obj, self.root, mo=1)
+    def attach_to_component(self, other_comp, hook_index=0):
+        super(EyeComponent, self).attach_to_component(other_comp, hook_index=hook_index)
+        if self.in_hook:
+            pm.parentConstraint(self.in_hook.transform, self.root, mo=1)

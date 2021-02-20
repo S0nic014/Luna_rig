@@ -218,10 +218,10 @@ class FKIKSpineComponent(SpineComponent):
         chest_control.transform.metaParent.connect(instance.pynode.chestControl)
 
         # Store attach points
-        instance.add_hook(root_control.transform)
-        instance.add_hook(hips_control.transform)
-        instance.add_hook(mid_control.transform)
-        instance.add_hook(chest_control.transform)
+        instance.add_hook(root_control.transform, "root")
+        instance.add_hook(ctl_chain[0], "hips")
+        instance.add_hook(mid_control.transform, "mid")
+        instance.add_hook(ctl_chain[-1], "chest")
 
         # Connect to character, metaparent
         instance.connect_to_character(parent=True)
@@ -424,10 +424,10 @@ class FKRibbonSpineComponent(SpineComponent):
         chest_control.transform.metaParent.connect(instance.pynode.chestControl)
 
         # Store attach points
-        instance.add_hook(root_control.transform)
-        instance.add_hook(hips_control.transform)
-        instance.add_hook(mid_control.transform)
-        instance.add_hook(chest_control.transform)
+        instance.add_hook(root_control.transform, "root")
+        instance.add_hook(ctl_chain[0], "hips")
+        instance.add_hook(mid_control.transform, "mid")
+        instance.add_hook(ctl_chain[-1], "chest")
 
         # Connect to character, metaparent
         instance.connect_to_character(parent=True)

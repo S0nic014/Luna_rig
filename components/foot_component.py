@@ -142,7 +142,7 @@ class FootComponent(luna_rig.AnimComponent):
             jnt.metaParent.connect(instance.pynode.fkChain, na=1)
 
         instance.connect_to_character(parent=True)
-        instance.attach_to_component(meta_parent, hook=meta_parent.Hooks.IK)
+        instance.attach_to_component(meta_parent, hook_index=None)
 
         # Scale controls
         scale_dict = {fk_control: 0.2}

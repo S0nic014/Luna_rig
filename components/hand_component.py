@@ -52,7 +52,8 @@ class HandComponent(luna_rig.AnimComponent):
 
         return fk_component
 
-    def attach_to_component(self, other_comp, hook=0):
-        attach_obj = super(HandComponent, self).attach_to_component(other_comp, hook=hook)
-        pm.matchTransform(self.root, attach_obj)
-        pm.parentConstraint(attach_obj, self.group_ctls)
+    def attach_to_component(self, other_comp, hook_index=0):
+        super(HandComponent, self).attach_to_component(other_comp, hook=hook_index)
+        if self.in_hook:
+            pm.matchTransform(self.root, self.in_hook.tranform)
+            pm.parentConstraint(self.in_hook.transform, self.group_ctls)

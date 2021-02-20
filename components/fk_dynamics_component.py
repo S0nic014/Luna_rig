@@ -23,14 +23,13 @@ class FKDynamicsComponent(luna_rig.AnimComponent):
     def create(cls,
                meta_parent,
                name="dynamics_component",
-               unique_nsolver=False,
-               hook=0):
+               unique_nsolver=False):
         if not isinstance(meta_parent, luna_rig.components.FKComponent):
             Logger.exception("Dynamics component requires FKComponent instance as meta_parent")
             return
 
         # Create instance and add attrs
-        instance = super(FKDynamicsComponent, cls).create(meta_parent, meta_parent.side, name)
+        instance = super(FKDynamicsComponent, cls).create(meta_parent, meta_parent.side, name)  # type: FKDynamicsComponent
         instance.pynode.addAttr("hairSystem", at="message")
 
         # Joint chain
@@ -105,21 +104,12 @@ class FKDynamicsComponent(luna_rig.AnimComponent):
                                 scv=0)[0]  # type: luna_rig.nt.IkHandle
         ik_handle.setParent(instance.group_parts)
 
-        # # Add dynamics attributes
-        # attrFn.add_divider(meta_parent.controls[0].transform, attr_name="DYNAMICS")
-        # attr_dict = attrFn.transfer_attr(hair_system.getShape(), meta_parent.controls[0].transform, connect=True)
-        # for added_attr in attr_dict.values():
-        #     instance._store_settings(added_attr)
-        # # Add meta attributes
-        # instance.pynode.addAttr("offsets", at="message", multi=True, im=False)
         # Store joint chains
         instance._store_ctl_chain(ctl_chain)
+        hair_system.getShape().metaParent.connect(instance.pynode.hairSystem)
         # Connect to character, parent
         instance.connect_to_character(parent=True)
-        # Store component nodes
-        hair_system.getShape().metaParent.connect(instance.pynode.hairSystem)
-
-        instance.attach_to_component(meta_parent, hook)
+        instance.attach_to_component(meta_parent)
 
         # # House keeping
         if instance.character:
@@ -127,21 +117,13 @@ class FKDynamicsComponent(luna_rig.AnimComponent):
             instance.group_joints.visibility.set(0)
         return instance
 
-    def attach_to_component(self, other_comp, hook=0):
-        # Check if should attach at all
-        if not other_comp:
-            return
-        # Create meta parent connections
-        super(FKDynamicsComponent, self).attach_to_component(other_comp, hook=hook)
+    def attach_to_component(self, other_comp):
+        super(FKDynamicsComponent, self).attach_to_component(other_comp, hook_index=None)
         # Add dynamics attributes
-        attrFn.add_divider(self.attach_object, attr_name="DYNAMICS")
-        Logger.debug(self.attach_object)
-        Logger.debug(self.hair_system)
-        attr_dict = attrFn.transfer_attr(self.hair_system, self.attach_object, connect=True)
+        attrFn.add_divider(self.meta_parent.controls[0].transform, attr_name="DYNAMICS")
+        attr_dict = attrFn.transfer_attr(self.hair_system, self.meta_parent.controls[0].transform, connect=True)
         for added_attr in attr_dict.values():
             self._store_settings(added_attr)
-        # Add meta attributes
-        # self.pynode.addAttr("offsets", at="message", multi=True, im=False)
         # Create dynamics offsets
         for fk_ctl, jnt in zip(self.meta_parent.controls, self.ctl_chain):
             dynam_offset = fk_ctl.insert_offset("dynamics")

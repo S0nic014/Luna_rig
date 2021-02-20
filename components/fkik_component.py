@@ -14,8 +14,6 @@ class FKIKComponent(luna_rig.AnimComponent):
     class Hooks(enumFn.Enum):
         START_JNT = 0
         END_JNT = 1
-        IK = 2
-        PV = 3
 
     @property
     def ik_control(self):
@@ -206,10 +204,8 @@ class FKIKComponent(luna_rig.AnimComponent):
         param_control.transform.metaParent.connect(instance.pynode.paramControl)
 
         # Store attach points
-        instance.add_hook(ctl_chain[0])
-        instance.add_hook(ctl_chain[-1])
-        instance.add_hook(ik_control.transform)
-        instance.add_hook(pv_control.transform)
+        instance.add_hook(ctl_chain[0], "start_jnt")
+        instance.add_hook(ctl_chain[-1], "end_jnt")
 
         # Connect to character, parent
         instance.connect_to_character(parent=True)
@@ -233,18 +229,11 @@ class FKIKComponent(luna_rig.AnimComponent):
             instance.group_joints.visibility.set(0)
         return instance
 
-    def attach_to_component(self, other_comp, hook=0):
-        # Check if should attach at all
-        if not other_comp:
-            return
-
-        # Get attach point from super method
-        attach_obj = super(FKIKComponent, self).attach_to_component(other_comp, hook)
-        if not attach_obj:
-            return
-        # Component specific attach logic
-        pm.parentConstraint(attach_obj, self.ik_chain[0], mo=1)
-        pm.parentConstraint(attach_obj, self.fk_controls[0].group, mo=1)
+    def attach_to_component(self, other_comp, hook_index=None):
+        super(FKIKComponent, self).attach_to_component(other_comp, hook_index)
+        if self.in_hook:
+            pm.parentConstraint(self.in_hook.transform, self.ik_chain[0], mo=1)
+            pm.parentConstraint(self.in_hook.transform, self.fk_controls[0].group, mo=1)
 
     def switch_fkik(self, matching=True):
         # If in FK -> match IK to FK and switch to IK

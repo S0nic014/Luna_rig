@@ -10,8 +10,8 @@ from luna_rig.functions import nameFn
 class IKComponent(luna_rig.AnimComponent):
 
     class Hooks(enumFn.Enum):
-        IK = 0
-        PV = 1
+        START_JNT = 0
+        END_JNT = 1
 
     @property
     def ik_control(self):
@@ -93,8 +93,8 @@ class IKComponent(luna_rig.AnimComponent):
         ik_handle.metaParent.connect(instance.pynode.ikHandle)
 
         # Store attach points
-        instance.add_hook(ik_control.transform)
-        instance.add_hook(pv_control.transform)
+        instance.add_hook(ctl_chain[0], "start_jnt")
+        instance.add_hook(ctl_chain[-1], "end_jnt")
         # Connect to character, parent
         instance.connect_to_character(parent=True)
         instance.attach_to_component(meta_parent, hook)
@@ -112,17 +112,10 @@ class IKComponent(luna_rig.AnimComponent):
             instance.group_joints.visibility.set(0)
         return instance
 
-    def attach_to_component(self, other_comp, hook=0):
-        # Check if should attach at all
-        if not other_comp:
-            return
-
-        # Get attach point from super method
-        attach_obj = super(IKComponent, self).attach_to_component(other_comp, hook)
-        if not attach_obj:
-            return
-        # Component specific attach logic
-        pm.parentConstraint(attach_obj, self.group_joints, mo=1)
+    def attach_to_component(self, other_comp, hook_index=0):
+        super(IKComponent, self).attach_to_component(other_comp, hook_index)
+        if self.in_hook:
+            pm.parentConstraint(self.in_hook.transform, self.group_joints, mo=1)
 
     def attach_to_skeleton(self):
         """Override: attach to skeleton"""

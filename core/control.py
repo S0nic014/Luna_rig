@@ -781,7 +781,7 @@ class Control(object):
         if isinstance(local_parent, Control):
             local_parent = local_parent.transform
         if not local_parent and self.connected_component:
-            local_parent = self.connected_component.attach_object
+            local_parent = self.connected_component.in_hook
         # Crete orient transforms
         space_group = pm.createNode("transform", n=nameFn.generate_name([self.name, "orient_space"], side=self.side, suffix="grp"), p=self.group)  # type: luna_rig.nt.Transform
         local_group = pm.createNode("transform", n=nameFn.generate_name([self.name, "orient_local"], side=self.side, suffix="grp"), p=self.group)  # type: luna_rig.nt.Transform
