@@ -9,7 +9,8 @@ import luna_rig.functions.jointFn as jointFn
 import luna_rig.functions.curveFn as curveFn
 import luna_rig.functions.surfaceFn as surfaceFn
 import luna_rig.functions.rivetFn as rivetFn
-import luna_rig.functions.transformFn as transformFn
+import luna_rig.functions.nodeFn as nodeFn
+import luna_rig.functions.deformerFn as deformerFn
 
 
 class SpineComponent(luna_rig.AnimComponent):
@@ -79,7 +80,8 @@ class FKIKSpineComponent(SpineComponent):
                side='c',
                name='spine',
                start_joint=None,
-               end_joint=None):
+               end_joint=None,
+               debug_mode=False):
         # Create instance and add attrs
         instance = super(FKIKSpineComponent, cls).create(meta_parent, side, name)  # type: FKIKSpineComponent
         instance.pynode.addAttr("fkControls", at="message", multi=1, im=0)
@@ -240,7 +242,7 @@ class FKIKSpineComponent(SpineComponent):
 
         # House keeping
         ik_handle.visibility.set(0)
-        if instance.character:
+        if not debug_mode:
             instance.group_parts.visibility.set(0)
             instance.group_joints.visibility.set(0)
 
@@ -267,8 +269,7 @@ class FKRibbonSpineComponent(SpineComponent):
                start_joint=None,
                end_joint=None,
                side_vector=[1, 0, 0],
-               joints_aim_vector=[1.0, 0.0, 0.0],
-               joints_up_vector=[0.0, 1.0, 0.0]):
+               debug_mode=False):
         # Create instance and add attrs
         instance = super(FKRibbonSpineComponent, cls).create(meta_parent, side, name)  # type: FKIKSpineComponent
         instance.pynode.addAttr("midControl", at="message")
@@ -286,6 +287,7 @@ class FKRibbonSpineComponent(SpineComponent):
         joint_points = [jnt.getTranslation(space="world") for jnt in ctl_chain]
 
         # Create spiene surface
+        # ? Loft besize curves instead?
         nurbs_width = (joint_points[-1] - joint_points[0]).length() * 0.1
         spine_surface = surfaceFn.loft_from_points(joint_points[1:], side_vector=side_vector, width=nurbs_width)
         surfaceFn.rebuild_1_to_3(spine_surface)
@@ -305,17 +307,10 @@ class FKRibbonSpineComponent(SpineComponent):
             pm.matchTransform(rvt_jnt, jnt, rot=1)
             jointFn.rot_to_orient(rvt_jnt)
             rivet_joints.append(rvt_jnt)
-        # Contrain rivet joints aim to next
-        for index, rvt_jnt in enumerate(rivet_joints[:-1]):
-            pm.aimConstraint(rivet_joints[index + 1], rvt_jnt,
-                             aim=joints_aim_vector,
-                             upVector=joints_up_vector,
-                             wut="objectrotation",
-                             wuo=rivet_joints[index + 1])
 
         # Create controls
         temp_curve = curveFn.curve_from_points(name="temp_spine_curve", degree=1, points=joint_points)
-        pm.rebuildCurve(temp_curve, d=3, rpo=1, ch=0, spans=4)
+        pm.rebuildCurve(temp_curve, d=3, rpo=1, ch=0)
         ctl_locator = pm.spaceLocator(n="temp_control_loc")
         ctl_locator.translate.set(pm.pointOnCurve(temp_curve, pr=0.0, top=1))
         # Root
@@ -339,6 +334,7 @@ class FKRibbonSpineComponent(SpineComponent):
                                                attributes="tr",
                                                shape="hips",
                                                orient_axis="y")
+        hips_control.transform.rotateOrder.set(1)
         # Mid
         ctl_locator.translate.set(pm.pointOnCurve(temp_curve, pr=0.5, top=1))
         mid_control = luna_rig.Control.create(side=instance.side,
@@ -361,36 +357,60 @@ class FKRibbonSpineComponent(SpineComponent):
                                                 attributes="tr",
                                                 shape="chest",
                                                 orient_axis="y")
+        chest_control.transform.rotateOrder.set(1)
+        pm.delete(temp_curve)
         # Connect rivet joints to control chain
         for ctl_jnt, rvt_jnt in zip(ctl_spine_chain[:-1], rivet_joints):
             pm.pointConstraint(rvt_jnt, ctl_jnt)
             pm.orientConstraint(rvt_jnt, ctl_jnt)
         # Connect chest joint to control
         jointFn.match_orient(chest_control.joint, ctl_spine_chain[-1])
+        pm.pointConstraint(chest_control.joint, ctl_spine_chain[-1])
         pm.orientConstraint(chest_control.joint, ctl_spine_chain[-1])
         # Connect pelvis joint to control
         jointFn.match_orient(hips_control.joint, ctl_pelvis_joint)
         pm.pointConstraint(hips_control.joint, ctl_pelvis_joint)
         pm.orientConstraint(hips_control.joint, ctl_pelvis_joint)
+        # Connect controls to spine surface
+        pm.skinCluster(hips_control.joint, mid_control.joint, chest_control.joint, spine_surface)
 
-        # Create wire curve
-        wire_curve = pm.curve(n=nameFn.generate_name([instance.indexed_name, "wire"], instance.side, "crv"),
-                              d=2,
-                              #   p=[joint_points[1], pm.pointOnCurve(temp_curve, pr=0.5, top=1), joint_points[-1]])
-                              p=[joint_points[1], pm.pointOnSurface(spine_surface, u=0.5, v=0.5, top=1), joint_points[-1]])
-        hips_cluster = pm.cluster(wire_curve.getShape().controlPoints[0], n=nameFn.generate_name([instance.indexed_name, "hips"], instance.side, "clst"))
-        mid_cluster = pm.cluster(wire_curve.getShape().controlPoints[1], n=nameFn.generate_name([instance.indexed_name, "mid"], instance.side, "clst"))
-        chest_cluster = pm.cluster(wire_curve.getShape().controlPoints[2], n=nameFn.generate_name([instance.indexed_name, "chest"], instance.side, "clst"))
-        pm.parentConstraint(hips_control.transform, hips_cluster, mo=1)
-        pm.parentConstraint(mid_control.transform, mid_cluster, mo=1)
-        pm.parentConstraint(chest_control.transform, chest_cluster, mo=1)
-        pm.group(hips_cluster, mid_cluster, chest_cluster, n=nameFn.generate_name([instance.indexed_name, "clusters"], instance.side, suffix="grp"), p=instance.group_parts)
-        wire_deformer = pm.wire(spine_surface,
-                                wire=wire_curve,
-                                n=nameFn.generate_name([instance.indexed_name, "surface"], instance.side, "wire"),
-                                dds=(0, 50))[0]  # type: luna_rig.nt.Wire
-        wire_base_curve = wire_deformer.baseWire[0].listConnections(d=1)[0]
-        pm.group(wire_curve, wire_base_curve, n=nameFn.generate_name([instance.indexed_name, "wire"], instance.side, "grp"), p=instance.group_noscale)
+        # Add mid bending
+        # Hips driver
+        hip_driver_base_joint = pm.createNode("joint", n=nameFn.generate_name([instance.indexed_name, "driver", "base"], instance.side, "jnt"))
+        pm.matchTransform(hip_driver_base_joint, hips_control.transform)
+        hip_driver_end_joint = pm.createNode("joint",
+                                             n=nameFn.generate_name([instance.indexed_name, "driver", "base", "end"], instance.side, "jnt"))
+        pm.matchTransform(hip_driver_end_joint, mid_control.transform)
+        hip_driver_end_joint.setParent(hip_driver_base_joint)
+        hip_driver_base_joint.setParent(hips_control.transform)
+        lower_bend_locator = pm.spaceLocator(n=nameFn.generate_name([instance.indexed_name, "lower", "bend"], instance.side, "loc"))
+        pm.matchTransform(lower_bend_locator, hip_driver_end_joint)
+        lower_bend_locator.setParent(hips_control.group)
+        pm.pointConstraint(hip_driver_end_joint, lower_bend_locator)
+        # Chest driver
+        chest_driver_base_joint = pm.createNode("joint", n=nameFn.generate_name([instance.indexed_name, "driver", "top"], instance.side, "jnt"))
+        pm.matchTransform(chest_driver_base_joint, chest_control.transform)
+        chest_driver_end_joint = pm.createNode("joint",
+                                               n=nameFn.generate_name([instance.indexed_name, "driver", "top", "end"], instance.side, "jnt"))
+        pm.matchTransform(chest_driver_end_joint, mid_control.transform)
+        chest_driver_end_joint.setParent(chest_driver_base_joint)
+        chest_driver_base_joint.setParent(chest_control.transform)
+        upper_bend_locator = pm.spaceLocator(n=nameFn.generate_name([instance.indexed_name, "upper", "bend"], instance.side, "loc"))
+        pm.matchTransform(upper_bend_locator, chest_driver_end_joint)
+        upper_bend_locator.setParent(chest_control.group)
+        pm.pointConstraint(chest_driver_end_joint, upper_bend_locator)
+        # Connect bend
+        mid_bend_offset = mid_control.insert_offset("bend")
+        # Side
+        mid_bend_side_pma = nodeFn.create("plusMinusAverage", [instance.indexed_name, "bend", "side"], instance.side, suffix="pma")
+        upper_bend_locator.translateX.connect(mid_bend_side_pma.input1D[0])
+        lower_bend_locator.translateX.connect(mid_bend_side_pma.input1D[1])
+        mid_bend_side_pma.output1D.connect(mid_bend_offset.translateX)
+        # Front
+        mid_bend_front_pma = nodeFn.create("plusMinusAverage", [instance.indexed_name, "bend", "front"], instance.side, suffix="pma")
+        upper_bend_locator.translateZ.connect(mid_bend_front_pma.input1D[0])
+        lower_bend_locator.translateZ.connect(mid_bend_front_pma.input1D[1])
+        mid_bend_front_pma.output1D.connect(mid_bend_offset.translateZ)
 
         # Store default items
         instance._store_bind_joints(joint_chain)
@@ -422,12 +442,13 @@ class FKRibbonSpineComponent(SpineComponent):
                       chest_control: 0.25}
         instance.scale_controls(scale_dict)
 
-        # # House keeping
-        # if instance.character:
-        #     instance.group_parts.visibility.set(0)
-        #     instance.group_joints.visibility.set(0)
+        # House keeping
+        if not debug_mode:
+            hip_driver_base_joint.visibility.set(0)
+            chest_driver_base_joint.visibility.set(0)
+            lower_bend_locator.visibility.set(0)
+            upper_bend_locator.visibility.set(0)
+            instance.group_parts.visibility.set(0)
+            instance.group_joints.visibility.set(0)
 
         return instance
-
-    def attach_to_skeleton(self):
-        return super(FKRibbonSpineComponent, self).attach_to_skeleton()
