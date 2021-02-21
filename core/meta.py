@@ -142,7 +142,6 @@ class MetaNode(object):
 
     def set_meta_parent(self, parent):
         self.pynode.metaParent.connect(parent.pynode.metaChildren, na=1)
-        Logger.info("Meta parent connection: {0} ->> {1}".format(parent, self))
 
     def get_meta_children(self, of_type=None):
         """Get list of connected meta children
