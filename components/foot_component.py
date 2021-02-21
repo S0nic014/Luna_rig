@@ -10,14 +10,6 @@ class FootComponent(luna_rig.AnimComponent):
     ROLL_ATTRS = ["footRoll", "toeRoll", "heelRoll", "bank", "heelTwist", "toeTwist", "toeTap"]
 
     @property
-    def ik_chain(self):
-        return self.pynode.ikChain.listConnections(d=1)
-
-    @property
-    def fk_chain(self):
-        return self.pynode.fkChain.listConnections(d=1)
-
-    @property
     def fk_control(self):
         return luna_rig.Control(self.pynode.fkControl.listConnections(d=1))
 
@@ -48,27 +40,17 @@ class FootComponent(luna_rig.AnimComponent):
         for jnt in joint_chain:
             attrFn.add_meta_attr(jnt)
         ctl_chain = jointFn.duplicate_chain(joint_chain, add_name="ctl")
-        ik_chain = jointFn.duplicate_chain(joint_chain, add_name="ik")
-        fk_chain = jointFn.duplicate_chain(joint_chain, add_name="fk")
         rv_chain = jointFn.joint_chain(rv_chain)
         ctl_chain[0].setParent(meta_parent.ctl_chain[-1])
-        ik_chain[0].setParent(meta_parent.ik_chain[-1])
-        fk_chain[0].setParent(meta_parent.fk_chain[-1])
-        # Fkik blend
-        reverse_fkik = meta_parent.param_control.transform.fkik.listConnections(s=1, type="reverse")[0]
-        for ctl_jnt, fk_jnt, ik_jnt in zip(ctl_chain, fk_chain, ik_chain):
-            parent_constr = pm.parentConstraint(fk_jnt, ik_jnt, ctl_jnt)
-            reverse_fkik.outputX.connect(parent_constr.getWeightAliasList()[0])
-            meta_parent.param_control.transform.fkik.connect(parent_constr.getWeightAliasList()[1])
 
         # Foot handles
         ball_handle = pm.ikHandle(n=nameFn.generate_name([instance.indexed_name, "ball"], side=instance.side, suffix="ikh"),
-                                  sj=ik_chain[0].getParent(),
-                                  ee=ik_chain[0],
+                                  sj=ctl_chain[0].getParent(),
+                                  ee=ctl_chain[0],
                                   sol="ikSCsolver")[0]
         toe_handle = pm.ikHandle(n=nameFn.generate_name([instance.indexed_name, "toe"], side=instance.side, suffix="ikh"),
-                                 sj=ik_chain[0],
-                                 ee=ik_chain[1],
+                                 sj=ctl_chain[0],
+                                 ee=ctl_chain[1],
                                  sol="ikSCsolver")[0]
 
         # Foot locators
@@ -96,17 +78,22 @@ class FootComponent(luna_rig.AnimComponent):
         inner_locator.setParent(outer_locator)
         rv_chain[0].setParent(inner_locator)
 
-        # Controls
+        # FK Control
         meta_parent.param_control.transform.fkik.connect(instance.group_ctls.visibility)
         fk_control = luna_rig.Control.create(side=instance.side,
                                              name="{0}_fk".format(instance.indexed_name),
-                                             object_to_match=fk_chain[0],
+                                             object_to_match=ctl_chain[0],
                                              parent=meta_parent.fk_controls[-1],
                                              delete_match_object=False,
                                              attributes="r",
                                              shape="circleCrossed",
                                              tag="fk")
-        pm.orientConstraint(fk_control.transform, fk_chain[0])
+        pm.orientConstraint(fk_control.transform, ctl_chain[0])
+
+        # Fkik blend
+        meta_parent.param_control.transform.fkik.connect(ball_handle.ikBlend)
+        meta_parent.param_control.transform.fkik.connect(toe_handle.ikBlend)
+
         # Roll attributes
         attrFn.add_divider(meta_parent.ik_control.transform, attr_name="FOOT")
         for attr_name in FootComponent.ROLL_ATTRS:
@@ -136,10 +123,6 @@ class FootComponent(luna_rig.AnimComponent):
         instance._store_controls([fk_control])
         # Store chains
         fk_control.transform.metaParent.connect(instance.pynode.fkControl)
-        for jnt in ik_chain:
-            jnt.metaParent.connect(instance.pynode.ikChain, na=1)
-        for jnt in fk_chain:
-            jnt.metaParent.connect(instance.pynode.fkChain, na=1)
 
         instance.connect_to_character(parent=True)
         instance.attach_to_component(meta_parent, hook_index=None)
@@ -155,8 +138,6 @@ class FootComponent(luna_rig.AnimComponent):
     def remove(self):
         # Delete chains
         pm.delete(self.ctl_chain[0])
-        pm.delete(self.ik_chain[0])
-        pm.delete(self.fk_chain[0])
         if self.fk_control.transform.numChildren():
             self.fk_control.transform.childAtIndex(0).setParent(self.fk_control.transform.getParent())
         pm.delete(self.fk_control.group)

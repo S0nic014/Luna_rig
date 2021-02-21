@@ -7,6 +7,7 @@ import luna_rig.functions.attrFn as attrFn
 import luna_rig.functions.rigFn as rigFn
 import luna_rig.functions.nameFn as nameFn
 import luna_rig.functions.animFn as animFn
+import luna_rig.functions.nodeFn as nodeFn
 
 
 class FKIKComponent(luna_rig.AnimComponent):
@@ -28,14 +29,6 @@ class FKIKComponent(luna_rig.AnimComponent):
     @property
     def fk_controls(self):
         return [luna_rig.Control(node) for node in self.pynode.fkControls.listConnections(d=1)]
-
-    @property
-    def ik_chain(self):
-        return self.pynode.ikChain.listConnections(d=1)
-
-    @property
-    def fk_chain(self):
-        return self.pynode.fkChain.listConnections(d=1)
 
     @property
     def param_control(self):
@@ -76,7 +69,7 @@ class FKIKComponent(luna_rig.AnimComponent):
                name="fkik_component",
                start_joint=None,
                end_joint=None,
-               ik_world_orient=True,
+               ik_world_orient=False,
                default_state=1,
                param_locator=None):
         # Create instance and add attrs
@@ -97,29 +90,30 @@ class FKIKComponent(luna_rig.AnimComponent):
         for jnt in joint_chain:
             attrFn.add_meta_attr(jnt)
         ctl_chain = jointFn.duplicate_chain(original_chain=joint_chain, add_name="ctl", new_parent=instance.group_joints)
-        # Create FK, Ik chains
-        fk_chain = jointFn.duplicate_chain(original_chain=joint_chain, add_name="fk", new_parent=instance.group_joints)
-        ik_chain = jointFn.duplicate_chain(original_chain=joint_chain, add_name="ik", new_parent=instance.group_joints)
+        jnt_offset_grp = nodeFn.create("transform", [instance.indexed_name, "constr"], instance.side, suffix="grp", p=instance.group_joints)
+        pm.matchTransform(jnt_offset_grp, ctl_chain[0])
+        ctl_chain[0].setParent(jnt_offset_grp)
 
         # Create FK setup
         fk_controls = []
         next_parent = instance.group_ctls
-        for jnt in fk_chain:
-            ctl = luna_rig.Control.create(side=instance.side,
-                                          name="{0}_fk".format(instance.indexed_name),
-                                          object_to_match=jnt,
-                                          attributes="r",
-                                          parent=next_parent,
-                                          shape="circleCrossed",
-                                          tag="fk")
-            pm.parentConstraint(ctl.transform, jnt, mo=1)
-            next_parent = ctl
-            fk_controls.append(ctl)
+        for ctl_jnt in ctl_chain:
+            fk_ctl = luna_rig.Control.create(side=instance.side,
+                                             name="{0}_fk".format(instance.indexed_name),
+                                             object_to_match=ctl_jnt,
+                                             attributes="r",
+                                             parent=next_parent,
+                                             shape="circleCrossed",
+                                             tag="fk")
+            next_parent = fk_ctl
+            fk_controls.append(fk_ctl)
+        for fk_ctl, ctl_jnt in zip(fk_controls[:-1], ctl_chain):
+            pm.orientConstraint(fk_ctl.transform, ctl_jnt)
 
         # Create IK setup
         ik_control = luna_rig.Control.create(side=instance.side,
                                              name="{0}_ik".format(instance.indexed_name),
-                                             object_to_match=ik_chain[-1],
+                                             object_to_match=ctl_chain[-1],
                                              delete_match_object=False,
                                              attributes="tr",
                                              parent=instance.group_ctls,
@@ -127,12 +121,12 @@ class FKIKComponent(luna_rig.AnimComponent):
                                              match_orient=not ik_world_orient,
                                              tag="ik")
         ik_handle = pm.ikHandle(n=nameFn.generate_name(instance.name, side=instance.side, suffix="ikh"),
-                                sj=ik_chain[0],
-                                ee=ik_chain[-1],
+                                sj=ctl_chain[0],
+                                ee=ctl_chain[-1],
                                 sol="ikRPsolver")[0]
         attrFn.add_meta_attr(ik_handle)
         pm.parent(ik_handle, ik_control.transform)
-        pm.orientConstraint(ik_control.transform, ik_chain[-1], mo=1)
+
         # Matching helper
         matching_helper = pm.createNode("transform",
                                         n=nameFn.generate_name([instance.indexed_name, "matching_helper"], side=instance.side, suffix="grp"),
@@ -141,7 +135,7 @@ class FKIKComponent(luna_rig.AnimComponent):
         attrFn.add_meta_attr(matching_helper)
 
         # Pole vector
-        pole_locator = jointFn.get_pole_vector(ik_chain)
+        pole_locator = jointFn.get_pole_vector(ctl_chain)
         pv_control = luna_rig.Control.create(side=instance.side,
                                              name="{0}_pvec".format(instance.indexed_name),
                                              object_to_match=pole_locator,
@@ -151,10 +145,10 @@ class FKIKComponent(luna_rig.AnimComponent):
                                              shape="poleVector")
         pm.poleVectorConstraint(pv_control.transform, ik_handle)
         # Add wire
-        if len(ik_chain) % 2:
-            wire_source = ik_chain[(len(ik_chain) - 1) / 2]
+        if len(ctl_chain) % 2:
+            wire_source = ctl_chain[(len(ctl_chain) - 1) / 2]
         else:
-            wire_source = ik_chain[len(ik_chain) / 2]
+            wire_source = ctl_chain[len(ctl_chain) / 2]
         pv_control.add_wire(wire_source)
 
         # Params control
@@ -174,15 +168,23 @@ class FKIKComponent(luna_rig.AnimComponent):
 
         # Create blend
         param_control.transform.addAttr("fkik", nn="FK/IK", at="float", min=0.0, max=1.0, dv=default_state, k=True)
-        revese_fkik = pm.createNode("reverse", n=nameFn.generate_name([instance.indexed_name, "fkik"], side=instance.side, suffix="rev"))
-        param_control.transform.fkik.connect(revese_fkik.inputX)
+        reverse_fkik = pm.createNode("reverse", n=nameFn.generate_name([instance.indexed_name, "fkik"], side=instance.side, suffix="rev"))
+        param_control.transform.fkik.connect(reverse_fkik.inputX)
         param_control.transform.fkik.connect(ik_control.group.visibility)
         param_control.transform.fkik.connect(pv_control.group.visibility)
-        revese_fkik.outputX.connect(fk_controls[0].group.visibility)
-        for ctl_jnt, fk_jnt, ik_jnt in zip(ctl_chain, fk_chain, ik_chain):
-            parent_constr = pm.parentConstraint(fk_jnt, ik_jnt, ctl_jnt)
-            revese_fkik.outputX.connect(parent_constr.getWeightAliasList()[0])
-            param_control.transform.fkik.connect(parent_constr.getWeightAliasList()[1])
+        reverse_fkik.outputX.connect(fk_controls[0].group.visibility)
+        param_control.transform.fkik.connect(ik_handle.ikBlend)
+
+        # End joint orient
+        ikfk_orient_offset = nodeFn.create("transform",
+                                           [instance.indexed_name, "ikfk_or"],
+                                           instance.side,
+                                           "grp",
+                                           p=fk_controls[-1].transform)
+        last_orient_constr = pm.orientConstraint(fk_controls[-1].transform, ikfk_orient_offset, ctl_chain[-1], mo=1)  # type:  luna_rig.nt.OrientConstraint
+        ikfk_orient_offset.setParent(ik_control.transform)
+        reverse_fkik.outputX.connect(last_orient_constr.getWeightAliasList()[0])
+        param_control.transform.fkik.connect(last_orient_constr.getWeightAliasList()[1])
 
         # Store default items
         instance._store_bind_joints(joint_chain)
@@ -191,10 +193,6 @@ class FKIKComponent(luna_rig.AnimComponent):
         instance._store_controls([ik_control, pv_control, param_control])
 
         # Store indiviual items
-        for fk_jnt in fk_chain:
-            fk_jnt.metaParent.connect(instance.pynode.fkChain, na=1)
-        for ik_jnt in ik_chain:
-            ik_jnt.metaParent.connect(instance.pynode.ikChain, na=1)
         for fk_ctl in fk_controls:
             fk_ctl.transform.metaParent.connect(instance.pynode.fkControls, na=1)
         ik_control.transform.metaParent.connect(instance.pynode.ikControl)
@@ -232,7 +230,7 @@ class FKIKComponent(luna_rig.AnimComponent):
     def attach_to_component(self, other_comp, hook_index=None):
         super(FKIKComponent, self).attach_to_component(other_comp, hook_index)
         if self.in_hook:
-            pm.parentConstraint(self.in_hook.transform, self.ik_chain[0], mo=1)
+            pm.parentConstraint(self.in_hook.transform, self.ctl_chain[0].getParent(), mo=1)
             pm.parentConstraint(self.in_hook.transform, self.fk_controls[0].group, mo=1)
 
     def switch_fkik(self, matching=True):
@@ -242,19 +240,19 @@ class FKIKComponent(luna_rig.AnimComponent):
 
         else:
             if not self.fkik_state:
-                self.fkik_state = 1
                 pm.matchTransform(self.ik_control.transform, self.matching_helper)
                 # Pole vector
-                pole_locator = jointFn.get_pole_vector(self.fk_chain)
+                pole_locator = jointFn.get_pole_vector(self.ctl_chain)
                 pm.matchTransform(self.pv_control.transform, pole_locator)
                 pm.delete(pole_locator)
                 pm.select(self.ik_control.transform, r=1)
+                self.fkik_state = 1
             else:
                 # If in IK -> match FK to IK and switch to FK
-                self.fkik_state = 0
-                for ik_jnt, fk_ctl in zip(self.ik_chain, self.fk_controls):
-                    pm.matchTransform(fk_ctl.transform, ik_jnt, rot=1)
+                for ctl_jnt, fk_ctl in zip(self.ctl_chain, self.fk_controls):
+                    pm.matchTransform(fk_ctl.transform, ctl_jnt, rot=1)
                 pm.select(self.fk_controls[-1].transform, r=1)
+                self.fkik_state = 0
 
     def bake_fkik(self, source="fk", time_range=None, bake_pv=True, step=1):
         Logger.info("{0}: baking {1} to {2}...".format(self, source.upper(), "IK" if source.lower() == "fk" else "FK"))
