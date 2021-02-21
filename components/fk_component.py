@@ -71,7 +71,7 @@ class FKComponent(luna_rig.AnimComponent):
     def attach_to_component(self, other_comp, hook_index=0):
         super(FKComponent, self).attach_to_component(other_comp, hook_index=hook_index)
         if self.in_hook:
-            pm.parentConstraint(self.in_hook.transform, self.group_ctls, mo=1)
+            pm.parentConstraint(self.in_hook.transform, self.controls[0].group, mo=1)
 
     def add_auto_aim(self, follow_control, mirrored_chain=False):
         if not isinstance(follow_control, luna_rig.Control):
