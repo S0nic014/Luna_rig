@@ -162,4 +162,3 @@ class TwistComponent(luna_rig.AnimComponent):
             pm.parentConstraint(self.ctl_chain[0], self.meta_parent.bind_joints[0])
         # Insert output joints
         self.bind_joints[0].setParent(self.skel_start_joint)
-        self.skel_end_joint.setParent(self.bind_joints[-1])
