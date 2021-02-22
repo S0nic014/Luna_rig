@@ -30,10 +30,11 @@ class SpineComponent(luna_rig.AnimComponent):
     @classmethod
     def create(cls,
                meta_parent=None,
+               character=None,
                side='c',
                name='spine'):
         # Create instance and add attrs
-        instance = super(SpineComponent, cls).create(meta_parent, side, name)  # type: FKIKSpineComponent
+        instance = super(SpineComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character)  # type: FKIKSpineComponent
         instance.pynode.addAttr("rootControl", at="message")
         instance.pynode.addAttr("hipsControl", at="message")
         instance.pynode.addAttr("chestControl", at="message")
@@ -77,13 +78,14 @@ class FKIKSpineComponent(SpineComponent):
     def create(cls,
                meta_parent=None,
                hook=0,
+               character=None,
                side='c',
                name='spine',
                start_joint=None,
                end_joint=None,
                debug_mode=False):
         # Create instance and add attrs
-        instance = super(FKIKSpineComponent, cls).create(meta_parent, side, name)  # type: FKIKSpineComponent
+        instance = super(FKIKSpineComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character)  # type: FKIKSpineComponent
         instance.pynode.addAttr("fkControls", at="message", multi=1, im=0)
         instance.pynode.addAttr("midControl", at="message")
 
@@ -264,6 +266,7 @@ class FKRibbonSpineComponent(SpineComponent):
     def create(cls,
                meta_parent=None,
                hook=0,
+               character=None,
                side='c',
                name='spine',
                start_joint=None,
@@ -271,7 +274,7 @@ class FKRibbonSpineComponent(SpineComponent):
                side_vector=[1, 0, 0],
                debug_mode=False):
         # Create instance and add attrs
-        instance = super(FKRibbonSpineComponent, cls).create(meta_parent, side, name)  # type: FKIKSpineComponent
+        instance = super(FKRibbonSpineComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character)  # type: FKIKSpineComponent
         instance.pynode.addAttr("midControl", at="message")
 
         # Joint chains

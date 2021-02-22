@@ -9,6 +9,7 @@ import luna_rig.functions.outlinerFn as outlinerFn
 import luna_rig.functions.animFn as animFn
 import luna_rig.functions.attrFn as attrFn
 import luna_rig.functions.nodeFn as nodeFn
+import luna_rig.functions.rigFn as rigFn
 
 
 class _compSignals(QtCore.QObject):
@@ -115,7 +116,8 @@ class AnimComponent(Component):
                meta_parent=None,
                side="c",
                name="anim_component",
-               hook=0):  # noqa:F821
+               hook=0,
+               character=None):  # noqa:F821
         """Create AnimComponent hierarchy in the scene and instance.
 
         :param meta_parent: Other Rig element to connect to, defaults to None
@@ -165,6 +167,8 @@ class AnimComponent(Component):
         noscale_grp.metaParent.connect(instance.pynode.noScaleGroup)
         out_grp.metaParent.connect(instance.pynode.outGroup)
         instance.set_outliner_color(17)
+        # Connect to character
+        instance.connect_to_character(character_component=character, parent=False)
 
         return instance
 
@@ -371,32 +375,31 @@ class AnimComponent(Component):
                 raise
         self.signals.attached.emit(other_comp)
 
-    def connect_to_character(self, character_name="", parent=False):
+    def connect_to_character(self, character_component=None, character_name=None, parent=False):
         """Connect component to character
 
         :param character_name: Specific character to connect to, defaults to ""
         :type character_name: str, optional
         """
-        character = None
-        all_characters = luna_rig.MetaNode.list_nodes(luna_rig.components.Character)
-        if not all_characters:
-            Logger.error("No characters found in the scene!")
-            return
+        if not character_component:
+            if character_name:
+                all_characters = luna_rig.MetaNode.list_nodes(of_type=luna_rig.components.Character)
+                if not all_characters:
+                    raise RuntimeError("No characters found in the scene!")
+                for char_node in all_characters:
+                    if char_node.pynode.characterName.get() == character_name:
+                        character_component = char_node
+                        break
+            else:
+                character_component = rigFn.get_build_character()  # type: luna_rig.components.Character
+        if not isinstance(character_component, luna_rig.components.Character):
+            raise RuntimeError("{0} is not a valid Character".format(character_component))
 
-        if character_name:
-            for char_node in all_characters:
-                if char_node.pynode.characterName.get() == character_name:
-                    character = char_node
-                    break
-            if character is None:
-                Logger.error("No character: {0} found!".format(character_name))
-                return
-        else:
-            character = all_characters[0]  # type: luna_rig.components.Character
-
-        self.pynode.character.connect(character.pynode.metaChildren, na=1)
+        # Connect
+        if self.pynode not in character_component.pynode.metaChildren.listConnections(d=1):
+            self.pynode.character.connect(character_component.pynode.metaChildren, na=1)
         if parent:
-            pm.parent(self.root, character.control_rig)
+            self.root.setParent(character_component.control_rig)
 
     def scale_controls(self, scale_dict):
         if self.character:

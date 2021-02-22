@@ -21,10 +21,11 @@ class HandComponent(luna_rig.AnimComponent):
     @classmethod
     def create(cls,
                meta_parent=None,
+               character=None,
                side=None,
                name="hand",
                hook=0):
-        instance = super(HandComponent, cls).create(meta_parent=meta_parent, side=side, name=name, hook=hook)  # type: HandComponent
+        instance = super(HandComponent, cls).create(meta_parent=meta_parent, side=side, name=name, hook=hook, character=character)  # type: HandComponent
         instance.pynode.addAttr("fingers", at="message", multi=True, im=False)
 
         instance.connect_to_character(parent=True)

@@ -22,6 +22,7 @@ class FKDynamicsComponent(luna_rig.AnimComponent):
     @classmethod
     def create(cls,
                meta_parent,
+               character=None,
                name="dynamics_component",
                unique_nsolver=False):
         if not isinstance(meta_parent, luna_rig.components.FKComponent):
@@ -29,7 +30,7 @@ class FKDynamicsComponent(luna_rig.AnimComponent):
             return
 
         # Create instance and add attrs
-        instance = super(FKDynamicsComponent, cls).create(meta_parent, meta_parent.side, name)  # type: FKDynamicsComponent
+        instance = super(FKDynamicsComponent, cls).create(meta_parent=meta_parent, side=meta_parent.side, name=name, character=character)  # type: FKDynamicsComponent
         instance.pynode.addAttr("hairSystem", at="message")
 
         # Joint chain

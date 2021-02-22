@@ -16,6 +16,7 @@ class FootComponent(luna_rig.AnimComponent):
     @classmethod
     def create(cls,
                meta_parent=None,
+               character=None,
                side=None,
                name="foot",
                start_joint=None,
@@ -30,7 +31,7 @@ class FootComponent(luna_rig.AnimComponent):
         side = side if side else meta_parent.side
         foot_locators_grp = pm.PyNode(foot_locators_grp)  # type: luna_rig.nt.Transform
         # Create instance and add attrs
-        instance = super(FootComponent, cls).create(meta_parent=meta_parent, side=side, name=name)  # type: FootComponent
+        instance = super(FootComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character)  # type: FootComponent
         instance.pynode.addAttr("fkChain", at="message", multi=1, im=0)
         instance.pynode.addAttr("ikChain", at="message", multi=1, im=0)
         instance.pynode.addAttr("fkControl", at="message")

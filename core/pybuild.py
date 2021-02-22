@@ -19,7 +19,7 @@ class _buildSignals(QtCore.QObject):
 
 
 class PyBuild(object):
-    def __init__(self, asset_type, asset_name):
+    def __init__(self, asset_type, asset_name, existing_character=None):
         self.signals = _buildSignals()
 
         # Get project instance
@@ -40,7 +40,10 @@ class PyBuild(object):
         asset_files.import_model()
         asset_files.import_skeleton()
         # Setup character
-        self.character = luna_rig.components.Character.create(name=asset_name)
+        if existing_character:
+            self.character = luna_rig.components.Character(existing_character)
+        else:
+            self.character = luna_rig.components.Character.create(name=asset_name)
         environFn.set_character_var(self.character)
 
         # Override methods
@@ -53,7 +56,7 @@ class PyBuild(object):
         pm.select(cl=1)
         maya_utils.switch_xray_joints()
         pm.viewFit(self.character.root_ctl.group)
-        if Config.get(BuildVars.geometry_override, default=True):
+        if Config.get(BuildVars.geometry_override, default=True, stored=True):
             self.character.geometry_grp.overrideEnabled.set(1)
             self.character.geometry_grp.overrideColor.set(1)
 

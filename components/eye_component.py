@@ -16,12 +16,13 @@ class EyeComponent(luna_rig.AnimComponent):
                eye_joint,
                side="c",
                name="eye",
+               character=None,
                meta_parent=None,
                hook=0,
                aim_vector=[0, 0, 1],
                up_vector=[0, 1, 0],
                target_wire=False):
-        instance = super(EyeComponent, cls).create(meta_parent=meta_parent, side=side, name=name, hook=hook)  # type: EyeComponent
+        instance = super(EyeComponent, cls).create(meta_parent=meta_parent, side=side, name=name, hook=hook, character=character)  # type: EyeComponent
         instance.pynode.addAttr("aimControl", at="message")
         eye_joint = pm.PyNode(eye_joint)
         attrFn.add_meta_attr(eye_joint)

@@ -12,13 +12,14 @@ class FKComponent(luna_rig.AnimComponent):
     def create(cls,
                meta_parent=None,
                hook=0,
+               character=None,
                side="c",
                name="fk_component",
                start_joint=None,
                end_joint=None,
                add_end_ctl=True,
                lock_translate=True):
-        instance = super(FKComponent, cls).create(meta_parent, side, name)  # type: FKComponent
+        instance = super(FKComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character)  # type: FKComponent
         # Joint chain
         joint_chain = jointFn.joint_chain(start_joint, end_joint)
         jointFn.validate_rotations(joint_chain)
