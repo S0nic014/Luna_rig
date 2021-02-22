@@ -56,8 +56,8 @@ class Component(luna_rig.MetaNode):
         :rtype: Component
         """
         Logger.info("Building {0}({1}_{2})...".format(cls.as_str(name_only=True), side, name))
-        if isinstance(meta_parent, luna_rig.MetaNode):
-            meta_parent = meta_parent.pynode
+        Logger.info("Meta parent: {0}".format(meta_parent))
+        # Create instance, add attribs
         instance = super(Component, cls).create(meta_parent)  # type: Component
         instance.pynode.rename(nameFn.generate_name(name, side, suffix="meta"))
         instance.pynode.addAttr("settings", at="message", multi=1, im=0)
@@ -77,7 +77,7 @@ class Component(luna_rig.MetaNode):
             other_comp = luna_rig.MetaNode(other_comp)
         if other_comp.pynode not in self.pynode.metaParent.listConnections():
             self.set_meta_parent(other_comp)
-            Logger.info("Meta parent connection: {0} ->> {1}".format(other_comp, self))
+            Logger.info("Meta parent set: {0} ->> {1}".format(self, other_comp))
 
     def _store_settings(self, attr):
         """Store given attribute as component setting
@@ -154,7 +154,7 @@ class AnimComponent(Component):
         instance.pynode.addAttr("bindJoints", at="message", multi=1, im=0)
         instance.pynode.addAttr("ctlChain", at="message", multi=1, im=0)
         instance.pynode.addAttr("controls", at="message", multi=1, im=0)
-        instance.pynode.addAttr("hooks", at="message", multi=1, im=0)
+        instance.pynode.addAttr("outHooks", at="message", multi=1, im=0)
         instance.pynode.addAttr("inHook", at="message")
 
         # Connect hierarchy to meta
@@ -221,8 +221,8 @@ class AnimComponent(Component):
         return result
 
     @ property
-    def hooks(self):
-        hooks = [Hook(node) for node in self.pynode.hooks.listConnections()]
+    def out_hooks(self):
+        hooks = [Hook(node) for node in self.pynode.outHooks.listConnections()]
         return hooks
 
     @ property
@@ -342,7 +342,7 @@ class AnimComponent(Component):
         if isinstance(index, enumFn.Enum):
             index = index.value
         try:
-            hook = self.hooks[index]
+            hook = self.out_hooks[index]
         except IndexError:
             raise
         return hook
@@ -414,7 +414,7 @@ class AnimComponent(Component):
 class Hook(object):
 
     def __repr__(self):
-        return "Hook ({0})".format(self.transform)
+        return "Hook({0})".format(self.transform)
 
     def __eq__(self, other):
         if not isinstance(other, Hook):
@@ -426,7 +426,7 @@ class Hook(object):
 
     def add_output(self, anim_component):
         self.transform.children.connect(anim_component.pynode.inHook)
-        Logger.info("{0} connection: {0} ->> {1}".format(self, anim_component))
+        Logger.info("{0} ->> {1}".format(self, anim_component))
 
     @classmethod
     def create(cls, anim_component, object_node, name):
@@ -446,7 +446,7 @@ class Hook(object):
         hook_transform.addAttr("object", at="message")
         hook_transform.addAttr("children", at="message")
         object_node.message.connect(hook_transform.object)
-        hook_transform.metaParent.connect(anim_component.pynode.hooks, na=1)
+        hook_transform.metaParent.connect(anim_component.pynode.outHooks, na=1)
         instance = cls(hook_transform)
         return instance
 
@@ -467,4 +467,4 @@ class Hook(object):
 
     @property
     def index(self):
-        return self.component.hooks.index(self)
+        return self.component.out_hooks.index(self)

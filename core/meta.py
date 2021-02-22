@@ -125,7 +125,8 @@ class MetaNode(object):
         :rtype: MetaNode
         """
         if meta_parent:
-            meta_parent = MetaNode(meta_parent)
+            if not isinstance(meta_parent, MetaNode):
+                meta_parent = MetaNode(meta_parent)
 
         # Create node
         node = pm.createNode("network")
