@@ -214,43 +214,6 @@ class Character(luna_rig.Component):
         for ctl in self.list_controls():
             ctl.to_bind_pose()
 
-    def create_controls_set(self, name="controls_set", tag=None):
-        name = nameFn.add_namespaces(name, self.namespace_list)
-        result = None
-        if not pm.objExists(name):
-            result = pm.sets([ctl.transform for ctl in self.list_controls(tag)], n=name)  # type: luna_rig.nt.ObjectSet
-        else:
-            result = pm.PyNode(name)
-        return result
-
-    def create_bind_joints_set(self, name="bind_joints_set"):
-        name = nameFn.add_namespaces(name, self.namespace_list)
-        result = None
-        if not pm.objExists(name):
-            result = pm.sets(self.list_bind_joints(), n=name)  # type: luna_rig.nt.ObjectSet
-        else:
-            result = pm.PyNode(name)
-        return result
-
-    def create_skeleton_set(self, name="skeleton_set"):
-        name = nameFn.add_namespaces(name, self.namespace_list)
-        result = None
-        skel_joints = self.deformation_rig.listRelatives(type="joint", ad=True)
-        if not pm.objExists(name):
-            result = pm.sets(skel_joints, n=name)  # type: luna_rig.nt.ObjectSet
-        else:
-            result = pm.PyNode(name)
-        return result
-
-    def create_selection_sets(self):
-        ctl_set = self.create_controls_set()
-        skel_set = self.create_skeleton_set()
-        bind_jnt_set = self.create_bind_joints_set()
-        if not pm.objExists("rig_set"):
-            rig_set = pm.sets([ctl_set, skel_set, bind_jnt_set], n="rig_set")
-        else:
-            rig_set = pm.PyNode("rig_set")
-
     def get_nucleus(self):
         node = None
         nucleus_name = "{0}_nucl".format(self.name)
@@ -298,11 +261,59 @@ class Character(luna_rig.Component):
         root_joint.metaParent.connect(self.pynode.rootMotionJoint)
         return root_joint
 
+    def create_controls_set(self, name="controls_set", tag=None):
+        name = nameFn.add_namespaces(name, self.namespace_list)
+        result = None
+        if not pm.objExists(name):
+            result = pm.sets([ctl.transform for ctl in self.list_controls(tag)], n=name)  # type: luna_rig.nt.ObjectSet
+        else:
+            result = pm.PyNode(name)
+        return result
+
+    def create_bind_joints_set(self, name="bind_joints_set"):
+        name = nameFn.add_namespaces(name, self.namespace_list)
+        result = None
+        if not pm.objExists(name):
+            result = pm.sets(self.list_bind_joints(), n=name)  # type: luna_rig.nt.ObjectSet
+        else:
+            result = pm.PyNode(name)
+        return result
+
+    def create_skeleton_set(self, name="skeleton_set"):
+        name = nameFn.add_namespaces(name, self.namespace_list)
+        result = None
+        skel_joints = self.deformation_rig.listRelatives(type="joint", ad=True)
+        if not pm.objExists(name):
+            result = pm.sets(skel_joints, n=name)  # type: luna_rig.nt.ObjectSet
+        else:
+            result = pm.PyNode(name)
+        return result
+
+    def create_geometry_set(self, name="geometry_set"):
+        name = nameFn.add_namespaces(name, self.namespace_list)
+        result = None
+        polygon_objects = [node for node in self.geometry_grp.listRelatives() if isinstance(node.getShape(), luna_rig.nt.Mesh)]
+        if not pm.objExists(name):
+            result = pm.sets(polygon_objects, n=name)  # type: luna_rig.nt.ObjectSet
+        else:
+            result = pm.PyNode(name)
+        return result
+
+    def create_selection_sets(self):
+        ctl_set = self.create_controls_set()
+        skel_set = self.create_skeleton_set()
+        bind_jnt_set = self.create_bind_joints_set()
+        geo_set = self.create_geometry_set()
+        if not pm.objExists("rig_set"):
+            rig_set = pm.sets([ctl_set, skel_set, bind_jnt_set, geo_set], n="rig_set")
+        else:
+            rig_set = pm.PyNode("rig_set")
+        return rig_set
+
     def set_publish_mode(self, value):
         self.set_interesting(not value)
         rigFn.set_node_selectable(self.geometry_grp, not value)
         rigFn.set_node_selectable(self.deformation_rig, not value)
         self.deformation_rig.visibility.set(not value)
         self.util_grp.visibility.set(not value)
-        if value:
-            self.create_selection_sets()
+        self.create_selection_sets()
