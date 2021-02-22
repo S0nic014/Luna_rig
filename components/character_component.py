@@ -220,17 +220,36 @@ class Character(luna_rig.Component):
         if not pm.objExists(name):
             result = pm.sets([ctl.transform for ctl in self.list_controls(tag)], n=name)  # type: luna_rig.nt.ObjectSet
         else:
-            Logger.warning("Object set {0} already exists.".format(name))
+            result = pm.PyNode(name)
         return result
 
-    def create_joints_set(self, name="bind_joints_set"):
+    def create_bind_joints_set(self, name="bind_joints_set"):
         name = nameFn.add_namespaces(name, self.namespace_list)
         result = None
         if not pm.objExists(name):
             result = pm.sets(self.list_bind_joints(), n=name)  # type: luna_rig.nt.ObjectSet
         else:
-            Logger.warning("Object set {0} already exists.".format(name))
+            result = pm.PyNode(name)
         return result
+
+    def create_skeleton_set(self, name="skeleton_set"):
+        name = nameFn.add_namespaces(name, self.namespace_list)
+        result = None
+        skel_joints = self.deformation_rig.listRelatives(type="joint", ad=True)
+        if not pm.objExists(name):
+            result = pm.sets(skel_joints, n=name)  # type: luna_rig.nt.ObjectSet
+        else:
+            result = pm.PyNode(name)
+        return result
+
+    def create_selection_sets(self):
+        ctl_set = self.create_controls_set()
+        skel_set = self.create_skeleton_set()
+        bind_jnt_set = self.create_bind_joints_set()
+        if not pm.objExists("rig_set"):
+            rig_set = pm.sets([ctl_set, skel_set, bind_jnt_set], n="rig_set")
+        else:
+            rig_set = pm.PyNode("rig_set")
 
     def get_nucleus(self):
         node = None
@@ -286,5 +305,4 @@ class Character(luna_rig.Component):
         self.deformation_rig.visibility.set(not value)
         self.util_grp.visibility.set(not value)
         if value:
-            self.create_controls_set()
-            self.create_joints_set()
+            self.create_selection_sets()
