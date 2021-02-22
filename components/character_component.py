@@ -66,6 +66,11 @@ class Character(luna_rig.Component):
         size = max(self.get_size(axis="y") * 0.1, self.get_size(axis="x") * 0.1)
         return size
 
+    @ property
+    def actions_dict(self):
+        actions = {}
+        return actions
+
     @ classmethod
     def find(cls, name):
         result = []

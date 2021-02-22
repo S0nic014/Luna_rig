@@ -162,8 +162,8 @@ class FKIKSpineComponent(SpineComponent):
                                                 orient_axis="y")
         # Connect IK controls
         mid_ctl_constr = pm.parentConstraint(hips_control.transform, chest_control.transform, mid_control.group, mo=1)  # type: luna_rig.nt.ParentConstraint
-        mid_control.transform.followChest.connect(mid_ctl_constr.getWeightAliasList()[0])
-        mid_control.transform.followHips.connect(mid_ctl_constr.getWeightAliasList()[1])
+        mid_control.transform.followHips.connect(mid_ctl_constr.getWeightAliasList()[0])
+        mid_control.transform.followChest.connect(mid_ctl_constr.getWeightAliasList()[1])
         # Skin to curve
         pm.skinCluster([hips_control.joint, mid_control.joint, chest_control.joint],
                        ik_curve,
@@ -187,7 +187,7 @@ class FKIKSpineComponent(SpineComponent):
                                               delete_match_object=False,
                                               parent=root_control,
                                               joint=True,
-                                              attributes="r",
+                                              attributes="tr",
                                               shape="circleCrossed",
                                               orient_axis="y")
         ctl_locator.translate.set(pm.pointOnCurve(ik_curve, pr=0.75, top=1))
@@ -197,7 +197,7 @@ class FKIKSpineComponent(SpineComponent):
                                               delete_match_object=True,
                                               parent=fk1_control,
                                               joint=True,
-                                              attributes="r",
+                                              attributes="tr",
                                               shape="circleCrossed",
                                               orient_axis="y")
         pm.matchTransform(fk2_control.joint, ctl_chain[-1])
