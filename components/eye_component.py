@@ -28,9 +28,9 @@ class EyeComponent(luna_rig.AnimComponent):
         attrFn.add_meta_attr(eye_joint)
         aim_control = luna_rig.Control.create(name="{0}_aim".format(instance.indexed_name),
                                               side=instance.side,
-                                              object_to_match=aim_locator,
+                                              guide=aim_locator,
                                               parent=instance.group_ctls,
-                                              delete_match_object=True,
+                                              delete_guide=True,
                                               attributes="t",
                                               shape="circle",
                                               orient_axis="z",

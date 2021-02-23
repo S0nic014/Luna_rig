@@ -54,8 +54,8 @@ class IKComponent(luna_rig.AnimComponent):
         # Create ik control
         ik_control = luna_rig.Control.create(side=instance.side,
                                              name="{0}_ik".format(instance.indexed_name),
-                                             object_to_match=ctl_chain[-1],
-                                             delete_match_object=False,
+                                             guide=ctl_chain[-1],
+                                             delete_guide=False,
                                              attributes="tr",
                                              parent=instance.group_ctls,
                                              shape="cube",
@@ -71,8 +71,8 @@ class IKComponent(luna_rig.AnimComponent):
         pole_locator = jointFn.get_pole_vector(ctl_chain)
         pv_control = luna_rig.Control.create(side=instance.side,
                                              name="{0}_pvec".format(instance.indexed_name),
-                                             object_to_match=pole_locator,
-                                             delete_match_object=True,
+                                             guide=pole_locator,
+                                             delete_guide=True,
                                              parent=instance.group_ctls,
                                              attributes="tr",
                                              shape="poleVector")

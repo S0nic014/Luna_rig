@@ -251,6 +251,9 @@ class Character(luna_rig.Component):
                 connected_node.ihi.set(value)
 
     def add_root_motion(self, follow_object, root_joint=None, children=[]):
+        # Process arguments
+        if isinstance(follow_object, luna_rig.Control):
+            follow_object = follow_object.transform
         if not root_joint:
             root_joint = jointFn.create_root_joint(parent=self.deformation_rig, children=children)
         elif not isinstance(root_joint, pm.PyNode):

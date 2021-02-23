@@ -24,7 +24,7 @@ class HandComponent(luna_rig.AnimComponent):
                character=None,
                side=None,
                name="hand",
-               hook=0):
+               hook=None):
         instance = super(HandComponent, cls).create(meta_parent=meta_parent, side=side, name=name, hook=hook, character=character)  # type: HandComponent
         instance.pynode.addAttr("fingers", at="message", multi=True, im=False)
 
@@ -37,24 +37,25 @@ class HandComponent(luna_rig.AnimComponent):
         if "finger" not in name:
             name = name + "_finger"
         fk_component = luna_rig.components.FKComponent.create(meta_parent=self,
-                                                              hook=self.group_ctls,
+                                                              hook=None,
                                                               side=self.side,
                                                               name=name,
                                                               start_joint=start_joint,
                                                               end_joint=end_joint,
                                                               add_end_ctl=False,
                                                               lock_translate=False)
+        fk_component.root.setParent(self.group_ctls)
         fk_component.pynode.metaParent.connect(self.pynode.fingers, na=1)
+        # Adjust shapes
         fk_component.controls[0].shape = "markerDiamond"
         fk_component.controls[0].scale(1.0, 0.5)
         for ctl in fk_component.controls[1:]:
             ctl.shape = "cube"
             ctl.scale(1.0, 2)
-
         return fk_component
 
-    def attach_to_component(self, other_comp, hook_index=0):
-        super(HandComponent, self).attach_to_component(other_comp, hook=hook_index)
+    def attach_to_component(self, other_comp, hook_index=None):
+        super(HandComponent, self).attach_to_component(other_comp, hook_index=hook_index)
         if self.in_hook:
-            pm.matchTransform(self.root, self.in_hook.tranform)
+            pm.matchTransform(self.root, self.in_hook.transform)
             pm.parentConstraint(self.in_hook.transform, self.group_ctls)

@@ -83,9 +83,9 @@ class FootComponent(luna_rig.AnimComponent):
         meta_parent.param_control.transform.fkik.connect(instance.group_ctls.visibility)
         fk_control = luna_rig.Control.create(side=instance.side,
                                              name="{0}_fk".format(instance.indexed_name),
-                                             object_to_match=ctl_chain[0],
+                                             guide=ctl_chain[0],
                                              parent=meta_parent.fk_controls[-1],
-                                             delete_match_object=False,
+                                             delete_guide=False,
                                              attributes="r",
                                              shape="circleCrossed",
                                              tag="fk")

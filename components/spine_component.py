@@ -120,8 +120,8 @@ class FKIKSpineComponent(SpineComponent):
         # Root
         root_control = luna_rig.Control.create(side=instance.side,
                                                name="{0}_root".format(instance.indexed_name),
-                                               object_to_match=ctl_locator,
-                                               delete_match_object=False,
+                                               guide=ctl_locator,
+                                               delete_guide=False,
                                                parent=instance.group_ctls,
                                                joint=False,
                                                attributes="tr",
@@ -131,8 +131,8 @@ class FKIKSpineComponent(SpineComponent):
         # Hips
         hips_control = luna_rig.Control.create(side=instance.side,
                                                name="{0}_hips".format(instance.indexed_name),
-                                               object_to_match=ctl_locator,
-                                               delete_match_object=False,
+                                               guide=ctl_locator,
+                                               delete_guide=False,
                                                parent=root_control,
                                                joint=True,
                                                attributes="tr",
@@ -142,8 +142,8 @@ class FKIKSpineComponent(SpineComponent):
         ctl_locator.translate.set(pm.pointOnCurve(ik_curve, pr=0.5, top=1))
         mid_control = luna_rig.Control.create(side=instance.side,
                                               name="{0}_mid".format(instance.indexed_name),
-                                              object_to_match=ctl_locator,
-                                              delete_match_object=False,
+                                              guide=ctl_locator,
+                                              delete_guide=False,
                                               parent=root_control,
                                               joint=True,
                                               attributes="tr",
@@ -155,8 +155,8 @@ class FKIKSpineComponent(SpineComponent):
         ctl_locator.translate.set(pm.pointOnCurve(ik_curve, pr=1.0, top=1))
         chest_control = luna_rig.Control.create(side=instance.side,
                                                 name="{0}_chest".format(instance.indexed_name),
-                                                object_to_match=ctl_locator,
-                                                delete_match_object=False,
+                                                guide=ctl_locator,
+                                                delete_guide=False,
                                                 parent=root_control,
                                                 joint=True,
                                                 attributes="tr",
@@ -185,8 +185,8 @@ class FKIKSpineComponent(SpineComponent):
         ctl_locator.translate.set(pm.pointOnCurve(ik_curve, pr=0.25, top=1))
         fk1_control = luna_rig.Control.create(side=instance.side,
                                               name="{0}_fk".format(instance.indexed_name),
-                                              object_to_match=ctl_locator,
-                                              delete_match_object=False,
+                                              guide=ctl_locator,
+                                              delete_guide=False,
                                               parent=root_control,
                                               joint=True,
                                               attributes="tr",
@@ -195,8 +195,8 @@ class FKIKSpineComponent(SpineComponent):
         ctl_locator.translate.set(pm.pointOnCurve(ik_curve, pr=0.75, top=1))
         fk2_control = luna_rig.Control.create(side=instance.side,
                                               name="{0}_fk".format(instance.indexed_name),
-                                              object_to_match=ctl_locator,
-                                              delete_match_object=True,
+                                              guide=ctl_locator,
+                                              delete_guide=True,
                                               parent=fk1_control,
                                               joint=True,
                                               attributes="tr",
@@ -273,6 +273,7 @@ class FKRibbonSpineComponent(SpineComponent):
                end_joint=None,
                side_vector=[1, 0, 0],
                debug_mode=False):
+        Logger.warning("{0}: WIP component".format(cls))
         # Create instance and add attrs
         instance = super(FKRibbonSpineComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character)  # type: FKIKSpineComponent
         instance.pynode.addAttr("midControl", at="message")
@@ -319,8 +320,8 @@ class FKRibbonSpineComponent(SpineComponent):
         # Root
         root_control = luna_rig.Control.create(side=instance.side,
                                                name="{0}_root".format(instance.indexed_name),
-                                               object_to_match=ctl_locator,
-                                               delete_match_object=False,
+                                               guide=ctl_locator,
+                                               delete_guide=False,
                                                parent=instance.group_ctls,
                                                joint=False,
                                                attributes="tr",
@@ -330,8 +331,8 @@ class FKRibbonSpineComponent(SpineComponent):
         # Hips
         hips_control = luna_rig.Control.create(side=instance.side,
                                                name="{0}_hips".format(instance.indexed_name),
-                                               object_to_match=ctl_locator,
-                                               delete_match_object=False,
+                                               guide=ctl_locator,
+                                               delete_guide=False,
                                                parent=root_control,
                                                joint=True,
                                                attributes="tr",
@@ -342,8 +343,8 @@ class FKRibbonSpineComponent(SpineComponent):
         ctl_locator.translate.set(pm.pointOnCurve(temp_curve, pr=0.5, top=1))
         mid_control = luna_rig.Control.create(side=instance.side,
                                               name="{0}_mid".format(instance.indexed_name),
-                                              object_to_match=ctl_locator,
-                                              delete_match_object=False,
+                                              guide=ctl_locator,
+                                              delete_guide=False,
                                               parent=root_control,
                                               joint=True,
                                               attributes="tr",
@@ -353,8 +354,8 @@ class FKRibbonSpineComponent(SpineComponent):
         ctl_locator.translate.set(pm.pointOnCurve(temp_curve, pr=1.0, top=1))
         chest_control = luna_rig.Control.create(side=instance.side,
                                                 name="{0}_chest".format(instance.indexed_name),
-                                                object_to_match=ctl_locator,
-                                                delete_match_object=True,
+                                                guide=ctl_locator,
+                                                delete_guide=True,
                                                 parent=root_control,
                                                 joint=True,
                                                 attributes="tr",

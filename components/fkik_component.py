@@ -101,7 +101,7 @@ class FKIKComponent(luna_rig.AnimComponent):
         for ctl_jnt in ctl_chain:
             fk_ctl = luna_rig.Control.create(side=instance.side,
                                              name="{0}_fk".format(instance.indexed_name),
-                                             object_to_match=ctl_jnt,
+                                             guide=ctl_jnt,
                                              attributes="r",
                                              parent=next_parent,
                                              shape="circleCrossed",
@@ -114,8 +114,8 @@ class FKIKComponent(luna_rig.AnimComponent):
         # Create IK setup
         ik_control = luna_rig.Control.create(side=instance.side,
                                              name="{0}_ik".format(instance.indexed_name),
-                                             object_to_match=ctl_chain[-1],
-                                             delete_match_object=False,
+                                             guide=ctl_chain[-1],
+                                             delete_guide=False,
                                              attributes="tr",
                                              parent=instance.group_ctls,
                                              shape="cube",
@@ -139,8 +139,8 @@ class FKIKComponent(luna_rig.AnimComponent):
         pole_locator = jointFn.get_pole_vector(ctl_chain)
         pv_control = luna_rig.Control.create(side=instance.side,
                                              name="{0}_pvec".format(instance.indexed_name),
-                                             object_to_match=pole_locator,
-                                             delete_match_object=True,
+                                             guide=pole_locator,
+                                             delete_guide=True,
                                              parent=instance.group_ctls,
                                              attributes="tr",
                                              shape="poleVector")
@@ -157,8 +157,8 @@ class FKIKComponent(luna_rig.AnimComponent):
             param_locator = rigFn.get_param_ctl_locator(instance.side, joint_chain[-1], move_axis="x")
         param_control = luna_rig.Control.create(side=instance.side,
                                                 name="{0}_param".format(instance.indexed_name),
-                                                object_to_match=param_locator,
-                                                delete_match_object=True,
+                                                guide=param_locator,
+                                                delete_guide=True,
                                                 attributes="",
                                                 parent=instance.group_ctls,
                                                 match_orient=False,

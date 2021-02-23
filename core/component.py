@@ -335,7 +335,7 @@ class AnimComponent(Component):
         hook = Hook.create(self, node, name)
         return hook
 
-    def get_hook(self, index=0):
+    def get_hook(self, index):
         """Get component attach point from index
 
         :param index: Index for attach point, defaults to 0

@@ -1,9 +1,10 @@
 import pymel.core as pm
 import luna_rig
 from luna import Logger
-from luna_rig.functions import jointFn
-from luna_rig.functions import nameFn
-from luna_rig.functions import attrFn
+import luna_rig.functions.jointFn as jointFn
+import luna_rig.functions.nameFn as nameFn
+import luna_rig.functions.attrFn as attrFn
+import luna_rig.functions.transformFn as transformFn
 
 
 class FKComponent(luna_rig.AnimComponent):
@@ -35,7 +36,7 @@ class FKComponent(luna_rig.AnimComponent):
         for jnt in skel_chain:
             ctl = luna_rig.Control.create(side=instance.side,
                                           name="{0}_fk".format(instance.indexed_name),
-                                          object_to_match=jnt,
+                                          guide=jnt,
                                           parent=next_parent,
                                           attributes=free_attrs,
                                           shape="circleCrossed",
@@ -74,7 +75,7 @@ class FKComponent(luna_rig.AnimComponent):
         if self.in_hook:
             pm.parentConstraint(self.in_hook.transform, self.controls[0].group, mo=1)
 
-    def add_auto_aim(self, follow_control, mirrored_chain=False):
+    def add_auto_aim(self, follow_control, mirrored_chain=False, default_value=5.0):
         if not isinstance(follow_control, luna_rig.Control):
             raise ValueError("{0}: {1} is not a Control instance".format(self, follow_control))
         # Create aim transforms
@@ -99,7 +100,7 @@ class FKComponent(luna_rig.AnimComponent):
         orient_constr = pm.orientConstraint(aim_grp, no_aim_grp, constr_grp)  # type: luna_rig.nt.OrientConstraint
         pm.parent(self.controls[0].offset_list[0], constr_grp)
         # Add attr to control
-        self.controls[0].transform.addAttr("autoAim", at="float", dv=3.0, min=0.0, max=10.0, k=1)
+        self.controls[0].transform.addAttr("autoAim", at="float", dv=default_value, min=0.0, max=10.0, k=1)
         mdl_node = pm.createNode("multDoubleLinear", n=nameFn.generate_name([self.indexed_name, "auto_aim"], side=self.side, suffix="mdl"))
         rev_node = pm.createNode("reverse", n=nameFn.generate_name([self.indexed_name, "auto_aim"], side=self.side, suffix="rev"))
         mdl_node.input2.set(0.1)
@@ -110,3 +111,53 @@ class FKComponent(luna_rig.AnimComponent):
         rev_node.outputX.connect(orient_constr.getWeightAliasList()[1])
         # Store settings
         self._store_settings(self.controls[0].transform.autoAim)
+
+
+class HeadComponent(FKComponent):
+
+    @property
+    def head_control(self):
+        return self.controls[-1]
+
+    @property
+    def neck_controls(self):
+        return self.controls[:-1]
+
+    class Hooks:
+        HEAD = -1
+        NECK_BASE = 0
+
+    @classmethod
+    def create(cls,
+               meta_parent=None,
+               hook=None,
+               character=None,
+               side="c",
+               name="head",
+               start_joint=None,
+               end_joint=None,
+               head_joint_index=-2,
+               lock_translate=False):
+        instance = super(HeadComponent, cls).create(meta_parent=meta_parent,
+                                                    hook=hook,
+                                                    character=character,
+                                                    side=side,
+                                                    name=name,
+                                                    start_joint=start_joint,
+                                                    end_joint=end_joint,
+                                                    add_end_ctl=head_joint_index == -1,
+                                                    lock_translate=lock_translate)  # type: HeadComponent
+        # Create utility attrib
+        instance.pynode.addAttr("headJointIndex", at="long", k=False, dv=head_joint_index)
+        instance.pynode.headJointIndex.lock()
+        # Adjust head control shape
+        head_ctl_move_vector = transformFn.get_vector(instance.ctl_chain[-1], instance.ctl_chain[-2])
+        instance.head_control.shape = "circle_pointed"
+        scale_dict = {instance.head_control: 0.4}
+        instance.scale_controls(scale_dict)
+        instance.head_control.move_shape(head_ctl_move_vector)
+
+        return instance
+
+    def add_orient_attr(self):
+        self.head_control.add_orient_switch(self.character.world_locator, self.neck_controls[-1])

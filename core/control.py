@@ -34,10 +34,10 @@ class Control(object):
     def create(cls,
                name="control_obj",
                side="c",
-               object_to_match=None,
+               guide=None,
                parent=None,
                attributes="tr",
-               delete_match_object=False,
+               delete_guide=False,
                match_pos=True,
                match_orient=True,
                match_pivot=True,
@@ -55,14 +55,14 @@ class Control(object):
         :type name: str, optional
         :param side: Control side, defaults to "c"
         :type side: str, optional
-        :param object_to_match: Transform object to match, defaults to None
-        :type object_to_match: pm.luna_rig.nt.Transform, optional
+        :param guide: Transform object to match, defaults to None
+        :type guide: pm.luna_rig.nt.Transform, optional
         :param parent: Object to parent to, defaults to None
         :type parent: pm.luna_rig.nt.Transform, optional
         :param attributes: Attributes to leave unlocked and visible, defaults to "tr"
         :type attributes: str, optional
-        :param delete_match_object: If guide object should be deleted after matched, defaults to False
-        :type delete_match_object: bool, optional
+        :param delete_guide: If guide object should be deleted after matched, defaults to False
+        :type delete_guide: bool, optional
         :param match_pos: If Control position should be matched to guide object, defaults to True
         :type match_pos: bool, optional
         :param match_orient: If Control rotation values should be matched to guide object, defaults to True
@@ -98,10 +98,10 @@ class Control(object):
 
         group_node = pm.createNode('transform', n=nameFn.generate_name(name, side, suffix="grp"), p=temp_parent)
         temp_parent = group_node
-        if object_to_match:
-            pm.matchTransform(group_node, object_to_match, pos=match_pos, rot=match_orient, piv=match_pivot)
-            if delete_match_object:
-                pm.delete(object_to_match)
+        if guide:
+            pm.matchTransform(group_node, guide, pos=match_pos, rot=match_orient, piv=match_pivot)
+            if delete_guide:
+                pm.delete(guide)
         # Offset
         if offset_grp:
             offset_node = pm.createNode('transform', n=nameFn.generate_name(name, side, suffix="ofs"), p=temp_parent)
@@ -394,6 +394,10 @@ class Control(object):
             return
         for each in self.transform.getShapes():
             pm.scale(each + ".cv[0:1000]", [factor * scale, factor * scale, factor * scale])
+
+    def move_shape(self, vector):
+        for each in self.transform.getShapes():
+            pm.move(each + ".cv[0:1000]", vector, r=1)
 
     def set_parent(self, parent):
         """Set control parent
