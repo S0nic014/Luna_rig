@@ -27,7 +27,7 @@ class PsdManager(manager_base.AbstractManager):
     def export_all(self):
         interpolators = pm.ls(typ="poseInterpolator")
         if not interpolators:
-            Logger.warning("{0}: No pose interpolators found in the scene.".format(self))
+            pm.warning("{0}: No pose interpolators found in the scene.".format(self))
             return False
         # Export pose blendshapes
         pose_blendshapes = []
@@ -47,6 +47,9 @@ class PsdManager(manager_base.AbstractManager):
 
     def import_all(self):
         interpolator_file = self.get_latest_file()
+        if not interpolator_file:
+            pm.warning("No interpolators to import", noContext=True)
+            return False
         pm.poseInterpolator(im=interpolator_file)
         for interpolator_shape in pm.ls(typ="poseInterpolator"):
             driver = interpolator_shape.getTransform().driver.listConnections()[0]
