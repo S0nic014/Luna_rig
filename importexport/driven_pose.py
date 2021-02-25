@@ -78,7 +78,7 @@ class DrivenPoseManager(manager.AbstractManager):
             component_node = component_node.pynode.name()
         for pose_path in fileFn.get_latest_from_sub_name(component_node, self.path, extension=self.extension, sub_index=0, sub_split="-"):
             file_name = os.path.basename(pose_path)
-            pose_name = file_name.split(".")[0].split("-")[-1]
+            pose_name = file_name.split(".")[0].replace(component_node + "-", "")
             self.import_pose(component_node, pose_name)
 
     def import_all(self):
