@@ -10,9 +10,6 @@ import luna_rig.functions.jointFn as jointFn
 
 
 class Character(luna_rig.Component):
-    def __repr__(self):
-        return "Character component: ({0})".format(self.pynode.characterName.get())
-
     @property
     def root_ctl(self):
         return luna_rig.Control(self.pynode.rootCtl.listConnections()[0])
@@ -320,3 +317,9 @@ class Character(luna_rig.Component):
         self.deformation_rig.visibility.set(not value)
         self.util_grp.visibility.set(not value)
         self.create_selection_sets()
+
+    def copy_keyframes(self, time_range, target_component, time_offset=0.0):
+        for source_ctl in self.controls:
+            for target_ctl in target_component.controls:
+                if target_ctl.transform.stripNamespace() == source_ctl.transform.stripNamespace():
+                    source_ctl.copy_keyframes(time_range, target_ctl, time_offset=time_offset)

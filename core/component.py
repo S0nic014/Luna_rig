@@ -108,6 +108,9 @@ class Component(luna_rig.MetaNode):
             pm.delete(util_node)
             Logger.debug("{0}: Deleted util node {1}".format(self, util_node))
 
+    def copy_keyframes(self, time_range, target_component, time_offset=0.0):
+        pass
+
 
 class AnimComponent(Component):
 
@@ -350,6 +353,12 @@ class AnimComponent(Component):
         except IndexError:
             raise
         return hook
+
+    def copy_keyframes(self, time_range, target_component, time_offset=0.0):
+        for source_ctl in self.controls:
+            for target_ctl in target_component.controls:
+                if target_ctl.transform.stripNamespace() == source_ctl.transform.stripNamespace():
+                    source_ctl.copy_keyframes(time_range, target_ctl, time_offset=time_offset)
 
     def attach_to_component(self, other_comp, hook_index=None):
         """Attach to other AnimComponent

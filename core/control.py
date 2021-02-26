@@ -815,3 +815,8 @@ class Control(object):
             pm.setDrivenKeyframe(pose_offset.attr(attr_name), cd=driver_attr, v=pose_offset.attr(attr_name).get(), dv=0)
             pm.setDrivenKeyframe(pose_offset.attr(attr_name), cd=driver_attr, v=value, dv=driver_value)
         return pose_offset
+
+    def copy_keyframes(self, time_range, target_control, time_offset=0.0):
+        copiedKeys = pm.copyKey(self.transform, time=time_range)
+        if copiedKeys:
+            pm.pasteKey(target_control.transform, time=time_range, option="fitReplace", timeOffset=time_offset)
