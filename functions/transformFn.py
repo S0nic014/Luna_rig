@@ -116,3 +116,48 @@ def matrix_to_list(mtx):
 
 def get_vector(source, destination, space="world"):
     return source.getTranslation(space=space) - destination.getTranslation(space=space)
+
+
+def snap_to_object_center(target_object, snap_objects):
+    centroid = pm.objectCenter(target_object)
+    if not isinstance(snap_objects, list):
+        snap_objects = [snap_objects]
+    center_locator = pm.spaceLocator(n="temp_center_loc")
+    center_locator.translate.set(centroid)
+    for obj in snap_objects:
+        pm.matchTransform(obj, center_locator, pos=True)
+    pm.delete(center_locator)
+
+
+def snap_to_components_center(components, snap_object):
+    if not isinstance(snap_object, pm.PyNode):
+        snap_object = pm.PyNode(snap_object)
+    if not isinstance(snap_object, luna_rig.nt.Transform):
+        pm.displayError("Invalid snap object, expected Transform got {0}".format(type(snap_object)))
+        return
+
+    # Mesh
+    if all([isinstance(comp, pm.MeshVertex) for comp in components]):
+        unpacked_verticies = []
+        for vtx_pack in components:
+            for vtx in vtx_pack:
+                unpacked_verticies.append(vtx)
+        all_points = [vtx.getPosition(space="world") for vtx in unpacked_verticies]
+    # Invalid
+    else:
+        pm.displayError("Invalid component types: {0}".format([type(comp) for comp in components]))
+        return
+    # Calculate centroid
+    centroid = [0.0, 0.0, 0.0]
+    for pt in all_points:
+        centroid += pt
+    centroid = centroid / len(all_points)
+    # Match to centroid
+    center_locator = pm.spaceLocator(n="temp_center_loc")
+    center_locator.translate.set(centroid)
+    pm.matchTransform(snap_object, center_locator, pos=True)
+    pm.delete(center_locator)
+
+
+if __name__ == "__main__":
+    pass
