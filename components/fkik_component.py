@@ -8,6 +8,7 @@ import luna_rig.functions.rigFn as rigFn
 import luna_rig.functions.nameFn as nameFn
 import luna_rig.functions.animFn as animFn
 import luna_rig.functions.nodeFn as nodeFn
+import luna_rig.functions.transformFn as transformFn
 
 
 class FKIKComponent(luna_rig.AnimComponent):
@@ -152,19 +153,18 @@ class FKIKComponent(luna_rig.AnimComponent):
             wire_source = ctl_chain[len(ctl_chain) / 2]
         pv_control.add_wire(wire_source)
 
-        # Params control
-        if not param_locator:
-            param_locator = rigFn.get_param_ctl_locator(instance.side, joint_chain[-1], move_axis="x")
+        # Param
         param_control = luna_rig.Control.create(side=instance.side,
                                                 name="{0}_param".format(instance.indexed_name),
-                                                guide=param_locator,
-                                                delete_guide=True,
+                                                guide=ctl_chain[-1],
+                                                delete_guide=False,
                                                 attributes="",
                                                 parent=instance.group_ctls,
                                                 match_orient=False,
                                                 offset_grp=False,
                                                 shape="small_cog",
                                                 orient_axis="y")
+
         pm.parentConstraint(ctl_chain[-1], param_control.group, mo=1)
 
         # Create blend
@@ -217,6 +217,13 @@ class FKIKComponent(luna_rig.AnimComponent):
         for ctl in fk_controls:
             scale_dict[ctl] = 0.2
         instance.scale_controls(scale_dict)
+
+        # Move param control shape
+        if not param_locator:
+            param_locator = rigFn.get_param_ctl_locator(instance.side, joint_chain[-1], move_axis="x")
+        param_move_vector = transformFn.get_vector(param_control.transform, param_locator)
+        param_control.move_shape(param_move_vector)
+        pm.delete(param_locator)
 
         # Store settings
         instance._store_settings(param_control.transform.fkik)

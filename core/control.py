@@ -393,7 +393,7 @@ class Control(object):
         if scale == 1.0 and factor == 1.0:
             return
         for each in self.transform.getShapes():
-            pm.scale(each + ".cv[0:1000]", [factor * scale, factor * scale, factor * scale])
+            pm.scale(each + ".cv[0:1000]", [factor * scale, factor * scale, factor * scale], objectSpace=True)
 
     def move_shape(self, vector):
         for each in self.transform.getShapes():

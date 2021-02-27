@@ -151,7 +151,7 @@ class HeadComponent(FKComponent):
         instance.pynode.addAttr("headJointIndex", at="long", k=False, dv=head_joint_index)
         instance.pynode.headJointIndex.lock()
         # Adjust head control shape
-        head_ctl_move_vector = transformFn.get_vector(instance.ctl_chain[-1], instance.ctl_chain[-2])
+        head_ctl_move_vector = transformFn.get_vector(instance.ctl_chain[-2], instance.ctl_chain[-1])
         instance.head_control.shape = "circle_pointed"
         scale_dict = {instance.head_control: 0.4}
         instance.scale_controls(scale_dict)

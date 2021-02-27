@@ -115,7 +115,7 @@ def matrix_to_list(mtx):
 
 
 def get_vector(source, destination, space="world"):
-    return source.getTranslation(space=space) - destination.getTranslation(space=space)
+    return destination.getTranslation(space=space) - source.getTranslation(space=space)
 
 
 def snap_to_object_center(target_object, snap_objects):
