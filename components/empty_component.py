@@ -27,6 +27,7 @@ class EmptyComponent(luna_rig.AnimComponent):
                                               joint=add_bind_joint,
                                               *args,
                                               **kwargs)
+        self._store_controls([new_control])
         # Connect to hook
         if self.in_hook:
             pm.parentConstraint(self.in_hook.transform, new_control.group, mo=1)

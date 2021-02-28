@@ -820,3 +820,15 @@ class Control(object):
         copiedKeys = pm.copyKey(self.transform, time=time_range)
         if copiedKeys:
             pm.pasteKey(target_control.transform, time=time_range, option="fitReplace", timeOffset=time_offset)
+
+    def constrain_geometry(self, geometry, scale=True, inherit_transforms=True):
+        if not isinstance(geometry, pm.PyNode):
+            geometry = pm.PyNode(geometry)  # type: luna_rig.nt.DependNode
+
+        pm.parentConstraint(self.transform, geometry, mo=1)
+        if scale:
+            pm.scaleConstraint(self.transform, geometry, mo=1)
+
+        if inherit_transforms and geometry.listRelatives(ad=1, typ="transform"):
+            for child in geometry.listRelatives(ad=1, typ="transform"):
+                child.it.set(True)

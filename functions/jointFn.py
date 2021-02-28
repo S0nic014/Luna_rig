@@ -148,14 +148,14 @@ def validate_rotations(joint_chain):
     is_valid = True
     for jnt in joint_chain:
         jnt = pm.PyNode(jnt)  # type: luna_rig.nt.Joint
-        if jnt.rotateX.get() > 0:
+        if jnt.rotateX.get() > 0.0:
             Logger.warning("Non zero rotationX on joint {0}".format(jnt))
             is_valid = False
-        if jnt.rotateY.get() > 0:
-            Logger.warning("Non zero rotationX on joint {0}".format(jnt))
+        if jnt.rotateY.get() > 0.0:
+            Logger.warning("Non zero rotationY on joint {0}".format(jnt))
             is_valid = False
-        if jnt.rotateZ.get() > 0:
-            Logger.warning("Non zero rotationX on joint {0}".format(jnt))
+        if jnt.rotateZ.get() > 0.0:
+            Logger.warning("Non zero rotationZ on joint {0}".format(jnt))
             is_valid = False
     return is_valid
 
