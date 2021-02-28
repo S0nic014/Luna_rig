@@ -33,7 +33,7 @@ class HandComponent(luna_rig.AnimComponent):
 
         return instance
 
-    def add_fk_finger(self, start_joint, end_joint=None, name="finger"):
+    def add_fk_finger(self, start_joint, end_joint=None, name="finger", end_control=False):
         if "finger" not in name:
             name = name + "_finger"
         fk_component = luna_rig.components.FKComponent.create(meta_parent=self,
@@ -42,7 +42,7 @@ class HandComponent(luna_rig.AnimComponent):
                                                               name=name,
                                                               start_joint=start_joint,
                                                               end_joint=end_joint,
-                                                              add_end_ctl=False,
+                                                              add_end_ctl=end_control,
                                                               lock_translate=False)
         fk_component.root.setParent(self.group_ctls)
         fk_component.pynode.metaParent.connect(self.pynode.fingers, na=1)
