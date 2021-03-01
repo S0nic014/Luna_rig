@@ -196,7 +196,7 @@ class SkinCluster(object):
 
         # Show unsused imports
         if unused_imports:
-            unused_grp = pm.createNode("unsused_joints")
+            unused_grp = pm.createNode("transform", n="unsused_joints")
             outlinerFn.set_color(unused_grp, color=[1.0, 0.3, 0.3])
             for unused_name in unused_imports:
                 pm.createNode("joint", n=unused_name, p=unused_grp)
