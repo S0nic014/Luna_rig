@@ -4,11 +4,12 @@ import pymel.core as pm
 from luna import Logger
 from luna import static
 import luna_rig
-from luna_rig.functions import nameFn
-from luna_rig.functions import attrFn
-from luna_rig.functions import curveFn
-from luna_rig.functions import transformFn
-from luna_rig.functions import outlinerFn
+import luna_rig.functions.nameFn as nameFn
+import luna_rig.functions.attrFn as attrFn
+import luna_rig.functions.curveFn as curveFn
+import luna_rig.functions.transformFn as transformFn
+import luna_rig.functions.outlinerFn as outlinerFn
+import luna_rig.functions.animFn as animFn
 from luna_rig.core.shape_manager import ShapeManager
 
 
@@ -328,6 +329,21 @@ class Control(object):
         result = []
         if self.transform.hasAttr("space"):
             result = attrFn.get_enums(self.transform.space)
+        return result
+
+    @property
+    def space_index(self):
+        result = None
+        if self.transform.hasAttr("space"):
+            result = self.transform.space.get()  # type: int
+        return result
+
+    @property
+    def space_name(self):
+        result = None
+        if self.transform.hasAttr("space"):
+            index = self.transform.space.get()  # type: int
+            result = self.spaces[index][0]
         return result
 
     @property
@@ -832,3 +848,87 @@ class Control(object):
         if inherit_transforms and geometry.listRelatives(ad=1, typ="transform"):
             for child in geometry.listRelatives(ad=1, typ="transform"):
                 child.it.set(True)
+
+    def bake_space(self,
+                   space_index=None,
+                   space_name=None,
+                   time_range=None,
+                   step=1.0):
+        if not self.spaces:
+            Logger.warning("{0}: no spaces to bake".format(self))
+            return
+
+        # Get target space
+        if isinstance(space_index, int):
+            try:
+                new_space_tuple = self.spaces[space_index]
+            except IndexError:
+                Logger.error("{0}: Invalid space index {1}".format(self, space_index))
+                return
+        elif space_name:
+            filtered_spaces = [tpl for tpl in self.spaces if space_name == tpl[0]]
+            try:
+                new_space_tuple = filtered_spaces[0]
+            except IndexError:
+                Logger.error("{0}: Invalid space name '{1}'".format(self, space_name))
+        else:
+            Logger.error("{0}Bake space requires space index int or space name str, got index: {1}, name{2}".format(self, space_index, space_name))
+            raise ValueError
+        # Check against current
+        if new_space_tuple[0] == self.space_name or new_space_tuple[1] == self.space_index:
+            pm.warning("{0}: Can't bake space {1} to identical {2}".format(self, (self.space_name, self.space_index), new_space_tuple))
+            return
+
+        # Time range
+        if not time_range:
+            time_range = animFn.get_playback_range()
+
+        # Baking
+        src_space_index = self.space_index
+        Logger.info("{0}: Baking space {1} ->> {2} {3}".format(self, self.space_name, new_space_tuple[0], time_range))
+        # Bake to locator
+        Logger.info("Baking to locator...")
+        self.switch_space(src_space_index)
+        bake_locator = pm.spaceLocator(n="bake_locator")  # type: luna_rig.nt.Transform
+        pm.matchTransform(bake_locator, self.transform)
+        parent_constr = pm.parentConstraint(self.transform, bake_locator)
+        pm.bakeResults(bake_locator, t=time_range, sampleBy=step)
+        pm.delete(parent_constr)
+
+        # Bake new space for switch attrib
+        Logger.info("Baking switch attr...")
+        for frame in range(time_range[0], time_range[1] + 1, int(step)):
+            pm.setCurrentTime(frame)
+            self.switch_space(new_space_tuple[1], matching=False)
+            self.transform.space.setKey()
+
+        # Unparent
+        Logger.info("Baking to control...")
+        pm.setCurrentTime(time_range[0])
+        bake_locator.setParent(None)
+        pm.parentConstraint(bake_locator, self.transform, mo=True)
+        pm.bakeResults(self.transform, t=time_range, sampleBy=step)
+        # Cleanup
+        pm.delete(bake_locator)
+        Logger.info("Done.")
+
+    def bake_custom_space(self,
+                          space_object,
+                          time_range=None,
+                          step=1.0,
+                          bake_scale=False):
+        # Create locator and constraint to control to it
+        space_locator = pm.spaceLocator(n="space_locator")
+        pm.matchTransform(space_locator, space_object)
+        pm.parent(space_locator, space_object)
+        pm.parentConstraint(space_locator, self.transform, mo=1)
+        if bake_scale:
+            pm.scaleConstraint(space_locator, self.transform, mo=1)
+        # Time range
+        if not time_range:
+            time_range = animFn.get_playback_range()
+        # Baking
+        Logger.info("{0}: Baking to space {1} {2}".format(self, space_object, time_range))
+        pm.bakeResults(self.transform, t=time_range, sampleBy=step)
+        # Cleanup
+        pm.delete(space_locator)
