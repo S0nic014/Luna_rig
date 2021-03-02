@@ -2,6 +2,7 @@ import pymel.core as pm
 from luna import Logger
 from luna import static
 import luna_rig
+import luna_rig.functions.animFn as animFn
 import luna_rig.functions.attrFn as attrFn
 import luna_rig.functions.outlinerFn as outlinerFn
 import luna_rig.functions.rigFn as rigFn
@@ -219,17 +220,21 @@ class Character(luna_rig.Component):
             node = pm.PyNode(nucleus_name)  # type: luna_rig.nt.Nucleus
         return node
 
-    def bake_to_skeleton(self, *args, **kwargs):
-        for anim_comp in self.get_meta_children(of_type=luna_rig.AnimComponent):
-            anim_comp.bake_to_skeleton(*args, **kwargs)
+    def bake_to_skeleton(self, time_range=None):
+        if not time_range:
+            time_range = animFn.get_playback_range()
+        Logger.info("{0}: Baking to skeleton {1}...".format(self, time_range))
+        pm.bakeResults(self.bind_joints, time=time_range, simulation=True)
 
-    def bake_and_detach(self, *args, **kwargs):
+    def bake_and_detach(self, time_range=None):
+        self.bake_to_skeleton(time_range=time_range)
         for anim_comp in self.get_meta_children(of_type=luna_rig.AnimComponent):
-            anim_comp.bake_and_detach(*args, **kwargs)
+            anim_comp.detach_from_sekelton()
 
     def remove(self, time_range=None):
         # Bake root
         if self.root_motion:
+            Logger.info("{0}: Baking root motion...".format(self))
             pm.bakeResults(self.root_motion, time=time_range, simulation=True)
         # Bake components
         self.bake_and_detach(time_range)

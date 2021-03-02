@@ -294,6 +294,12 @@ class AnimComponent(Component):
                 pm.delete(bind_jnt.listConnections(type="parentConstraint"))
             pm.parentConstraint(ctl_jnt, bind_jnt, mo=1)
 
+    def detach_from_sekelton(self):
+        for skel_jnt in self.bind_joints:
+            pconstr = skel_jnt.listConnections(type="parentConstraint")
+            pm.delete(pconstr)
+        Logger.info("{0}: Detached from skeleton.".format(self))
+
     def bake_to_skeleton(self, time_range=None):
         """Override: bake animation to skeleton"""
         if not self.bind_joints:
@@ -305,10 +311,7 @@ class AnimComponent(Component):
 
     def bake_and_detach(self, time_range=None):
         self.bake_to_skeleton(time_range)
-        for skel_jnt in self.bind_joints:
-            pconstr = skel_jnt.listConnections(type="parentConstraint")
-            pm.delete(pconstr)
-        Logger.info("{0}: Detached from skeleton.".format(self))
+        self.detach_from_sekelton()
 
     def bake_to_rig(self, time_range):
         """Override: reverse bake to rig"""
@@ -321,6 +324,7 @@ class AnimComponent(Component):
 
     def remove(self):
         """Delete component from scene"""
+        self.detach_from_sekelton()
         for child in self.meta_children:
             child.remove()
         pm.delete(self.root)
