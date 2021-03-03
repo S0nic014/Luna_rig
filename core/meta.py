@@ -201,7 +201,11 @@ class MetaNode(object):
         return scene_dict
 
     @ staticmethod
-    def get_connected_metanode(node):
+    def get_connected_metanode(node, of_type=None):
         node = pm.PyNode(node)
-        connected_nodes = [MetaNode(network) for network in node.listConnections(type="network") if network.hasAttr("metaType")]
-        return connected_nodes
+        all_nodes = [MetaNode(network) for network in node.listConnections(type="network") if network.hasAttr("metaType")]
+        if of_type:
+            result = [meta_node for meta_node in all_nodes if isinstance(meta_node, of_type)]
+        else:
+            result = all_nodes
+        return result

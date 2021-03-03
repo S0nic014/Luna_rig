@@ -38,6 +38,7 @@ class SpineComponent(luna_rig.AnimComponent):
         instance.pynode.addAttr("rootControl", at="message")
         instance.pynode.addAttr("hipsControl", at="message")
         instance.pynode.addAttr("chestControl", at="message")
+        instance.pynode.addAttr("ikCurve", at="message")
         return instance
 
     def add_stretch(self, default_value=False):
@@ -101,6 +102,7 @@ class FKIKSpineComponent(SpineComponent):
         ik_curve = curveFn.curve_from_points(name=nameFn.generate_name([instance.indexed_name, "ik"], side=instance.side, suffix="crv"),
                                              points=ik_curve_points,
                                              parent=instance.group_noscale)
+        attrFn.add_meta_attr(ik_curve)
         pm.rebuildCurve(ik_curve, d=3, kep=1, rpo=1, ch=0, tol=0.01, spans=4)
         # ik_curve.inheritsTransform.set(0)
         ik_handle = pm.ikHandle(n=nameFn.generate_name([instance.name], side=instance.side, suffix="ikh"),
@@ -218,6 +220,7 @@ class FKIKSpineComponent(SpineComponent):
         hips_control.transform.metaParent.connect(instance.pynode.hipsControl)
         mid_control.transform.metaParent.connect(instance.pynode.midControl)
         chest_control.transform.metaParent.connect(instance.pynode.chestControl)
+        ik_curve.metaParent.connect(instance.pynode.ikCurve)
 
         # Store attach points
         instance.add_hook(root_control.transform, "root")
