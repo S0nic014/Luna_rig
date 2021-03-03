@@ -244,7 +244,7 @@ class Character(luna_rig.Component):
         for child in self.deformation_rig.getChildren():
             child.setParent(None)
         pm.delete(self.root_ctl.group)
-        self.delete_util_nodes()
+        self._delete_util_nodes()
         pm.delete(self.pynode)
 
     def set_interesting(self, value):

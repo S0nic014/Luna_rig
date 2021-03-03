@@ -65,6 +65,9 @@ class Component(luna_rig.MetaNode):
         instance.pynode.addAttr("utilNodes", at="message", multi=1, im=0)
         return instance
 
+    def remove(self):
+        pass
+
     def set_outliner_color(self, color):
         raise NotImplementedError
 
@@ -97,7 +100,7 @@ class Component(luna_rig.MetaNode):
             if each not in self.util_nodes:
                 each.message.connect(self.pynode.utilNodes, na=1)
 
-    def delete_util_nodes(self):
+    def _delete_util_nodes(self):
         for util_node in self.util_nodes:
             if isinstance(util_node, luna_rig.nt.DagNode):
                 if util_node.numChildren():
@@ -328,7 +331,7 @@ class AnimComponent(Component):
         for child in self.meta_children:
             child.remove()
         pm.delete(self.root)
-        self.delete_util_nodes()
+        self._delete_util_nodes()
         pm.delete(self.pynode)
         Logger.info("Removed {0}".format(self))
         self.signals.removed.emit()
@@ -422,9 +425,6 @@ class AnimComponent(Component):
 
         for ctl, factor in scale_dict.items():
             ctl.scale(clamped_size, factor=factor)
-
-    def get_actions_dict(self):
-        pass
 
 
 class Hook(object):
