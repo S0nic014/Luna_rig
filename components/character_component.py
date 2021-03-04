@@ -12,7 +12,7 @@ import luna_rig.functions.jointFn as jointFn
 
 class Character(luna_rig.Component):
     @property
-    def root_ctl(self):
+    def root_control(self):
         return luna_rig.Control(self.pynode.rootCtl.listConnections()[0])
 
     @property
@@ -103,27 +103,27 @@ class Character(luna_rig.Component):
         instance.pynode.addAttr("rootMotionJoint", at="message")
 
         # Create main members
-        root_ctl = luna_rig.Control.create(name="character_node",
-                                           side="c",
-                                           offset_grp=False,
-                                           attributes="trs",
-                                           shape="character_node",
-                                           tag="root",
-                                           orient_axis="y")
-        root_ctl.rename(index="")
-        control_rig = pm.createNode('transform', n=static.CharacterMembers.control_rig.value, p=root_ctl.transform)  # type: luna_rig.nt.Transform
-        deformation_rig = pm.createNode('transform', n=static.CharacterMembers.deformation_rig.value, p=root_ctl.transform)  # type: luna_rig.nt.Transform
-        locators_grp = pm.createNode('transform', n=static.CharacterMembers.locators.value, p=root_ctl.transform)  # type: luna_rig.nt.Transform
+        root_control = luna_rig.Control.create(name="character_node",
+                                               side="c",
+                                               offset_grp=False,
+                                               attributes="trs",
+                                               shape="character_node",
+                                               tag="root",
+                                               orient_axis="y")
+        root_control.rename(index="")
+        control_rig = pm.createNode('transform', n=static.CharacterMembers.control_rig.value, p=root_control.transform)  # type: luna_rig.nt.Transform
+        deformation_rig = pm.createNode('transform', n=static.CharacterMembers.deformation_rig.value, p=root_control.transform)  # type: luna_rig.nt.Transform
+        locators_grp = pm.createNode('transform', n=static.CharacterMembers.locators.value, p=root_control.transform)  # type: luna_rig.nt.Transform
         world_locator = pm.spaceLocator(n=static.CharacterMembers.world_space.value)  # type: luna_rig.nt.Locator
-        util_grp = pm.createNode('transform', n=static.CharacterMembers.util_group.value, p=root_ctl.transform)  # type: luna_rig.nt.Transform
+        util_grp = pm.createNode('transform', n=static.CharacterMembers.util_group.value, p=root_control.transform)  # type: luna_rig.nt.Transform
         pm.parent(world_locator, locators_grp)
 
         # Handle geometry group
         if not pm.objExists(static.CharacterMembers.geometry.value):
-            geometry_grp = pm.createNode('transform', n=static.CharacterMembers.geometry.value, p=root_ctl.transform)
+            geometry_grp = pm.createNode('transform', n=static.CharacterMembers.geometry.value, p=root_control.transform)
         else:
             geometry_grp = pm.PyNode(static.CharacterMembers.geometry.value)
-            pm.parent(geometry_grp, root_ctl.transform)
+            pm.parent(geometry_grp, root_control.transform)
             geometry_grp.inheritsTransform.set(0)
 
         # Add meta parent attrs to nodes
@@ -133,7 +133,7 @@ class Character(luna_rig.Component):
 
         # Connect to meta node
         instance.pynode.characterName.set(name)
-        root_ctl.transform.metaParent.connect(instance.pynode.rootCtl)
+        root_control.transform.metaParent.connect(instance.pynode.rootCtl)
         control_rig.metaParent.connect(instance.pynode.controlRig)
         deformation_rig.metaParent.connect(instance.pynode.deformationRig)
         geometry_grp.metaParent.connect(instance.pynode.geometryGroup)
@@ -143,18 +143,18 @@ class Character(luna_rig.Component):
 
         # Edit attributes
         # Merge scale to make uniform
-        root_ctl.transform.addAttr("Scale", defaultValue=1.0, shortName="us", at="float", keyable=1)
-        root_ctl.transform.Scale.connect(root_ctl.transform.scaleX)
-        root_ctl.transform.Scale.connect(root_ctl.transform.scaleY)
-        root_ctl.transform.Scale.connect(root_ctl.transform.scaleZ)
+        root_control.transform.addAttr("Scale", defaultValue=1.0, shortName="us", at="float", keyable=1)
+        root_control.transform.Scale.connect(root_control.transform.scaleX)
+        root_control.transform.Scale.connect(root_control.transform.scaleY)
+        root_control.transform.Scale.connect(root_control.transform.scaleZ)
 
         # Fit root control size
-        instance.root_ctl.scale(instance.clamped_size, factor=1.0)
+        instance.root_control.scale(instance.clamped_size, factor=1.0)
 
         # Visibility
         locators_grp.visibility.set(0)
         # Lock
-        attrFn.lock(root_ctl.transform, ["sx", "sy", "sz"])
+        attrFn.lock(root_control.transform, ["sx", "sy", "sz"])
         instance.set_outliner_color(18)
         return instance
 
@@ -188,7 +188,7 @@ class Character(luna_rig.Component):
         return joint_list
 
     def set_outliner_color(self, color):
-        outlinerFn.set_color(self.root_ctl.group, color)
+        outlinerFn.set_color(self.root_control.group, color)
 
     def get_size(self, axis="y"):
         bounding_box = pm.exactWorldBoundingBox(self.geometry_grp, ii=True)
@@ -243,7 +243,7 @@ class Character(luna_rig.Component):
             child.setParent(None)
         for child in self.deformation_rig.getChildren():
             child.setParent(None)
-        pm.delete(self.root_ctl.group)
+        pm.delete(self.root_control.group)
         self._delete_util_nodes()
         pm.delete(self.pynode)
 

@@ -44,7 +44,7 @@ class FKDynamicsComponent(luna_rig.AnimComponent):
                                                 points=joint_points,
                                                 parent=instance.group_noscale)
         pm.rebuildCurve(input_curve, d=3, end=1, kep=1, rpo=1, ch=0, tol=0.01)
-        meta_parent.character.root_ctl.transform.scale.connect(input_curve.scale)
+        meta_parent.character.root_control.transform.scale.connect(input_curve.scale)
         # Create hair system
         input_curve.select(r=1)
         pm.mel.eval('makeCurvesDynamic 2 { "0", "0", "1", "1", "0"};')
@@ -76,7 +76,7 @@ class FKDynamicsComponent(luna_rig.AnimComponent):
             pm.select(cl=1)
             if not old_nucleus.inputActive.listConnections():
                 pm.delete(old_nucleus)
-        pm.parent(nucleus, meta_parent.character.root_ctl.transform)
+        pm.parent(nucleus, meta_parent.character.root_control.transform)
 
         # Rename hair system objects
         hair_system.rename(nameFn.generate_name([instance.name, "hair"], side=instance.side, suffix="sys"))
