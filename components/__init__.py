@@ -11,7 +11,7 @@ from luna_rig.components.spine_component import RibbonSpine
 from luna_rig.components.foot_component import Foot
 from luna_rig.components.twist_component import TwistComponent
 from luna_rig.components.hand_component import Hand
-from luna_rig.components.eye_component import EyeComponent
+from luna_rig.components.eye_component import Eye
 from luna_rig.components.empty_component import EmptyComponent
 
 # Components
