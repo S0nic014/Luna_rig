@@ -19,7 +19,13 @@ class Control(object):
         return "Control({0})".format(self.transform)
 
     def __init__(self, node):
-        node = pm.PyNode(node)
+        # Type casting
+        if isinstance(node, Control):
+            node = node.transform
+        if not isinstance(node, pm.PyNode):
+            node = pm.PyNode(node)
+
+        # Find transform
         if isinstance(node, luna_rig.nt.Controller):
             self.transform = node.controllerObject.listConnections()[0]  # type: luna_rig.nt.Transform
         elif isinstance(node, luna_rig.nt.Transform):
@@ -28,6 +34,12 @@ class Control(object):
             self.transform = node.getTransform()  # type: luna_rig.nt.Transform
         else:
             raise TypeError("Control requires node with transform to initialize.")
+
+        if not self.is_control(self.transform):
+            Logger.error("Invalid control transform - {0}".format(self))
+            raise TypeError
+
+        # Attribute checkes
         if not self.transform.hasAttr("metaParent"):
             raise AttributeError("{0} metaParent attribute not found.".format(self))
 
