@@ -5,7 +5,7 @@ from luna_rig.components.fk_component import FKComponent
 from luna_rig.components.fk_component import Head
 from luna_rig.components.ik_component import IKComponent
 from luna_rig.components.fkik_component import FKIKComponent
-from luna_rig.components.fk_dynamics_component import FKDynamicsComponent
+from luna_rig.components.fk_dynamics_component import FKDynamics
 from luna_rig.components.spine_component import FKIKSpine
 from luna_rig.components.spine_component import RibbonSpine
 from luna_rig.components.foot_component import FootComponent
