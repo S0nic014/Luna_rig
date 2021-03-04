@@ -10,7 +10,6 @@ import luna_rig.functions.curveFn as curveFn
 import luna_rig.functions.surfaceFn as surfaceFn
 import luna_rig.functions.rivetFn as rivetFn
 import luna_rig.functions.nodeFn as nodeFn
-import luna_rig.functions.deformerFn as deformerFn
 
 
 class SpineComponent(luna_rig.AnimComponent):
@@ -34,7 +33,7 @@ class SpineComponent(luna_rig.AnimComponent):
                side='c',
                name='spine'):
         # Create instance and add attrs
-        instance = super(SpineComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character)  # type: FKIKSpineComponent
+        instance = super(SpineComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character)  # type: SpineComponent
         instance.pynode.addAttr("rootControl", at="message")
         instance.pynode.addAttr("hipsControl", at="message")
         instance.pynode.addAttr("chestControl", at="message")
@@ -48,7 +47,7 @@ class SpineComponent(luna_rig.AnimComponent):
         pass
 
 
-class FKIKSpineComponent(SpineComponent):
+class FKIKSpine(SpineComponent):
 
     class Hooks(enumFn.Enum):
         ROOT = 0
@@ -86,7 +85,7 @@ class FKIKSpineComponent(SpineComponent):
                end_joint=None,
                debug_mode=False):
         # Create instance and add attrs
-        instance = super(FKIKSpineComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character)  # type: FKIKSpineComponent
+        instance = super(FKIKSpine, cls).create(meta_parent=meta_parent, side=side, name=name, character=character)  # type: FKIKSpine
         instance.pynode.addAttr("fkControls", at="message", multi=1, im=0)
         instance.pynode.addAttr("midControl", at="message")
 
@@ -254,7 +253,7 @@ class FKIKSpineComponent(SpineComponent):
         return instance
 
 
-class FKRibbonSpineComponent(SpineComponent):
+class RibbonSpine(SpineComponent):
     class Hooks(enumFn.Enum):
         ROOT = 0
         HIPS = 1
@@ -278,7 +277,7 @@ class FKRibbonSpineComponent(SpineComponent):
                debug_mode=False):
         Logger.warning("{0}: WIP component".format(cls))
         # Create instance and add attrs
-        instance = super(FKRibbonSpineComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character)  # type: FKIKSpineComponent
+        instance = super(RibbonSpine, cls).create(meta_parent=meta_parent, side=side, name=name, character=character)  # type: FKIKSpine
         instance.pynode.addAttr("midControl", at="message")
 
         # Joint chains
