@@ -117,31 +117,12 @@ def along_curve(curve, amount, joint_name="joint", joint_side="c", joint_suffix=
     return joints
 
 
-def rot_to_orient(jnt):
-    jnt = pm.PyNode(jnt)  # type: luna_rig.nt.Joint
-    newOrient = []
-    for rot, orient in zip(jnt.rotate.get(), jnt.jointOrient.get()):
-        newOrient.append(orient + rot)
-    jnt.jointOrientX.set(newOrient[0])
-    jnt.jointOrientY.set(newOrient[1])
-    jnt.jointOrientZ.set(newOrient[2])
-    jnt.rotateX.set(0)
-    jnt.rotateY.set(0)
-    jnt.rotateZ.set(0)
-    return newOrient
-
-
 def copy_orient(source, destination):
     if not isinstance(destination, list):
         destination = [destination]
     source = pm.PyNode(source)  # type: luna_rig.nt.Joint
     for dest_joint in destination:
         dest_joint.jointOrient.set(source.jointOrient.get())
-
-
-def match_orient(destination_joint, source_joint):
-    pm.matchTransform(destination_joint, source_joint, rot=1)
-    rot_to_orient(destination_joint)
 
 
 def validate_rotations(joint_chain):
