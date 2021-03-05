@@ -91,6 +91,7 @@ class TwistComponent(luna_rig.AnimComponent):
                                              points=curve_points,
                                              parent=instance.group_noscale)
         pm.rebuildCurve(ik_curve, d=3, ch=0)
+        # Create ctl chain
         ctl_chain = jointFn.along_curve(ik_curve,
                                         num_joints + 2,
                                         joint_name=instance.name,
@@ -98,12 +99,13 @@ class TwistComponent(luna_rig.AnimComponent):
                                         joint_suffix="jnt",
                                         delete_curve=False)
         attrFn.add_meta_attr(ctl_chain)
-
         for jnt in ctl_chain:
             pm.matchTransform(jnt, instance.start_joint, rot=1)
-            jointFn.rot_to_orient(jnt)
+            pm.makeIdentity(jnt, apply=True)
+
         jointFn.create_chain(ctl_chain)
         ctl_chain[0].setParent(instance.group_joints)
+        # Spline IK
         ik_handle = pm.ikHandle(n=nameFn.generate_name(instance.indexed_name, side=instance.side, suffix="ikh"),
                                 sj=ctl_chain[0],
                                 ee=ctl_chain[-1],

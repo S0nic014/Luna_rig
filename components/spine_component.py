@@ -204,7 +204,7 @@ class FKIKSpine(SpineComponent):
                                               shape="circleCrossed",
                                               orient_axis="y")
         pm.matchTransform(fk2_control.joint, ctl_chain[-1])
-        jointFn.rot_to_orient(fk2_control.joint)
+        pm.makeIdentity(fk2_control.joint, apply=True)
         pm.parentConstraint(fk2_control.joint, chest_control.group, mo=1)
 
         # Store default items
@@ -311,7 +311,7 @@ class RibbonSpine(SpineComponent):
                                     n=nameFn.generate_name([instance.indexed_name, "rivet"], instance.side, suffix="jnt"),
                                     parent=follicles[index].follicle_transform)
             pm.matchTransform(rvt_jnt, jnt, rot=1)
-            jointFn.rot_to_orient(rvt_jnt)
+            pm.makeIdentity(rvt_jnt, apply=True)
             rivet_joints.append(rvt_jnt)
 
         # Create controls
@@ -370,11 +370,13 @@ class RibbonSpine(SpineComponent):
             pm.pointConstraint(rvt_jnt, ctl_jnt)
             pm.orientConstraint(rvt_jnt, ctl_jnt)
         # Connect chest joint to control
-        jointFn.match_orient(chest_control.joint, ctl_spine_chain[-1])
+        pm.matchTransform(chest_control.joint, ctl_chain[-1])
+        pm.makeIdentity(chest_control.joint, apply=True)
         pm.pointConstraint(chest_control.joint, ctl_spine_chain[-1])
         pm.orientConstraint(chest_control.joint, ctl_spine_chain[-1])
         # Connect pelvis joint to control
-        jointFn.match_orient(hips_control.joint, ctl_pelvis_joint)
+        pm.matchTransform(hips_control.joint, ctl_pelvis_joint)
+        pm.makeIdentity(chest_control.joint, apply=True)
         pm.pointConstraint(hips_control.joint, ctl_pelvis_joint)
         pm.orientConstraint(hips_control.joint, ctl_pelvis_joint)
         # Connect controls to spine surface
