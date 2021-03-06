@@ -20,23 +20,25 @@ class SimpleComponent(luna_rig.AnimComponent):
         instance.attach_to_component(meta_parent, hook_index=hook)
         return instance
 
-    def add_control(self, guide_object, name, as_hook=False, add_bind_joint=False, *args, **kwargs):
+    def add_control(self, guide_object, name, as_hook=False, bind_joint=None, *args, **kwargs):
+        if "parent" not in kwargs.keys():
+            kwargs["parent"] = self.group_ctls
         new_control = luna_rig.Control.create(name=[self.indexed_name, name],
-                                              parent=self.group_ctls,
                                               guide=guide_object,
-                                              joint=add_bind_joint,
                                               *args,
                                               **kwargs)
-        self._store_controls([new_control])
         # Connect to hook
+        self._store_controls([new_control])
         if self.in_hook:
             pm.parentConstraint(self.in_hook.transform, new_control.group, mo=1)
         # Store hook
         if as_hook:
             self.add_hook(new_control.transform, new_control.name)
         # Add bind joint
-        if add_bind_joint:
-            self._store_bind_joints([new_control.joint])
+        if bind_joint:
+            pm.parentConstraint(new_control.transform, bind_joint, mo=True)
+            attrFn.add_meta_attr(bind_joint)
+            self._store_bind_joints([bind_joint])
         return new_control
 
     def attach_to_skeleton(self):
