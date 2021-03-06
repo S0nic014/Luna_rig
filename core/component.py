@@ -90,6 +90,8 @@ class Component(luna_rig.MetaNode):
         :type attr: pymel.core.Attribute
         """
         # if not attr.isConnectedTo(self.pynode.settings, checkLocalArray=True, checkOtherArray=True):
+        if not isinstance(attr, pm.PyNode):
+            attr = pm.PyNode(attr)
         if attr not in self.pynode.settings.listConnections(d=1, plugs=1):
             attr.connect(self.pynode.settings, na=1)
 
@@ -251,6 +253,8 @@ class AnimComponent(Component):
 
     def _store_bind_joints(self, joint_chain):
         for jnt in joint_chain:
+            if not isinstance(jnt, pm.PyNode):
+                jnt = pm.PyNode(jnt)
             if jnt not in self.pynode.bindJoints.listConnections(d=1):
                 jnt.metaParent.connect(self.pynode.bindJoints, na=1)
 

@@ -13,7 +13,8 @@ def add_meta_attr(nodes):
     if not isinstance(nodes, list):
         nodes = [nodes]
     for node in nodes:
-        node = pm.PyNode(node)
+        if not isinstance(node, pm.PyNode):
+            node = pm.PyNode(node)
         if not node.hasAttr("metaParent"):
             node.addAttr("metaParent", at="message")
 
