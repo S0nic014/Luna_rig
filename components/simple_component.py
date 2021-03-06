@@ -6,7 +6,7 @@ from luna_rig.functions import nameFn
 from luna_rig.functions import attrFn
 
 
-class EmptyComponent(luna_rig.AnimComponent):
+class SimpleComponent(luna_rig.AnimComponent):
 
     @classmethod
     def create(cls,
@@ -15,7 +15,7 @@ class EmptyComponent(luna_rig.AnimComponent):
                character=None,
                side="c",
                name="empty_component"):
-        instance = super(EmptyComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character)  # type: EmptyComponent
+        instance = super(SimpleComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character)  # type: SimpleComponent
         instance.connect_to_character(character, parent=True)
         instance.attach_to_component(meta_parent, hook_index=hook)
         return instance
