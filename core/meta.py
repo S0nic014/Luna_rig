@@ -168,6 +168,9 @@ class MetaNode(object):
             Logger.warning("{0}: Missing metaChildren attribute.")
         return result
 
+    def is_animatable(self):
+        return isinstance(self, (luna_rig.AnimComponent, luna_rig.components.Character))
+
     @ staticmethod
     def list_nodes(of_type=None):
         """List existing meta nodes
@@ -188,19 +191,7 @@ class MetaNode(object):
             result = all_nodes
         return result
 
-    @ staticmethod
-    def get_existing_nodes():
-        scene_dict = {}
-        for comp_name, comp_type in inspectFn.get_classes(luna_rig.components):
-            existing_nodes = MetaNode.list_nodes(of_type=comp_type)
-            if existing_nodes:
-                scene_dict[comp_type] = existing_nodes
-        anim_comps = MetaNode.list_nodes(of_type=luna_rig.AnimComponent)
-        if anim_comps:
-            scene_dict[luna_rig.AnimComponent] = anim_comps
-        return scene_dict
-
-    @ staticmethod
+    @staticmethod
     def get_connected_metanode(node, of_type=None):
         node = pm.PyNode(node)
         all_nodes = [MetaNode(network) for network in node.listConnections(type="network") if network.hasAttr("metaType")]
