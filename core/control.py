@@ -344,6 +344,14 @@ class Control(object):
         return result
 
     @property
+    def spaces_dict(self):
+        result = {}
+        if self.transform.hasAttr("space"):
+            for space_name, space_index in attrFn.get_enums(self.transform.space):
+                result[space_name] = space_index
+        return result
+
+    @property
     def space_index(self):
         result = None
         if self.transform.hasAttr("space"):
