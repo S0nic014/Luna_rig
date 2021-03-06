@@ -56,9 +56,8 @@ class PyBuild(object):
         pm.select(cl=1)
         maya_utils.switch_xray_joints()
         pm.viewFit(self.character.root_control.group)
-        if Config.get(BuildVars.geometry_override, default=True, stored=True):
-            self.character.geometry_grp.overrideEnabled.set(1)
-            self.character.geometry_grp.overrideColor.set(1)
+        self.character.geometry_grp.overrideEnabled.set(1)
+        self.character.geometry_grp.overrideColor.set(1)
 
         # Report completion
         self.signals.done.emit()
