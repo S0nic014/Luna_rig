@@ -126,7 +126,7 @@ class Control(object):
 
         # Joint
         if joint:
-            ctl_joint = pm.createNode('joint', n=nameFn.generate_name([name], side, suffix="cjnt"), p=temp_parent)
+            ctl_joint = pm.createNode('joint', n=nameFn.generate_name(name, side, suffix="cjnt"), p=temp_parent)
             ctl_joint.visibility.set(0)
 
         # Tag node
