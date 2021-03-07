@@ -175,7 +175,8 @@ class ShapeManager:
 
     @classmethod
     def get_color(cls, node):
-        node = pm.PyNode(node)
+        if not isinstance(node, pm.PyNode):
+            node = pm.PyNode(node)
         color = 0
         if isinstance(node, luna_rig.nt.Transform):
             shapes = node.getShapes()
@@ -189,3 +190,14 @@ class ShapeManager:
             Logger.error("Invalid transform {0}, cant't get color!".format(node))
 
         return color
+
+    @classmethod
+    def set_line_width(cls, transform, value):
+        if not isinstance(transform, pm.PyNode):
+            transform = pm.PyNode(transform)
+        if isinstance(transform, luna_rig.nt.Transform):
+            for shape_node in transform.getShapes():
+                if isinstance(shape_node, luna_rig.nt.NurbsCurve):
+                    shape_node.lineWidth.set(value)
+        else:
+            Logger.error("Invalid transform {0}, cant't set line width!".format(shape_node))
