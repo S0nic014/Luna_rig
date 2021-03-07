@@ -1,8 +1,6 @@
 import pymel.core as pm
 import os
 from luna import Logger
-from luna import Config
-from luna import RigVars
 from luna.utils import fileFn
 import luna_rig
 from luna_rig.importexport import manager
@@ -79,8 +77,7 @@ class CtlShapeManager(manager.AbstractManager):
         if not latest_file:
             return
         data_dict = fileFn.load_json(latest_file)
-        line_width = Config.get(RigVars.line_width, default=2.0, stored=True)
+
         for transform, shape_data in data_dict.items():
             ShapeManager.apply_shape(transform, shape_list=shape_data)
-            ShapeManager.set_line_width(transform, line_width)
         Logger.info("Imported control shapes: {0}".format(latest_file))
