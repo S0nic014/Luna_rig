@@ -42,8 +42,12 @@ class MetaNode(object):
         if node:
             node = pm.PyNode(node)
             class_string = node.metaType.get()
-            eval_class = eval(class_string, globals(), locals())
-            result = eval_class.__new__(eval_class, node)
+            try:
+                eval_class = eval(class_string, globals(), locals())
+                result = eval_class.__new__(eval_class, node)
+            except Exception:
+                Logger.exception("{0}: Failed to evaluate class string: {1}".format(cls, class_string))
+                raise
         else:
             result = super(MetaNode, cls)
 
@@ -171,7 +175,7 @@ class MetaNode(object):
     def is_animatable(self):
         return isinstance(self, (luna_rig.AnimComponent, luna_rig.components.Character))
 
-    @ staticmethod
+    @staticmethod
     def list_nodes(of_type=None):
         """List existing meta nodes
 
@@ -190,6 +194,14 @@ class MetaNode(object):
         else:
             result = all_nodes
         return result
+
+    @staticmethod
+    def scene_types(of_type=None):
+        types_dict = {}
+        for meta_node in MetaNode.list_nodes(of_type=None):
+            if meta_node.as_str(name_only=True) not in types_dict.keys():
+                types_dict[meta_node.as_str(name_only=True)] = type(meta_node)
+        return types_dict
 
     @staticmethod
     def get_connected_metanode(node, of_type=None):
