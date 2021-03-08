@@ -13,6 +13,7 @@ from luna_rig.functions import curveFn
 
 
 class ShapeManager:
+
     SHAPES_LIB = directories.SHAPES_LIB_PATH
     COPIED_SHAPE_FILE = "luna_copied_shape.json"
     COPIED_COLOR_FILE = "luna_copied_color.json"
@@ -61,7 +62,7 @@ class ShapeManager:
     @classmethod
     def apply_shape(cls, node, shape_list, default_color=0):
         if not pm.objExists(node):
-            Logger.warning("Transform {0} no longer exists".format(node))
+            Logger.warning("ShapeManager: Transform {0} no longer exists".format(node))
             return False
         node = pm.PyNode(node)  # type: luna_rig.nt.Transform
         pm.delete(node.getShapes())

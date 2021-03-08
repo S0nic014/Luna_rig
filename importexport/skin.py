@@ -229,6 +229,20 @@ class SkinCluster(object):
                 cluster_name = "{0}_{1}_skin".format(geo_name_parts.side, geo_name_parts.indexed_name)
             except Exception:
                 cluster_name = str(geometry) + "_skin"
+            cls.__create_missing_joints(skin_data)
             deformer = pm.skinCluster(skin_data["weights"].keys(), geometry, tsb=True, nw=2, n=cluster_name)
         skin = SkinCluster(deformer)
         skin.set_data(skin_data)
+
+    @classmethod
+    def __create_missing_joints(cls, skin_data):
+        # TODO: Implement remaping
+        missing_grp_name = "missing_joints_grp"
+        for influence_name in skin_data["weights"].keys():
+            if pm.objExists(influence_name):
+                continue
+            Logger.warning("{0}: Missing inluence {0}".format(influence_name))
+            if not pm.objExists(missing_grp_name):
+                pm.createNode("transform", n=missing_grp_name)
+                outlinerFn.set_color(missing_grp_name, color=[0.8, 0.2, 0.2])
+            pm.createNode("joint", n=influence_name, p=missing_grp_name)
