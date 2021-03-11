@@ -41,10 +41,6 @@ class Control(object):
             Logger.error("Invalid control transform - {0}".format(self))
             raise TypeError
 
-        # Attribute checkes
-        if not self.transform.hasAttr("metaParent"):
-            raise AttributeError("{0} metaParent attribute not found.".format(self))
-
     @classmethod
     def create(cls,
                name="control_obj",
@@ -400,10 +396,12 @@ class Control(object):
 
         :param node: Node to test
         :type node: str or luna_rig.nt.Transform
-        :return: Test result (0 or 1)
-        :rtype: int
+        :return: Test result
+        :rtype: bool
         """
-        result = pm.controller(node, q=1, ic=1)  # type: int
+        if not isinstance(node, pm.PyNode):
+            node = pm.PyNode(node)
+        result = all([pm.controller(node, q=1, ic=1), node.hasAttr("metaParent")])
         return result
 
     def print_debug(self):
@@ -938,15 +936,22 @@ class Control(object):
     def bake_custom_space(self,
                           space_object,
                           time_range=None,
-                          step=1.0,
-                          bake_scale=False):
+                          step=1.0):
+        # Find locked attrs to skip
+        locked_attrs = self.transform.listAttr(locked=True)
+        skip_rotate = []
+        skip_translate = []
+        for attr in locked_attrs:
+            if attr.attrName() in ["tx", "ty", "tz"]:
+                skip_translate.append(attr.attrName()[-1])
+            elif attr.attrName() in ["rx", "ry", "rz"]:
+                skip_rotate.append(attr.attrName()[-1])
+
         # Create locator and constraint to control to it
         space_locator = pm.spaceLocator(n="space_locator")
         pm.matchTransform(space_locator, space_object)
         pm.parent(space_locator, space_object)
-        pm.parentConstraint(space_locator, self.transform, mo=1)
-        if bake_scale:
-            pm.scaleConstraint(space_locator, self.transform, mo=1)
+        pm.parentConstraint(space_locator, self.transform, mo=1, sr=skip_rotate, st=skip_translate)
         # Time range
         if not time_range:
             time_range = animFn.get_playback_range()
