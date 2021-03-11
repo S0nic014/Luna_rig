@@ -874,7 +874,8 @@ class Control(object):
                    space_index=None,
                    space_name=None,
                    time_range=None,
-                   step=1.0):
+                   step=1.0,
+                   anim_layer="BaseAnimation"):
         if not self.spaces:
             Logger.warning("{0}: no spaces to bake".format(self))
             return
@@ -913,7 +914,7 @@ class Control(object):
         bake_locator = pm.spaceLocator(n="bake_locator")  # type: luna_rig.nt.Transform
         pm.matchTransform(bake_locator, self.transform)
         parent_constr = pm.parentConstraint(self.transform, bake_locator)
-        pm.bakeResults(bake_locator, t=time_range, sampleBy=step)
+        pm.bakeResults(bake_locator, t=time_range, sampleBy=step, destinationLayer=anim_layer)
         pm.delete(parent_constr)
 
         # Bake new space for switch attrib
@@ -936,7 +937,8 @@ class Control(object):
     def bake_custom_space(self,
                           space_object,
                           time_range=None,
-                          step=1.0):
+                          step=1.0,
+                          anim_layer="BaseAnimation"):
         # Find locked attrs to skip
         locked_attrs = self.transform.listAttr(locked=True)
         skip_rotate = []
@@ -957,6 +959,6 @@ class Control(object):
             time_range = animFn.get_playback_range()
         # Baking
         Logger.info("{0}: Baking to space {1} {2}".format(self, space_object, time_range))
-        pm.bakeResults(self.transform, t=time_range, sampleBy=step)
+        pm.bakeResults(self.transform, t=time_range, sampleBy=step, destinationLayer=anim_layer)
         # Cleanup
         pm.delete(space_locator)
