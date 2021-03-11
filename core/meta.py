@@ -198,7 +198,7 @@ class MetaNode(object):
     @staticmethod
     def scene_types(of_type=None):
         types_dict = {}
-        for meta_node in MetaNode.list_nodes(of_type=None):
+        for meta_node in MetaNode.list_nodes(of_type=of_type):
             if meta_node.as_str(name_only=True) not in types_dict.keys():
                 types_dict[meta_node.as_str(name_only=True)] = type(meta_node)
         return types_dict
