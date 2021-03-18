@@ -28,12 +28,22 @@ def get_curve_data(curve):
 
 def curve_from_points(name, degree=1, points=[], parent=None):
     knot_len = len(points) + degree - 1
-    if degree == 1:
-        knot_vecs = [v for v in range(knot_len)]
+    knot_vecs = [v for v in range(knot_len)]
 
-    new_curve = pm.curve(n=name, p=points, d=degree, k=knot_vecs)  # type: luna_rig.nt.NurbsCurve
+    new_curve = pm.curve(n=name, p=points, d=1, k=knot_vecs)  # type: luna_rig.nt.NurbsCurve
+    if degree != 1:
+        pm.rebuildCurve(new_curve, d=degree, ch=0)
     if parent:
         pm.parent(new_curve, parent)
+    return new_curve
+
+
+def curve_from_transforms(name, degree=1, transforms=[], parent=None):
+    for index in range(0, len(transforms)):
+        if not isinstance(transforms[index], pm.PyNode):
+            transforms[index] = pm.PyNode(transforms[index])
+    points = [trs.getTranslation(space="world") for trs in transforms]
+    new_curve = curve_from_points(name, degree=degree, points=points, parent=parent)
     return new_curve
 
 
