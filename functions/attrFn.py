@@ -89,3 +89,13 @@ def transfer_attr(source, destination, attr_list=[], connect=False, ** kwargs):
                 continue
             copied_attr.connect(orig_attr)
     return attr_alias
+
+
+def connect_transform_attrs(src_transform, dest_transform):
+    if not isinstance(src_transform, pm.PyNode):
+        src_transform = pm.PyNode(src_transform)
+    if not isinstance(dest_transform, pm.PyNode):
+        src_transform = pm.PyNode(dest_transform)
+    src_transform.translate.connect(dest_transform.translate)
+    src_transform.rotate.connect(dest_transform.rotate)
+    src_transform.scale.connect(dest_transform.scale)

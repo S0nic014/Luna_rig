@@ -5,6 +5,7 @@ from luna import Logger
 import luna_rig
 import luna.static as static
 import luna_rig.functions.nameFn as nameFn
+import luna_rig.functions.nodeFn as nodeFn
 
 
 def duplicate_chain(original_chain=[],
@@ -179,3 +180,27 @@ def create_root_joint(side="c", name="root", suffix="jnt", parent=None, children
     for child in children:
         pm.parent(child, root)
     return root
+
+
+def group_joint(joint, side=None, name=None, parent=None):
+    if not side:
+        side = nameFn.deconstruct_name(joint).side
+    if not name:
+        name = nameFn.deconstruct_name(joint).name
+    if not parent:
+        parent = joint.getParent()
+    jnt_locator = pm.spaceLocator(n=nameFn.generate_name(name, side, "loc"))
+    pm.matchTransform(jnt_locator, joint)
+    pm.parent(joint, jnt_locator)
+    jnt_grp = nodeFn.create("transform", name, side, suffix="grp")
+    pm.matchTransform(jnt_grp, joint)
+    pm.parent(jnt_locator, jnt_grp)
+    pm.parent(jnt_grp, parent)
+
+    class returnStruct:
+        def __init__(self):
+            self.group = jnt_grp  # type: luna_rig.nt.Transform
+            self.locator = jnt_locator  # type: luna_rig.nt.Transform
+            self.joint = joint  # type: luna_rig.nt.Joint
+
+    return returnStruct()

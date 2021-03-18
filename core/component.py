@@ -255,11 +255,13 @@ class AnimComponent(Component):
         for jnt in joint_chain:
             if not isinstance(jnt, pm.PyNode):
                 jnt = pm.PyNode(jnt)
+            attrFn.add_meta_attr(jnt)
             if jnt not in self.pynode.bindJoints.listConnections(d=1):
                 jnt.metaParent.connect(self.pynode.bindJoints, na=1)
 
     def _store_ctl_chain(self, joint_chain):
         for jnt in joint_chain:
+            attrFn.add_meta_attr(jnt)
             if jnt not in self.pynode.ctlChain.listConnections(d=1):
                 jnt.metaParent.connect(self.pynode.ctlChain, na=1)
 
