@@ -262,7 +262,7 @@ class FKIKComponent(luna_rig.AnimComponent):
                 pm.select(self.fk_controls[-1].transform, r=1)
                 self.fkik_state = 0
 
-    def bake_fkik(self, source="fk", time_range=None, bake_pv=True, step=1, anim_layer="BaseAnimation"):
+    def bake_fkik(self, source="fk", time_range=None, bake_pv=True, step=1):
         Logger.info("{0}: baking {1} to {2} {3}...".format(self, source.upper(), "IK" if source.lower() == "fk" else "FK", time_range))
         if not time_range:
             time_range = animFn.get_playback_range()
@@ -271,19 +271,19 @@ class FKIKComponent(luna_rig.AnimComponent):
             if source == "fk":
                 self.fkik_state = 0
                 self.switch_fkik(matching=True)
-                self.ik_control.transform.translate.setKey(animLayer=anim_layer)
-                self.ik_control.transform.rotate.setKey(animLayer=anim_layer)
+                self.ik_control.transform.translate.setKey()
+                self.ik_control.transform.rotate.setKey()
                 if bake_pv:
-                    self.pv_control.transform.translate.setKey(animLayer=anim_layer)
+                    self.pv_control.transform.translate.setKey()
             elif source == "ik":
                 self.fkik_state = 1
                 self.switch_fkik(matching=True)
                 for fk_control in self.fk_controls:
-                    fk_control.transform.rotate.setKey(animLayer=anim_layer)
+                    fk_control.transform.rotate.setKey()
         # Bake children
         for child in self.meta_children:
             if hasattr(child, "bake_fkik"):
-                child.bake_fkik(source=source, time_range=time_range, step=step, anim_layer=anim_layer)
+                child.bake_fkik(source=source, time_range=time_range, step=step)
 
     def add_stretch(self, default_value=False):
         # TODO: Add stretch

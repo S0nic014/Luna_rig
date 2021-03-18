@@ -158,7 +158,7 @@ class Foot(luna_rig.AnimComponent):
             pm.deleteAttr(self.meta_parent.ik_control.transform.attr(attr_name))
         super(Foot, self).remove()
 
-    def bake_fkik(self, source="fk", time_range=None, step=1, anim_layer="BaseAnimation"):
+    def bake_fkik(self, source="fk", time_range=None, step=1):
         if source != "ik":
             return
         Logger.info("{0}: baking foot roll to FK {1}...".format(self, time_range))
@@ -169,4 +169,4 @@ class Foot(luna_rig.AnimComponent):
             pm.setCurrentTime(frame)
             if source == "ik":
                 self.fk_control.transform.attr(self.roll_axis).set(self.meta_parent.ik_control.transform.footRoll.get() * -1.0)
-                self.fk_control.transform.attr(self.roll_axis).setKey(animLayer=anim_layer)
+                self.fk_control.transform.attr(self.roll_axis).setKey()
