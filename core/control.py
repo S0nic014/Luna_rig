@@ -9,6 +9,7 @@ import luna_rig
 import luna_rig.functions.nameFn as nameFn
 import luna_rig.functions.attrFn as attrFn
 import luna_rig.functions.curveFn as curveFn
+import luna_rig.functions.nodeFn as nodeFn
 import luna_rig.functions.transformFn as transformFn
 import luna_rig.functions.outlinerFn as outlinerFn
 import luna_rig.functions.animFn as animFn
@@ -962,3 +963,23 @@ class Control(object):
         pm.bakeResults(self.transform, t=time_range, sampleBy=step, destinationLayer=anim_layer)
         # Cleanup
         pm.delete(space_locator)
+
+    def connect_via_remap(self,
+                          source_plug,
+                          dest_plug,
+                          remap_name="remap",
+                          input_min=0.0,
+                          input_max=10.0,
+                          output_min=0.0,
+                          output_max=1.0):
+        if isinstance(source_plug, str):
+            source_plug = self.transform.attr(source_plug)  # type: pm.Attribute
+        if isinstance(dest_plug, str):
+            dest_plug = pm.PyNode(dest_plug)  # type: pm.Attribute
+        remap_node = nodeFn.create("remapValue", [self.indexed_name, remap_name], self.side, suffix="rmv")
+        remap_node.inputMin.set(input_min)
+        remap_node.inputMax.set(input_max)
+        remap_node.outputMin.set(output_min)
+        remap_node.outputMax.set(output_max)
+        source_plug.connect(remap_node.inputValue)
+        remap_node.outValue.connect(dest_plug)
