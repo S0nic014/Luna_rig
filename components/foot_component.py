@@ -4,14 +4,20 @@ import luna_rig
 from luna_rig.functions import jointFn
 from luna_rig.functions import attrFn
 from luna_rig.functions import nameFn
+import luna_rig.functions.animFn as animFn
 
 
 class Foot(luna_rig.AnimComponent):
     ROLL_ATTRS = ["footRoll", "toeRoll", "heelRoll", "bank", "heelTwist", "toeTwist", "toeTap"]
 
     @property
+    def roll_axis(self):
+        axis = self.pynode.rollAxis.get()  # type: str
+        return axis
+
+    @property
     def fk_control(self):
-        return luna_rig.Control(self.pynode.fkControl.listConnections(d=1))
+        return luna_rig.Control(self.pynode.fkControl.listConnections(d=1)[0])
 
     @classmethod
     def create(cls,
@@ -35,6 +41,8 @@ class Foot(luna_rig.AnimComponent):
         instance.pynode.addAttr("fkChain", at="message", multi=1, im=0)
         instance.pynode.addAttr("ikChain", at="message", multi=1, im=0)
         instance.pynode.addAttr("fkControl", at="message")
+        instance.pynode.addAttr("rollAxis", dt="string")
+        instance.pynode.rollAxis.set(roll_axis)
 
         # Chains
         joint_chain = jointFn.joint_chain(start_joint, end_joint)
@@ -149,3 +157,16 @@ class Foot(luna_rig.AnimComponent):
         for attr_name in self.ROLL_ATTRS:
             pm.deleteAttr(self.meta_parent.ik_control.transform.attr(attr_name))
         super(Foot, self).remove()
+
+    def bake_fkik(self, source="fk", time_range=None, step=1, anim_layer="BaseAnimation"):
+        if source != "ik":
+            return
+        Logger.info("{0}: baking foot roll to FK {1}...".format(self, time_range))
+
+        if not time_range:
+            time_range = animFn.get_playback_range()
+        for frame in range(time_range[0], time_range[1] + 1, step):
+            pm.setCurrentTime(frame)
+            if source == "ik":
+                self.fk_control.transform.attr(self.roll_axis).set(self.meta_parent.ik_control.transform.footRoll.get() * -1.0)
+                self.fk_control.transform.attr(self.roll_axis).setKey(animLayer=anim_layer)
