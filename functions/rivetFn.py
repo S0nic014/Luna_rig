@@ -13,27 +13,27 @@ class FollicleRivet(object):
                  name="rivet"):
         # Create follicle
         self.name = nameFn.generate_name(name, side, "fol")
-        self.follicle_shape = pm.createNode("follicle")  # type: luna_rig.nt.Follicle
-        self.follicle_transform = self.follicle_shape.getTransform()
-        self.follicle_transform.rename(self.name)
-        self.follicle_transform.inheritsTransform.set(0)
-        self.follicle_shape.pointLock.set(0)
-        self.follicle_shape.simulationMethod.set(0)
-        self.follicle_shape.collide.set(0)
-        self.follicle_shape.stiffness.set(0)
-        self.follicle_shape.clumpWidthMult.set(0)
-        self.follicle_shape.densityMult.set(0)
-        self.follicle_shape.curlMult.set(0)
-        self.follicle_shape.sampleDensity.set(0)
-        self.follicle_shape.degree.set(1)
-        self.follicle_shape.clumpWidth.set(0)
+        self.shape_node = pm.createNode("follicle")  # type: luna_rig.nt.Follicle
+        self.transform = self.shape_node.getTransform()
+        self.transform.rename(self.name)
+        self.transform.inheritsTransform.set(0)
+        self.shape_node.pointLock.set(0)
+        self.shape_node.simulationMethod.set(0)
+        self.shape_node.collide.set(0)
+        self.shape_node.stiffness.set(0)
+        self.shape_node.clumpWidthMult.set(0)
+        self.shape_node.densityMult.set(0)
+        self.shape_node.curlMult.set(0)
+        self.shape_node.sampleDensity.set(0)
+        self.shape_node.degree.set(1)
+        self.shape_node.clumpWidth.set(0)
         # Connect shape to transform
-        self.follicle_shape.outRotate.connect(self.follicle_shape.getTransform().rotate)
-        self.follicle_shape.outTranslate.connect(self.follicle_shape.getTransform().translate)
+        self.shape_node.outRotate.connect(self.shape_node.getTransform().rotate)
+        self.shape_node.outTranslate.connect(self.shape_node.getTransform().translate)
 
     def set_uv(self, uv_values):
-        self.follicle_shape.parameterU.set(uv_values[0])
-        self.follicle_shape.parameterV.set(uv_values[1])
+        self.shape_node.parameterU.set(uv_values[0])
+        self.shape_node.parameterV.set(uv_values[1])
 
     def pin_proximity(self, target_shape, pin_guide, delete_guide=False):
         target_shape = pm.PyNode(target_shape)  # type: luna_rig.nt.Mesh
@@ -63,10 +63,10 @@ class FollicleRivet(object):
         self.set_uv(uv_values)
         # Connect world attributes
         if isinstance(target_shape, luna_rig.nt.Mesh):
-            target_shape.worldMesh.connect(self.follicle_shape.inputMesh)
+            target_shape.worldMesh.connect(self.shape_node.inputMesh)
         elif isinstance(target_shape, luna_rig.nt.NurbsSurface):
-            target_shape.local.connect(self.follicle_shape.inputSurface)
-        target_shape.worldMatrix.connect(self.follicle_shape.inputWorldMatrix)
+            target_shape.local.connect(self.shape_node.inputSurface)
+        target_shape.worldMatrix.connect(self.shape_node.inputWorldMatrix)
         # Cleanup
         if delete_guide:
             pm.delete(pin_guide)
@@ -84,10 +84,10 @@ class FollicleRivet(object):
         self.set_uv(uv_values)
         # Connect world attributes
         if isinstance(target_shape, luna_rig.nt.Mesh):
-            target_shape.worldMesh.connect(self.follicle_shape.inputMesh)
+            target_shape.worldMesh.connect(self.shape_node.inputMesh)
         elif isinstance(target_shape, luna_rig.nt.NurbsSurface):
-            target_shape.local.connect(self.follicle_shape.inputSurface)
-        target_shape.worldMatrix.connect(self.follicle_shape.inputWorldMatrix)
+            target_shape.local.connect(self.shape_node.inputSurface)
+        target_shape.worldMatrix.connect(self.shape_node.inputWorldMatrix)
 
     @classmethod
     def along_surface(cls,
@@ -142,5 +142,5 @@ class FollicleRivet(object):
             Logger.error("Follicle mesh pin requires guide object or UV values.")
             raise RuntimeError
         if parent:
-            pm.parent(rivet.follicle_shape.getTransform(), parent)
+            pm.parent(rivet.shape_node.getTransform(), parent)
         return rivet

@@ -306,7 +306,7 @@ class RibbonSpine(SpineComponent):
             for index, jnt in enumerate(ctl_spine_chain):
                 rvt_jnt = pm.createNode("joint",
                                         n=nameFn.generate_name([instance.indexed_name, "rivet"], instance.side, suffix="jnt"),
-                                        parent=follicles[index].follicle_transform)
+                                        parent=follicles[index].transform)
                 pm.matchTransform(rvt_jnt, jnt, rot=1)
                 pm.makeIdentity(rvt_jnt, apply=True)
                 rivet_joints.append(rvt_jnt)
