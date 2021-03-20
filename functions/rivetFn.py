@@ -10,13 +10,15 @@ class FollicleRivet(object):
 
     def __init__(self,
                  side="c",
-                 name="rivet"):
+                 name="rivet",
+                 flip_direction=False):
         # Create follicle
         self.name = nameFn.generate_name(name, side, "fol")
         self.shape_node = pm.createNode("follicle")  # type: luna_rig.nt.Follicle
         self.transform = self.shape_node.getTransform()
         self.transform.rename(self.name)
         self.transform.inheritsTransform.set(0)
+        self.shape_node.flipDirection.set(flip_direction)
         self.shape_node.pointLock.set(0)
         self.shape_node.simulationMethod.set(0)
         self.shape_node.collide.set(0)
@@ -97,7 +99,8 @@ class FollicleRivet(object):
                       use_span="u",
                       secondary_value=0.5,
                       parent=None,
-                      amount=0):
+                      amount=0,
+                      flip_direction=False):
         created_rivets = []
         # Get surface shape
         if not isinstance(surface, pm.PyNode):
@@ -120,7 +123,7 @@ class FollicleRivet(object):
                 pin_values = [primary_value, secondary_value]
             else:
                 pin_values = [secondary_value, primary_value]
-            rivet = cls.create_and_pin(surface, uv_values=pin_values, side=side, name=name, parent=parent)
+            rivet = cls.create_and_pin(surface, uv_values=pin_values, side=side, name=name, parent=parent, flip_direction=flip_direction)
             created_rivets.append(rivet)
         return created_rivets
 
@@ -132,8 +135,9 @@ class FollicleRivet(object):
                        side="c",
                        name="rivet",
                        parent=None,
-                       delete_guide=False):
-        rivet = cls(side=side, name=name)
+                       delete_guide=False,
+                       flip_direction=False):
+        rivet = cls(side=side, name=name, flip_direction=flip_direction)
         if pin_guide:
             rivet.pin_proximity(target_shape, pin_guide, delete_guide=delete_guide)
         elif uv_values:

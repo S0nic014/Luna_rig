@@ -44,7 +44,8 @@ class RibbonComponent(luna_rig.AnimComponent):
                skel_joint_parent=None,
                use_span="u",
                fk_hierarchy=False,
-               override_num_rivets=None):
+               override_num_rivets=None,
+               flip_rivets_normal=False):
         # Metanode attributes
         instance = super(RibbonComponent, cls).create(meta_parent=meta_parent, side=side, name=name, hook=hook, character=character)  # type: RibbonComponent
         instance.pynode.addAttr("surface", at="message")
@@ -71,7 +72,8 @@ class RibbonComponent(luna_rig.AnimComponent):
                                                      name=[instance.indexed_name, "rivet"],
                                                      use_span=use_span,
                                                      parent=instance.group_noscale,
-                                                     amount=override_num_rivets)
+                                                     amount=override_num_rivets,
+                                                     flip_direction=flip_rivets_normal)
         ctl_chain = []
         for follicle in rivets:
             ctl_jnt = nodeFn.create("joint", [instance.indexed_name, "ctl"], instance.side, "jnt", parent=follicle.transform)
@@ -84,7 +86,8 @@ class RibbonComponent(luna_rig.AnimComponent):
                                                            name=[instance.indexed_name, "guide_rivet"],
                                                            use_span=use_span,
                                                            parent=None,
-                                                           amount=num_controls)
+                                                           amount=num_controls,
+                                                           flip_direction=flip_rivets_normal)
         for guide_rvt in guide_rivets:
             shape_ctl = luna_rig.Control.create(name=[instance.indexed_name, "shape"],
                                                 side=instance.side,
