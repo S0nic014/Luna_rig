@@ -12,8 +12,7 @@ from luna_rig.components.twist_component import TwistComponent
 from luna_rig.components.hand_component import Hand
 from luna_rig.components.eye_component import Eye
 from luna_rig.components.simple_component import SimpleComponent
-from luna_rig.components.ribbon_component import CurveRibbonComponent
-from luna_rig.components.ribbon_component import CurveRibbonBrow
+from luna_rig.components.ribbon_component import RibbonComponent
 
 # Components
 from luna_rig.components.stretch_component import IKSplineStretch
