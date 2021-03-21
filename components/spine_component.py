@@ -47,7 +47,7 @@ class SpineComponent(luna_rig.AnimComponent):
         pass
 
 
-class FKIKSpine(SpineComponent):
+class FKIKSpineComponent(SpineComponent):
 
     class Hooks(enumFn.Enum):
         ROOT = 0
@@ -84,7 +84,7 @@ class FKIKSpine(SpineComponent):
                start_joint=None,
                end_joint=None):
         # Create instance and add attrs
-        instance = super(FKIKSpine, cls).create(meta_parent=meta_parent, side=side, name=name, character=character)  # type: FKIKSpine
+        instance = super(FKIKSpineComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character)  # type: FKIKSpineComponent
         instance.pynode.addAttr("fkControls", at="message", multi=1, im=0)
         instance.pynode.addAttr("midControl", at="message")
 
@@ -251,7 +251,7 @@ class FKIKSpine(SpineComponent):
         return instance
 
 
-class RibbonSpine(SpineComponent):
+class RibbonSpineComponent(SpineComponent):
     class Hooks(enumFn.Enum):
         ROOT = 0
         HIPS = 1
@@ -274,7 +274,7 @@ class RibbonSpine(SpineComponent):
                side_vector=[1, 0, 0]):
         Logger.warning("{0}: WIP component".format(cls))
         # Create instance and add attrs
-        instance = super(RibbonSpine, cls).create(meta_parent=meta_parent, side=side, name=name, character=character)  # type: FKIKSpine
+        instance = super(RibbonSpineComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character)  # type: RibbonSpineComponent
         instance.pynode.addAttr("midControl", at="message")
 
         # Joint chains

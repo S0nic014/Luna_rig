@@ -113,7 +113,7 @@ class FKComponent(luna_rig.AnimComponent):
         self._store_settings(self.controls[0].transform.autoAim)
 
 
-class Head(FKComponent):
+class HeadComponent(FKComponent):
 
     @property
     def head_control(self):
@@ -138,15 +138,15 @@ class Head(FKComponent):
                end_joint=None,
                head_joint_index=-2,
                lock_translate=False):
-        instance = super(Head, cls).create(meta_parent=meta_parent,
-                                           hook=hook,
-                                           character=character,
-                                           side=side,
-                                           name=name,
-                                           start_joint=start_joint,
-                                           end_joint=end_joint,
-                                           add_end_ctl=head_joint_index == -1,
-                                           lock_translate=lock_translate)  # type: Head
+        instance = super(HeadComponent, cls).create(meta_parent=meta_parent,
+                                                    hook=hook,
+                                                    character=character,
+                                                    side=side,
+                                                    name=name,
+                                                    start_joint=start_joint,
+                                                    end_joint=end_joint,
+                                                    add_end_ctl=head_joint_index == -1,
+                                                    lock_translate=lock_translate)  # type: HeadComponent
         # Create utility attrib
         instance.pynode.addAttr("headJointIndex", at="long", k=False, dv=head_joint_index)
         instance.pynode.headJointIndex.lock()

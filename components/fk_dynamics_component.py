@@ -7,7 +7,7 @@ from luna_rig.functions import attrFn
 from luna_rig.functions import curveFn
 
 
-class FKDynamics(luna_rig.AnimComponent):
+class FKDynamicsComponent(luna_rig.AnimComponent):
 
     @property
     def hair_system(self):
@@ -30,7 +30,7 @@ class FKDynamics(luna_rig.AnimComponent):
             return
 
         # Create instance and add attrs
-        instance = super(FKDynamics, cls).create(meta_parent=meta_parent, side=meta_parent.side, name=name, character=character)  # type: FKDynamics
+        instance = super(FKDynamicsComponent, cls).create(meta_parent=meta_parent, side=meta_parent.side, name=name, character=character)  # type: FKDynamicsComponent
         instance.pynode.addAttr("hairSystem", at="message")
 
         # Joint chain
@@ -119,7 +119,7 @@ class FKDynamics(luna_rig.AnimComponent):
         return instance
 
     def attach_to_component(self, other_comp):
-        super(FKDynamics, self).attach_to_component(other_comp, hook_index=None)
+        super(FKDynamicsComponent, self).attach_to_component(other_comp, hook_index=None)
         # Add dynamics attributes
         attrFn.add_divider(self.meta_parent.controls[0].transform, attr_name="DYNAMICS")
         attr_dict = attrFn.transfer_attr(self.hair_system, self.meta_parent.controls[0].transform, connect=True)
@@ -140,5 +140,5 @@ class FKDynamics(luna_rig.AnimComponent):
             pm.deleteAttr(attr)
         self.meta_parent.controls[0].transform.DYNAMICS.unlock()
         pm.deleteAttr(self.meta_parent.controls[0].transform.DYNAMICS)
-        super(FKDynamics, self).remove()
+        super(FKDynamicsComponent, self).remove()
         self.signals.removed.emit()

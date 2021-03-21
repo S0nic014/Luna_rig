@@ -7,7 +7,7 @@ from luna_rig.functions import nameFn
 import luna_rig.functions.animFn as animFn
 
 
-class Foot(luna_rig.AnimComponent):
+class FootComponent(luna_rig.AnimComponent):
     ROLL_ATTRS = ["footRoll", "toeRoll", "heelRoll", "bank", "heelTwist", "toeTwist", "toeTap"]
 
     @property
@@ -37,7 +37,7 @@ class Foot(luna_rig.AnimComponent):
         side = side if side else meta_parent.side
         foot_locators_grp = pm.PyNode(foot_locators_grp)  # type: luna_rig.nt.Transform
         # Create instance and add attrs
-        instance = super(Foot, cls).create(meta_parent=meta_parent, side=side, name=name, character=character)  # type: Foot
+        instance = super(FootComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character)  # type: FootComponent
         instance.pynode.addAttr("fkChain", at="message", multi=1, im=0)
         instance.pynode.addAttr("ikChain", at="message", multi=1, im=0)
         instance.pynode.addAttr("fkControl", at="message")
@@ -105,7 +105,7 @@ class Foot(luna_rig.AnimComponent):
 
         # Roll attributes
         attrFn.add_divider(meta_parent.ik_control.transform, attr_name="FOOT")
-        for attr_name in Foot.ROLL_ATTRS:
+        for attr_name in FootComponent.ROLL_ATTRS:
             meta_parent.ik_control.transform.addAttr(attr_name, at="float", k=1, dv=0.0)
         meta_parent.ik_control.transform.footRoll.connect(rv_chain[2].attr(roll_axis))
         meta_parent.ik_control.transform.toeRoll.connect(toe_locator.rotateX)
@@ -156,7 +156,7 @@ class Foot(luna_rig.AnimComponent):
         pm.deleteAttr(self.meta_parent.ik_control.transform.FOOT)
         for attr_name in self.ROLL_ATTRS:
             pm.deleteAttr(self.meta_parent.ik_control.transform.attr(attr_name))
-        super(Foot, self).remove()
+        super(FootComponent, self).remove()
 
     def bake_fkik(self, source="fk", time_range=None, step=1):
         if source != "ik":

@@ -4,7 +4,7 @@ import luna_rig
 import luna_rig.functions.attrFn as attrFn
 
 
-class Eye(luna_rig.AnimComponent):
+class EyeComponent(luna_rig.AnimComponent):
 
     @property
     def aim_control(self):
@@ -22,7 +22,7 @@ class Eye(luna_rig.AnimComponent):
                aim_vector=[0, 0, 1],
                up_vector=[0, 1, 0],
                target_wire=False):
-        instance = super(Eye, cls).create(meta_parent=meta_parent, side=side, name=name, hook=hook, character=character)  # type: Eye
+        instance = super(EyeComponent, cls).create(meta_parent=meta_parent, side=side, name=name, hook=hook, character=character)  # type: EyeComponent
         instance.pynode.addAttr("aimControl", at="message")
         eye_joint = pm.PyNode(eye_joint)
         attrFn.add_meta_attr(eye_joint)
@@ -47,6 +47,6 @@ class Eye(luna_rig.AnimComponent):
         return instance
 
     def attach_to_component(self, other_comp, hook_index=0):
-        super(Eye, self).attach_to_component(other_comp, hook_index=hook_index)
+        super(EyeComponent, self).attach_to_component(other_comp, hook_index=hook_index)
         if self.in_hook:
             pm.parentConstraint(self.in_hook.transform, self.root, mo=1)

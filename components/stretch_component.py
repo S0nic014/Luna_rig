@@ -3,7 +3,7 @@ import luna_rig
 import luna_rig.functions.nodeFn as nodeFn
 
 
-class IKSplineStretch(luna_rig.Component):
+class IKSplineStretchComponent(luna_rig.Component):
 
     @property
     def ik_curve(self):
@@ -34,7 +34,7 @@ class IKSplineStretch(luna_rig.Component):
 
         # Full name based on parent component
         full_name = "_".join([meta_parent.indexed_name, name])
-        instance = super(IKSplineStretch, cls).create(meta_parent, side=side, name=full_name)  # type: IKSplineStretch
+        instance = super(IKSplineStretchComponent, cls).create(meta_parent, side=side, name=full_name)  # type: IKSplineStretchComponent
 
         # Apply stretch
         curve_info = nodeFn.create("curveInfo", [instance.name, "curve"], instance.side, suffix="info")

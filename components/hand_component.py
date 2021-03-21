@@ -3,7 +3,7 @@ import luna_rig
 from luna_rig.importexport.driven_pose import DrivenPoseManager
 
 
-class Hand(luna_rig.AnimComponent):
+class HandComponent(luna_rig.AnimComponent):
 
     @property
     def fingers(self):
@@ -25,7 +25,7 @@ class Hand(luna_rig.AnimComponent):
                side=None,
                name="hand",
                hook=None):
-        instance = super(Hand, cls).create(meta_parent=meta_parent, side=side, name=name, hook=hook, character=character)  # type: Hand
+        instance = super(HandComponent, cls).create(meta_parent=meta_parent, side=side, name=name, hook=hook, character=character)  # type: HandComponent
         instance.pynode.addAttr("fingers", at="message", multi=True, im=False)
 
         instance.connect_to_character(parent=True)
@@ -55,7 +55,7 @@ class Hand(luna_rig.AnimComponent):
         return fk_component
 
     def attach_to_component(self, other_comp, hook_index=None):
-        super(Hand, self).attach_to_component(other_comp, hook_index=hook_index)
+        super(HandComponent, self).attach_to_component(other_comp, hook_index=hook_index)
         if self.in_hook:
             pm.matchTransform(self.root, self.in_hook.transform)
             pm.parentConstraint(self.in_hook.transform, self.group_ctls)
