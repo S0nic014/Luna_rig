@@ -24,7 +24,7 @@ class MetaNode(object):
         return meta_type_str
 
     def __repr__(self):
-        return "{0}({1})".format(self.as_str(name_only=True), self.pynode.name())
+        return "{0} ({1})".format(self.as_str(name_only=True), self.pynode.name())
 
     def __eq__(self, other):
         return self.pynode == other.pynode

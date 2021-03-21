@@ -60,7 +60,7 @@ class TwistComponent(luna_rig.AnimComponent):
             start_object = start_joint
         if not end_object:
             end_object = end_joint
-        name = "_".join([meta_parent.name, name])
+        name = "_".join([meta_parent.indexed_name, name])
 
         # Create instance and add attrs to metanode
         instance = super(TwistComponent, cls).create(meta_parent=meta_parent, side=side, name=name, hook=None, character=character)  # type: TwistComponent
