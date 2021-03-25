@@ -424,6 +424,9 @@ class Control(object):
                         """.format(self.group, self.offset_list, self.offset, self.transform, self.joint, self.tag_node, self.shape, self.bind_pose,
                                    self.side, self.name))
 
+    def set_tag(self, value_str):
+        self.tag_node.tag.set(value_str)
+
     def set_outliner_color(self, color):
         outlinerFn.set_color(self.transform, color)
 

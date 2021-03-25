@@ -1,10 +1,8 @@
 import pymel.core as pm
 from luna import Logger
 import luna_rig
-import luna_rig.functions.jointFn as jointFn
 import luna_rig.functions.nodeFn as nodeFn
 import luna_rig.functions.attrFn as attrFn
-import luna_rig.functions.nameFn as nameFn
 import luna_rig.functions.rivetFn as rivetFn
 
 

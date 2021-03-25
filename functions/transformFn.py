@@ -159,5 +159,27 @@ def snap_to_components_center(components, snap_object):
     pm.delete(center_locator)
 
 
+def get_axis_name_from_vector3(vector3):
+    if not isinstance(vector3, pm.dt.Vector):
+        vector3 = pm.dt.Vector(*vector3)
+    if vector3.x:
+        if vector3.x > 0:
+            return "x"
+        else:
+            return "-x"
+
+    if vector3.y:
+        if vector3.y > 0:
+            return "y"
+        else:
+            return "-y"
+
+    if vector3.z:
+        if vector3.z > 0:
+            return "z"
+        else:
+            return "-z"
+
+
 if __name__ == "__main__":
     pass
