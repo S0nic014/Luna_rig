@@ -80,7 +80,7 @@ class Character(luna_rig.Component):
         return result
 
     @classmethod
-    def create(cls, meta_parent=None, name="character"):
+    def create(cls, meta_parent=None, name="character", tag="character"):
         """Creation method.
 
         :param meta_parent: Not used, defaults to None
@@ -91,7 +91,7 @@ class Character(luna_rig.Component):
         :rtype: Character
         """
         # Add message attrs to meta node
-        instance = super(Character, cls).create(meta_parent, name=name, side="char")  # type: Character
+        instance = super(Character, cls).create(meta_parent, name=name, side="char", tag=tag)  # type: Character
         instance.pynode.addAttr("characterName", dt="string")
         instance.pynode.addAttr("rootCtl", at="message")
         instance.pynode.addAttr("controlRig", at="message")

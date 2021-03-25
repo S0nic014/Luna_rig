@@ -73,9 +73,10 @@ class FKIKComponent(luna_rig.AnimComponent):
                end_joint=None,
                ik_world_orient=False,
                default_state=1,
-               param_locator=None):
+               param_locator=None,
+               tag=""):
         # Create instance and add attrs
-        instance = super(FKIKComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character)  # type: FKIKComponent
+        instance = super(FKIKComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character, tag=tag)  # type: FKIKComponent
         instance.pynode.addAttr("fkChain", at="message", multi=1, im=0)
         instance.pynode.addAttr("ikChain", at="message", multi=1, im=0)
         instance.pynode.addAttr("fkControls", at="message", multi=1, im=0)

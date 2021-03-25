@@ -15,13 +15,15 @@ class IKSplineStretchComponent(luna_rig.Component):
         return curve_transform
 
     @classmethod
-    def create(cls, meta_parent,
+    def create(cls,
+               meta_parent,
                side=None,
                name='stretch',
                switch_control=None,
                default_state=False,
                switch_attr="stretch",
-               joint_attr="scaleX"):
+               joint_attr="scaleX",
+               tag=""):
         if not isinstance(meta_parent, luna_rig.AnimComponent):
             Logger.error("{0}: Must have AnimComponent instance as meta_parent".format(cls))
             raise TypeError
@@ -34,7 +36,7 @@ class IKSplineStretchComponent(luna_rig.Component):
 
         # Full name based on parent component
         full_name = "_".join([meta_parent.indexed_name, name])
-        instance = super(IKSplineStretchComponent, cls).create(meta_parent, side=side, name=full_name)  # type: IKSplineStretchComponent
+        instance = super(IKSplineStretchComponent, cls).create(meta_parent, side=side, name=full_name, tag=tag)  # type: IKSplineStretchComponent
 
         # Apply stretch
         curve_info = nodeFn.create("curveInfo", [instance.name, "curve"], instance.side, suffix="info")

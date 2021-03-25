@@ -19,8 +19,9 @@ class FKComponent(luna_rig.AnimComponent):
                start_joint=None,
                end_joint=None,
                add_end_ctl=True,
-               lock_translate=True):
-        instance = super(FKComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character)  # type: FKComponent
+               lock_translate=True,
+               tag=""):
+        instance = super(FKComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character, tag=tag)  # type: FKComponent
         # Joint chain
         joint_chain = jointFn.joint_chain(start_joint, end_joint)
         jointFn.validate_rotations(joint_chain)
@@ -137,7 +138,8 @@ class HeadComponent(FKComponent):
                start_joint=None,
                end_joint=None,
                head_joint_index=-2,
-               lock_translate=False):
+               lock_translate=False,
+               tag=""):
         instance = super(HeadComponent, cls).create(meta_parent=meta_parent,
                                                     hook=hook,
                                                     character=character,
@@ -146,7 +148,8 @@ class HeadComponent(FKComponent):
                                                     start_joint=start_joint,
                                                     end_joint=end_joint,
                                                     add_end_ctl=head_joint_index == -1,
-                                                    lock_translate=lock_translate)  # type: HeadComponent
+                                                    lock_translate=lock_translate,
+                                                    tag=tag)  # type: HeadComponent
         # Create utility attrib
         instance.pynode.addAttr("headJointIndex", at="long", k=False, dv=head_joint_index)
         instance.pynode.headJointIndex.lock()

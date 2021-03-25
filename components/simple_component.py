@@ -14,8 +14,9 @@ class SimpleComponent(luna_rig.AnimComponent):
                hook=None,
                character=None,
                side="c",
-               name="empty_component"):
-        instance = super(SimpleComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character)  # type: SimpleComponent
+               name="empty_component",
+               tag=""):
+        instance = super(SimpleComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character, tag=tag)  # type: SimpleComponent
         instance.connect_to_character(character, parent=True)
         instance.attach_to_component(meta_parent, hook_index=hook)
         return instance

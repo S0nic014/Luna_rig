@@ -44,7 +44,7 @@ class Component(luna_rig.MetaNode):
         return nodes
 
     @ classmethod
-    def create(cls, meta_parent, side="c", name="component"):
+    def create(cls, meta_parent, side="c", name="component", tag=""):
         """Creates instance of component
 
         :param meta_parent: Other Component to parent to.
@@ -63,6 +63,7 @@ class Component(luna_rig.MetaNode):
         instance.pynode.rename(nameFn.generate_name(name, side, suffix="meta"))
         instance.pynode.addAttr("settings", at="message", multi=1, im=0)
         instance.pynode.addAttr("utilNodes", at="message", multi=1, im=0)
+        instance.set_tag(tag)
         return instance
 
     def remove(self):
@@ -125,7 +126,8 @@ class AnimComponent(Component):
                side="c",
                name="anim_component",
                hook=0,
-               character=None):  # noqa:F821
+               character=None,
+               tag=""):  # noqa:F821
         """Create AnimComponent hierarchy in the scene and instance.
 
         :param meta_parent: Other Rig element to connect to, defaults to None
@@ -141,7 +143,7 @@ class AnimComponent(Component):
         """
         if not side:
             side = meta_parent.side
-        instance = super(AnimComponent, cls).create(meta_parent, side, name)  # type: AnimComponent
+        instance = super(AnimComponent, cls).create(meta_parent, side, name, tag=tag)  # type: AnimComponent
         # Create hierarchy
         root_grp = pm.group(n=nameFn.generate_name(instance.name, instance.side, suffix="comp"), em=1)
         ctls_grp = pm.group(n=nameFn.generate_name(instance.name, instance.side, suffix="ctls"), em=1, p=root_grp)

@@ -45,9 +45,10 @@ class RibbonComponent(luna_rig.AnimComponent):
                use_span="u",
                fk_hierarchy=False,
                override_num_rivets=None,
-               flip_rivets_normal=False):
+               flip_rivets_normal=False,
+               tag=""):
         # Metanode attributes
-        instance = super(RibbonComponent, cls).create(meta_parent=meta_parent, side=side, name=name, hook=hook, character=character)  # type: RibbonComponent
+        instance = super(RibbonComponent, cls).create(meta_parent=meta_parent, side=side, name=name, hook=hook, character=character, tag=tag)  # type: RibbonComponent
         instance.pynode.addAttr("surface", at="message")
         instance.pynode.addAttr("fkHierarchy", at="bool", dv=fk_hierarchy, w=False, r=True)
         instance.pynode.fkHierarchy.lock()

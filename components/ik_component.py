@@ -36,9 +36,10 @@ class IKComponent(luna_rig.AnimComponent):
                side="c",
                name="ik_component",
                start_joint=None,
-               end_joint=None):
+               end_joint=None,
+               tag=""):
         # Create instance and add attrs
-        instance = super(IKComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character)  # type: IKComponent
+        instance = super(IKComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character, tag=tag)  # type: IKComponent
         instance.pynode.addAttr("ikControl", at="message")
         instance.pynode.addAttr("poleVectorControl", at="message")
         instance.pynode.addAttr("ikHandle", at="message")

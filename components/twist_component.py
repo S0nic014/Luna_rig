@@ -50,7 +50,8 @@ class TwistComponent(luna_rig.AnimComponent):
                num_joints=2,
                start_object=None,
                end_object=None,
-               mirrored_chain=False):
+               mirrored_chain=False,
+               tag=""):
         # Process arguments
         if not side:
             side = meta_parent.side
@@ -63,7 +64,7 @@ class TwistComponent(luna_rig.AnimComponent):
         name = "_".join([meta_parent.indexed_name, name])
 
         # Create instance and add attrs to metanode
-        instance = super(TwistComponent, cls).create(meta_parent=meta_parent, side=side, name=name, hook=None, character=character)  # type: TwistComponent
+        instance = super(TwistComponent, cls).create(meta_parent=meta_parent, side=side, name=name, hook=None, character=character, tag=tag)  # type: TwistComponent
         instance.pynode.addAttr("twistStartObject", at="message")
         instance.pynode.addAttr("twistEndObject", at="message")
         instance.pynode.addAttr("startJoint", at="message")

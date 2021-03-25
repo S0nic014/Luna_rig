@@ -31,9 +31,10 @@ class SpineComponent(luna_rig.AnimComponent):
                meta_parent=None,
                character=None,
                side='c',
-               name='spine'):
+               name='spine',
+               tag="body"):
         # Create instance and add attrs
-        instance = super(SpineComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character)  # type: SpineComponent
+        instance = super(SpineComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character, tag="tag")  # type: SpineComponent
         instance.pynode.addAttr("rootControl", at="message")
         instance.pynode.addAttr("hipsControl", at="message")
         instance.pynode.addAttr("chestControl", at="message")
@@ -82,9 +83,10 @@ class FKIKSpineComponent(SpineComponent):
                side='c',
                name='spine',
                start_joint=None,
-               end_joint=None):
+               end_joint=None,
+               tag="body"):
         # Create instance and add attrs
-        instance = super(FKIKSpineComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character)  # type: FKIKSpineComponent
+        instance = super(FKIKSpineComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character, tag=tag)  # type: FKIKSpineComponent
         instance.pynode.addAttr("fkControls", at="message", multi=1, im=0)
         instance.pynode.addAttr("midControl", at="message")
 
@@ -271,10 +273,11 @@ class RibbonSpineComponent(SpineComponent):
                name='spine',
                start_joint=None,
                end_joint=None,
-               side_vector=[1, 0, 0]):
+               side_vector=[1, 0, 0],
+               tag="body"):
         Logger.warning("{0}: WIP component".format(cls))
         # Create instance and add attrs
-        instance = super(RibbonSpineComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character)  # type: RibbonSpineComponent
+        instance = super(RibbonSpineComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character, tag=tag)  # type: RibbonSpineComponent
         instance.pynode.addAttr("midControl", at="message")
 
         # Joint chains

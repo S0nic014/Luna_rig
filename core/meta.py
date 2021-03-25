@@ -4,7 +4,6 @@ import pymel.core as pm
 import luna_rig
 from luna import Logger
 from luna_rig.functions import nameFn
-import luna.utils.inspectFn as inspectFn
 
 
 class MetaNode(object):
@@ -98,6 +97,14 @@ class MetaNode(object):
         return attr_val
 
     @property
+    def tag(self):
+        if self.pynode.hasAttr("tag"):
+            return self.pynode.tag.get()
+        else:
+            Logger.warning("{0}: Missing tag attribute".format(self))
+            return ""
+
+    @property
     def meta_parent(self):
         """Get instance of meta parent
 
@@ -133,10 +140,11 @@ class MetaNode(object):
                 meta_parent = MetaNode(meta_parent)
 
         # Create node
-        node = pm.createNode("network")
+        node = pm.createNode("network")  # type: luna_rig.nt.Network
 
         # Add attributes
         node.addAttr("metaType", dt="string")
+        node.addAttr("tag", dt="string")
         node.addAttr("metaChildren", at="message", multi=1, im=0)
         node.addAttr("metaParent", at="message")
         node.metaType.set(cls.as_str())
@@ -148,7 +156,7 @@ class MetaNode(object):
     def set_meta_parent(self, parent):
         self.pynode.metaParent.connect(parent.pynode.metaChildren, na=1)
 
-    def get_meta_children(self, of_type=None):
+    def get_meta_children(self, of_type=None, by_tag=""):
         """Get list of connected meta children
 
         :param of_type: Only list children of specific type, defaults to None
@@ -161,6 +169,7 @@ class MetaNode(object):
             connections = self.pynode.metaChildren.listConnections()
             if connections:
                 children = [MetaNode(connection_node) for connection_node in connections if pm.hasAttr(connection_node, "metaType")]
+                # Type filter
                 if not of_type:
                     result = children
                 else:
@@ -168,15 +177,21 @@ class MetaNode(object):
                         result = [child for child in children if of_type in child.as_str()]
                     else:
                         result = [child for child in children if isinstance(child, of_type)]
+                # Tag filter
+                if by_tag:
+                    result = [child for child in result if child.tag == by_tag]
         else:
             Logger.warning("{0}: Missing metaChildren attribute.")
         return result
+
+    def set_tag(self, tag_str):
+        self.pynode.tag.set(tag_str)
 
     def is_animatable(self):
         return isinstance(self, (luna_rig.AnimComponent, luna_rig.components.Character))
 
     @staticmethod
-    def list_nodes(of_type=None):
+    def list_nodes(of_type=None, by_tag=""):
         """List existing meta nodes
 
         :param of_type: List only specific type, defaults to None
@@ -193,6 +208,10 @@ class MetaNode(object):
                 result = [node for node in all_nodes if isinstance(node, of_type)]
         else:
             result = all_nodes
+
+        # Tag filter
+        if by_tag:
+            result = [node for node in result if node.tag == by_tag]
         return result
 
     @staticmethod

@@ -29,7 +29,8 @@ class FootComponent(luna_rig.AnimComponent):
                end_joint=None,
                rv_chain=None,
                foot_locators_grp=None,
-               roll_axis="ry"):
+               roll_axis="ry",
+               tag="body"):
         # Validate arguments
         if not isinstance(meta_parent, luna_rig.components.FKIKComponent):
             Logger.error("{0}: Invalid meta_parent type. Should be FKIKComponent.")
@@ -37,7 +38,7 @@ class FootComponent(luna_rig.AnimComponent):
         side = side if side else meta_parent.side
         foot_locators_grp = pm.PyNode(foot_locators_grp)  # type: luna_rig.nt.Transform
         # Create instance and add attrs
-        instance = super(FootComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character)  # type: FootComponent
+        instance = super(FootComponent, cls).create(meta_parent=meta_parent, side=side, name=name, character=character, tag=tag)  # type: FootComponent
         instance.pynode.addAttr("fkChain", at="message", multi=1, im=0)
         instance.pynode.addAttr("ikChain", at="message", multi=1, im=0)
         instance.pynode.addAttr("fkControl", at="message")
