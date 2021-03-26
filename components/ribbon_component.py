@@ -102,7 +102,7 @@ class RibbonComponent(luna_rig.AnimComponent):
             for ctl_index in range(len(shape_controls) - 1):
                 shape_controls[ctl_index + 1].set_parent(shape_controls[ctl_index])
 
-            # Output joints
+        # Output joints
         bind_joints = []
         for ctl_jnt in ctl_chain:
             bind_jnt = nodeFn.create("joint", instance.name, instance.side, suffix="jnt")
