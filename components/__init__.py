@@ -13,6 +13,7 @@ from luna_rig.components.hand_component import HandComponent
 from luna_rig.components.eye_component import EyeComponent
 from luna_rig.components.simple_component import SimpleComponent
 from luna_rig.components.ribbon_component import RibbonComponent
+from luna_rig.components.lips_component import RibbonLipsComponent
 
 # Components
 from luna_rig.components.stretch_component import IKSplineStretchComponent

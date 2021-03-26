@@ -179,9 +179,9 @@ class Character(luna_rig.Component):
                 ctls += comp.list_controls(tag)
         return ctls
 
-    def list_bind_joints(self):
+    def list_bind_joints(self, by_tag=""):
         joint_list = []
-        comp_list = self.get_meta_children()
+        comp_list = self.get_meta_children(by_tag=by_tag)
         for comp in comp_list:
             if isinstance(comp, luna_rig.AnimComponent):
                 joint_list += comp.bind_joints
