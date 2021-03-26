@@ -89,3 +89,35 @@ def select_cvs(transform=None):
     pm.select(cl=1)
     for shape in transform.getShapes():
         pm.select(shape + ".cv[0:]", add=1)
+
+
+def insert_end_knots(curve):
+    """Inserts extra knots on both ends of the curve.
+    NOTE: Curve must be not uniform
+
+    :param curve: Curve transform node
+    :type curve: str or PyNode
+    """
+    if not isinstance(curve, pm.PyNode):
+        curve = pm.PyNode(curve)  # type: luna_rig.nt.Transform
+    # Get params
+    shape_node = curve.getShape()  # type: luna_rig.nt.NurbsCurve
+    start_param, end_param = shape_node.getKnotDomain()
+    end_insert_param = (end_param - 1.0) + (2.0 / 3.0)
+    start_insert_param = 1.0 / 3.0
+    # Insert
+    pm.insertKnotCurve(curve + ".u[{0}]".format(start_insert_param), ch=0, cos=1, nk=1, add=0, ib=1, rpo=1)
+    pm.insertKnotCurve(curve + ".u[{0}]".format(end_insert_param), ch=0, cos=1, nk=1, add=0, ib=1, rpo=1)
+
+
+def get_skin_persent(curve, skin, cv_index):
+    if not isinstance(curve, pm.PyNode):
+        curve = pm.PyNode(curve)  # type: luna_rig.nt.Transform
+    if not isinstance(skin, pm.PyNode):
+        curve = pm.PyNode(skin)  # type: luna_rig.nt.SkinCluster
+
+    skin_percents = []
+    for influence_obj in skin.getWeightedInfluence():
+        weight = pm.skinPercent(skin, curve.getShape().cv[cv_index], transform=influence_obj, q=True)
+        skin_percents.append((influence_obj, weight))
+    return skin_percents
