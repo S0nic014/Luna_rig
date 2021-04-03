@@ -16,12 +16,9 @@ from luna_rig.importexport import manager as manager_base
 
 class NgLayersManager(manager_base.AbstractManager):
 
-    def __init__(self, file_format=None):
+    def __init__(self):
         super(NgLayersManager, self).__init__("ng_layers", "layers")
-        if not file_format:
-            self.file_format = luna.Config.get(luna.RigVars.nglayers_export_format, default="pickle")  # type: str
-        else:
-            self.file_format = file_format
+        self.file_format = luna.Config.get(luna.RigVars.nglayers_export_format, default="pickle")  # type: str
         if self.file_format not in ["json", "pickle"]:
             Logger.error("{0}: Invalid file format: {1}".format(self, self.file_format))
             raise ValueError
@@ -38,13 +35,6 @@ class NgLayersManager(manager_base.AbstractManager):
 
     def get_latest_file(self, node):
         return fileFn.get_latest_file(self.get_base_name(node), self.path, extension=self.extension, full_path=True)
-
-    def get_initialized_clusters(self):
-        skin_clusters = []
-        for skin in pm.ls(type="skinCluster"):
-            if skin.listConnections(type="ngSkinLayerData"):
-                skin_clusters.append(skin)
-        return skin_clusters
 
     def export_single(self, node):
         # Get transform
@@ -67,10 +57,6 @@ class NgLayersManager(manager_base.AbstractManager):
             Logger.info("{0}: Exported layers {1}".format(self, new_file))
         except Exception:
             Logger.exception("{0}: Failed to export layers for {0}".format(node))
-
-    def export_all(self):
-        for skin in self.get_initialized_clusters():
-            self.export_single(skin)
 
     def import_single(self, node_name):
         # Get node name
@@ -95,11 +81,27 @@ class NgLayersManager(manager_base.AbstractManager):
             layer_data.saveTo(node_name)
             Logger.info("{0}: Imported layers for {1}".format(self, node_name))
         except Exception:
-            Logger.exception("Failed to appy ngLayers to {0}".format(node_name))
+            Logger.exception("Failed to apply ngLayers to {0}".format(node_name))
 
-    def import_all(self):
-        for node_name in self.versioned_files.keys():
-            self.import_single(node_name)
+    @classmethod
+    def get_initialized_skin(cls):
+        skin_clusters = []
+        for skin in pm.ls(type="skinCluster"):
+            if skin.listConnections(type="ngSkinLayerData"):
+                skin_clusters.append(skin)
+        return skin_clusters
+
+    @classmethod
+    def export_all(cls):
+        ng_manager = NgLayersManager()
+        for skin in cls.get_initialized_skin():
+            ng_manager.export_single(skin)
+
+    @classmethod
+    def import_all(cls):
+        ng_manager = NgLayersManager()
+        for node_name in ng_manager.versioned_files.keys():
+            ng_manager.import_single(node_name)
 
     @classmethod
     def export_selected(cls):

@@ -59,7 +59,9 @@ class CtlShapeManager(manager.AbstractManager):
             ctl.shape = shape_name
         Logger.info("Successfully loaded shape: " + shape_name)
 
-    def export_asset_shapes(self):
+    @classmethod
+    def export_asset_shapes(cls):
+        manager_instance = cls()
         data_dict = {}
         all_controls = rigFn.list_controls()
         if not all_controls:
@@ -68,12 +70,14 @@ class CtlShapeManager(manager.AbstractManager):
 
         for ctl in all_controls:
             data_dict[ctl.transform.name()] = ctl.shape
-        export_path = self.get_new_file()
+        export_path = manager_instance.get_new_file()
         fileFn.write_json(export_path, data=data_dict)
         Logger.info("Exported control shapes: " + export_path)
 
-    def import_asset_shapes(self):
-        latest_file = self.get_latest_file()
+    @classmethod
+    def import_asset_shapes(cls):
+        manager_instance = cls()
+        latest_file = manager_instance.get_latest_file()
         if not latest_file:
             return
         data_dict = fileFn.load_json(latest_file)

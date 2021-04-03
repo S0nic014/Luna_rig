@@ -24,10 +24,12 @@ class PsdManager(manager_base.AbstractManager):
     def get_new_file(self):
         return fileFn.get_new_versioned_file(self.get_base_name(), self.path, extension=self.extension, full_path=True)
 
-    def export_all(self):
+    @classmethod
+    def export_all(cls):
+        psd_manager = cls()
         interpolators = pm.ls(typ="poseInterpolator")
         if not interpolators:
-            pm.warning("{0}: No pose interpolators found in the scene.".format(self))
+            pm.warning("{0}: No pose interpolators found in the scene.".format(psd_manager))
             return False
         # Export pose blendshapes
         pose_blendshapes = []
@@ -40,13 +42,15 @@ class PsdManager(manager_base.AbstractManager):
         for bs_node in pose_blendshapes:
             bs_manager.export_single(bs_node)
         # Export interpolators
-        export_path = self.get_new_file()
+        export_path = psd_manager.get_new_file()
         pm.poseInterpolator(interpolators, e=1, ex=export_path)
-        Logger.info("{0}: Exported pose interpolators: {1}".format(self, export_path))
+        Logger.info("{0}: Exported pose interpolators: {1}".format(psd_manager, export_path))
         return export_path
 
-    def import_all(self):
-        interpolator_file = self.get_latest_file()
+    @classmethod
+    def import_all(cls):
+        psd_manager = cls()
+        interpolator_file = psd_manager.get_latest_file()
         if not interpolator_file:
             pm.warning("No interpolators to import", noContext=True)
             return False
@@ -56,4 +60,4 @@ class PsdManager(manager_base.AbstractManager):
             driver_parent_component = luna_rig.MetaNode.get_connected_metanode(driver)
             if driver_parent_component:
                 pm.parent(interpolator_shape.getTransform(), driver_parent_component.character.util_grp)
-        Logger.info("{0}: Imported pose interpolators: {1}".format(self, interpolator_file))
+        Logger.info("{0}: Imported pose interpolators: {1}".format(psd_manager, interpolator_file))

@@ -81,6 +81,8 @@ class DrivenPoseManager(manager.AbstractManager):
             pose_name = file_name.split(".")[0].replace(component_node + "-", "")
             self.import_pose(component_node, pose_name)
 
-    def import_all(self):
+    @classmethod
+    def import_all(cls):
+        pose_manager = cls()
         for component in luna_rig.MetaNode.list_nodes(of_type=luna_rig.AnimComponent):
-            self.import_component_poses(component)
+            pose_manager.import_component_poses(component)

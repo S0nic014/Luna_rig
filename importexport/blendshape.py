@@ -54,12 +54,6 @@ class BlendShapeManager(manager.AbstractManager):
             Logger.exception("{0}: Failed to export blendshape {1}".format(self, node))
             return False
 
-    def export_all(self, under_group=static.CharacterMembers.geometry.value):
-        export_list = []
-        export_list = deformerFn.list_deformers(self.data_type, under_group=under_group)
-        for shape in export_list:
-            self.export_single(shape)
-
     def import_single(self, bs_node):
         if not isinstance(bs_node, str):
             bs_node = str(bs_node)
@@ -89,27 +83,30 @@ class BlendShapeManager(manager.AbstractManager):
             Logger.exception("{0}: Failed to import blendshape {1}".format(self, latest_path))
             return False
 
-    def import_all(self):
-        for bs_name in self.versioned_files.keys():
-            self.import_single(bs_name)
+    @classmethod
+    def export_all(cls, under_group=static.CharacterMembers.geometry.value):
+        bs_manager = cls()
+        export_list = []
+        export_list = deformerFn.list_deformers(bs_manager.data_type, under_group=under_group)
+        for shape in export_list:
+            bs_manager.export_single(shape)
+
+    @classmethod
+    def import_all(cls):
+        bs_manager = cls()
+        for bs_name in bs_manager.versioned_files.keys():
+            bs_manager.import_single(bs_name)
 
     @classmethod
     def export_selected(cls):
-        manager = BlendShapeManager()
+        manager = cls()
         seleted = pm.selected(type=manager.data_type)
         for bs_node in seleted:
             manager.export_single(bs_node)
 
     @classmethod
     def import_selected(cls):
-        manager = BlendShapeManager()
+        manager = cls()
         seleted = pm.selected(type=manager.data_type)
         for bs_node in seleted:
             manager.import_single(bs_node)
-
-
-if __name__ == "__main__":
-    bs_manager = BlendShapeManager()
-    # bs_manager.export_all()
-    # BlendShapeManager.export_selected()
-    # BlendShapeManager.import_selected()
