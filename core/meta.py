@@ -161,6 +161,8 @@ class MetaNode(object):
 
         :param of_type: Only list children of specific type, defaults to None
         :type of_type: class, optional
+        :param by_tag: List child nodes that have specified tag, defaults to ""
+        :type by_tag: str, optional
         :return: List of meta children instances
         :rtype: list[MetaNode]
         """
@@ -196,6 +198,8 @@ class MetaNode(object):
 
         :param of_type: List only specific type, defaults to None
         :type of_type: str, class, optional
+        :param by_tag: List nodes that have specified tag, defaults to ""
+        :type by_tag: str, optional
         :return: List of MetaNode instances.
         :rtype: list[MetaNode]
         """

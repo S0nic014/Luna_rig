@@ -4,3 +4,4 @@ from luna_rig.importexport.blendshape import BlendShapeManager
 from luna_rig.importexport.posespace import PsdManager
 from luna_rig.importexport.driven_pose import DrivenPoseManager
 from luna_rig.importexport.nglayers import NgLayersManager
+from luna_rig.importexport.nglayers2 import NgLayers2Manager
