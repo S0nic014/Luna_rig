@@ -125,7 +125,7 @@ class AnimComponent(Component):
                meta_parent=None,
                side="c",
                name="anim_component",
-               hook=0,
+               hook=None,
                character=None,
                tag=""):  # noqa:F821
         """Create AnimComponent hierarchy in the scene and instance.

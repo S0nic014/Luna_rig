@@ -20,7 +20,7 @@ def duplicate_chain(original_chain=[],
     if not original_chain:
         original_chain = joint_chain(start_joint, end_joint)
 
-    new_chain = pm.duplicate(original_chain, po=1, rc=1)  # type :list
+    new_chain = pm.duplicate(original_chain, po=1, rc=1)  # type: list
     for old_jnt, new_jnt in zip(original_chain, new_chain):
         original_name = nameFn.deconstruct_name(old_jnt)
         if replace_name:

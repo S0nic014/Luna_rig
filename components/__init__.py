@@ -14,6 +14,7 @@ from luna_rig.components.eye_component import EyeComponent
 from luna_rig.components.simple_component import SimpleComponent
 from luna_rig.components.ribbon_component import RibbonComponent
 from luna_rig.components.lips_component import RibbonLipsComponent
+from luna_rig.components.corrective_component import CorrectiveComponent
 
 # Components
 from luna_rig.components.stretch_component import IKSplineStretchComponent

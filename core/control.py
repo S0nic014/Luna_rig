@@ -849,13 +849,13 @@ class Control(object):
             self.connected_component._store_util_nodes([local_group, space_group])
 
     def add_driven_pose(self, driven_dict, driver_attr, driver_value):
-        pose_offset = self.find_offset("driven")
-        if not pose_offset:
-            pose_offset = self.insert_offset(extra_name="driven")
+        sdk_offset = self.find_offset("sdk")
+        if not sdk_offset:
+            sdk_offset = self.insert_offset(extra_name="sdk")
         for attr_name, value in driven_dict.items():
-            pm.setDrivenKeyframe(pose_offset.attr(attr_name), cd=driver_attr, v=pose_offset.attr(attr_name).get(), dv=0)
-            pm.setDrivenKeyframe(pose_offset.attr(attr_name), cd=driver_attr, v=value, dv=driver_value)
-        return pose_offset
+            pm.setDrivenKeyframe(sdk_offset.attr(attr_name), cd=driver_attr, v=sdk_offset.attr(attr_name).get(), dv=0)
+            pm.setDrivenKeyframe(sdk_offset.attr(attr_name), cd=driver_attr, v=value, dv=driver_value)
+        return sdk_offset
 
     def copy_keyframes(self, time_range, target_control, time_offset=0.0):
         copiedKeys = pm.copyKey(self.transform, time=time_range)
