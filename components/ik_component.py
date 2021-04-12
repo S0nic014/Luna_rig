@@ -2,9 +2,10 @@ import pymel.core as pm
 from luna import Logger
 from luna.utils import enumFn
 import luna_rig
-from luna_rig.functions import jointFn
-from luna_rig.functions import attrFn
-from luna_rig.functions import nameFn
+import luna_rig.functions.jointFn as jointFn
+import luna_rig.functions.attrFn as attrFn
+import luna_rig.functions.nameFn as nameFn
+import luna_rig.functions.nodeFn as nodeFn
 
 
 class IKComponent(luna_rig.AnimComponent):
@@ -28,6 +29,11 @@ class IKComponent(luna_rig.AnimComponent):
         node = self.pynode.ikHandle.listConnections(d=1)[0]  # type:luna_rig.nt.IkHandle
         return node
 
+    @property
+    def group_joints_offset(self):
+        transform = self.pynode.jointOffsetGrp.get()  # type: luna_rig.nt.Transform
+        return transform
+
     @classmethod
     def create(cls,
                meta_parent=None,
@@ -43,6 +49,7 @@ class IKComponent(luna_rig.AnimComponent):
         instance.pynode.addAttr("ikControl", at="message")
         instance.pynode.addAttr("poleVectorControl", at="message")
         instance.pynode.addAttr("ikHandle", at="message")
+        instance.pynode.addAttr("jointOffsetGrp", at="message")
         # Joint chain
         joint_chain = jointFn.joint_chain(start_joint, end_joint)
         jointFn.validate_rotations(joint_chain)
@@ -51,6 +58,10 @@ class IKComponent(luna_rig.AnimComponent):
         for jnt in joint_chain:
             attrFn.add_meta_attr(jnt)
         ctl_chain = jointFn.duplicate_chain(original_chain=joint_chain, add_name="ctl", new_parent=instance.group_joints)
+        jnt_offset_grp = nodeFn.create("transform", [instance.indexed_name, "constr"], instance.side, suffix="grp", p=instance.group_joints)
+        attrFn.add_meta_attr(jnt_offset_grp)
+        pm.matchTransform(jnt_offset_grp, ctl_chain[0])
+        ctl_chain[0].setParent(jnt_offset_grp)
 
         # Create ik control
         ik_control = luna_rig.Control.create(side=instance.side,
@@ -89,10 +100,11 @@ class IKComponent(luna_rig.AnimComponent):
         instance._store_bind_joints(joint_chain)
         instance._store_ctl_chain(ctl_chain)
         instance._store_controls([ik_control, pv_control])
-        # Store indiviual controls
+        # Store component items
         ik_control.transform.metaParent.connect(instance.pynode.ikControl)
         pv_control.transform.metaParent.connect(instance.pynode.poleVectorControl)
         ik_handle.metaParent.connect(instance.pynode.ikHandle)
+        jnt_offset_grp.metaParent.connect(instance.pynode.jointOffsetGrp)
 
         # Store attach points
         instance.add_hook(ctl_chain[0], "start_jnt")
@@ -117,7 +129,7 @@ class IKComponent(luna_rig.AnimComponent):
     def attach_to_component(self, other_comp, hook_index=0):
         super(IKComponent, self).attach_to_component(other_comp, hook_index)
         if self.in_hook:
-            pm.parentConstraint(self.in_hook.transform, self.group_joints, mo=1)
+            pm.parentConstraint(self.in_hook.transform, self.group_joints_offset, mo=1)
 
     def attach_to_skeleton(self):
         """Override: attach to skeleton"""
