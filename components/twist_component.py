@@ -140,7 +140,7 @@ class TwistComponent(luna_rig.AnimComponent):
                                                 add_name="out",
                                                 new_parent=instance.group_joints)
         for ctl_jnt, out_jnt in zip(ctl_chain[1:-1], output_joints):
-            pm.orientConstraint(ctl_jnt, out_jnt)
+            pm.parentConstraint(ctl_jnt, out_jnt)
 
         # Meta connections
         instance.connect_to_character(parent=True)

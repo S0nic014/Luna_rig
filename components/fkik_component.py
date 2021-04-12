@@ -19,12 +19,12 @@ class FKIKComponent(luna_rig.AnimComponent):
 
     @property
     def ik_control(self):
-        transform = self.pynode.ikControl.listConnections(d=1)[0]  # type: luna_rig.nt.Transform
+        transform = self.pynode.ikControl.get()  # type: luna_rig.nt.Transform
         return luna_rig.Control(transform)
 
     @property
     def pv_control(self):
-        transform = self.pynode.poleVectorControl.listConnections(d=1)[0]  # type: luna_rig.nt.Transform
+        transform = self.pynode.poleVectorControl.get()  # type: luna_rig.nt.Transform
         return luna_rig.Control(transform)
 
     @property
@@ -33,17 +33,22 @@ class FKIKComponent(luna_rig.AnimComponent):
 
     @property
     def param_control(self):
-        transform = self.pynode.paramControl.listConnections(d=1)[0]
+        transform = self.pynode.paramControl.get()
         return luna_rig.Control(transform)
 
     @property
     def handle(self):
-        node = self.pynode.ikHandle.listConnections(d=1)[0]  # type:luna_rig.nt.IkHandle
+        node = self.pynode.ikHandle.get()  # type:luna_rig.nt.IkHandle
         return node
 
     @property
     def matching_helper(self):
-        transform = self.pynode.matchingHelper.listConnections(d=1)[0]  # type: luna_rig.nt.Transform
+        transform = self.pynode.matchingHelper.get()  # type: luna_rig.nt.Transform
+        return transform
+
+    @property
+    def group_joints_offset(self):
+        transform = self.pynode.jointOffsetGrp.get()  # type: luna_rig.nt.Transform
         return transform
 
     @property
@@ -84,6 +89,7 @@ class FKIKComponent(luna_rig.AnimComponent):
         instance.pynode.addAttr("poleVectorControl", at="message")
         instance.pynode.addAttr("paramControl", at="message")
         instance.pynode.addAttr("matchingHelper", at="message")
+        instance.pynode.addAttr("jointOffsetGrp", at="message")
         instance.pynode.addAttr("ikHandle", at="message")
         # Joint chain
         joint_chain = jointFn.joint_chain(start_joint, end_joint)
@@ -94,6 +100,7 @@ class FKIKComponent(luna_rig.AnimComponent):
             attrFn.add_meta_attr(jnt)
         ctl_chain = jointFn.duplicate_chain(original_chain=joint_chain, add_name="ctl", new_parent=instance.group_joints)
         jnt_offset_grp = nodeFn.create("transform", [instance.indexed_name, "constr"], instance.side, suffix="grp", p=instance.group_joints)
+        attrFn.add_meta_attr(jnt_offset_grp)
         pm.matchTransform(jnt_offset_grp, ctl_chain[0])
         ctl_chain[0].setParent(jnt_offset_grp)
 
@@ -199,6 +206,7 @@ class FKIKComponent(luna_rig.AnimComponent):
             fk_ctl.transform.metaParent.connect(instance.pynode.fkControls, na=1)
         ik_control.transform.metaParent.connect(instance.pynode.ikControl)
         matching_helper.metaParent.connect(instance.pynode.matchingHelper)
+        jnt_offset_grp.metaParent.connect(instance.pynode.jointOffsetGrp)
         ik_handle.metaParent.connect(instance.pynode.ikHandle)
         pv_control.transform.metaParent.connect(instance.pynode.poleVectorControl)
         param_control.transform.metaParent.connect(instance.pynode.paramControl)
@@ -239,7 +247,7 @@ class FKIKComponent(luna_rig.AnimComponent):
     def attach_to_component(self, other_comp, hook_index=None):
         super(FKIKComponent, self).attach_to_component(other_comp, hook_index)
         if self.in_hook:
-            pm.parentConstraint(self.in_hook.transform, self.ctl_chain[0].getParent(), mo=1)
+            pm.parentConstraint(self.in_hook.transform, self.group_joints_offset, mo=1)
             pm.parentConstraint(self.in_hook.transform, self.fk_controls[0].group, mo=1)
 
     def switch_fkik(self, matching=True):
@@ -285,7 +293,3 @@ class FKIKComponent(luna_rig.AnimComponent):
         for child in self.meta_children:
             if hasattr(child, "bake_fkik"):
                 child.bake_fkik(source=source, time_range=time_range, step=step)
-
-    def add_stretch(self, default_value=False):
-        # TODO: Add stretch
-        pass

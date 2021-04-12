@@ -18,3 +18,4 @@ from luna_rig.components.corrective_component import CorrectiveComponent
 
 # Components
 from luna_rig.components.stretch_component import IKSplineStretchComponent
+from luna_rig.components.stretch_component import IKStretchComponent

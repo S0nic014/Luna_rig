@@ -26,9 +26,7 @@ class FKDynamicsComponent(luna_rig.AnimComponent):
                name="dynamics_component",
                unique_nsolver=False,
                tag=""):
-        if not isinstance(meta_parent, luna_rig.components.FKComponent):
-            Logger.exception("Dynamics component requires FKComponent instance as meta_parent")
-            return
+        cls.verify_parent_type(meta_parent, luna_rig.components.FKComponent)
 
         # Create instance and add attrs
         instance = super(FKDynamicsComponent, cls).create(meta_parent=meta_parent, side=meta_parent.side, name=name, character=character, tag=tag)  # type: FKDynamicsComponent
