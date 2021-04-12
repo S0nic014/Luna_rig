@@ -66,6 +66,12 @@ class Component(luna_rig.MetaNode):
         instance.set_tag(tag)
         return instance
 
+    @classmethod
+    def verify_parent_type(cls, parent, valid_types):
+        if not isinstance(parent, valid_types):
+            Logger.exception("{0}: Invalid meta parent type - {1}. Valid types: {2}".format(cls.as_str(name_only=True), parent, valid_types))
+            raise TypeError
+
     def remove(self):
         pass
 
@@ -102,6 +108,14 @@ class Component(luna_rig.MetaNode):
         for each in nodes:
             if each not in self.util_nodes:
                 each.message.connect(self.pynode.utilNodes, na=1)
+
+    def _delete_settings_attrs(self):
+        for source_attr in self.settings.keys():
+            if pm.objExists(source_attr):
+                pm.deleteAttr(source_attr)
+                Logger.info("{0}: Deleted settings attribute - {1}".format(self, source_attr))
+            else:
+                Logger.error("{0}: Settings attr doesn't exist - {1}".format(self, source_attr))
 
     def _delete_util_nodes(self):
         for util_node in self.util_nodes:
