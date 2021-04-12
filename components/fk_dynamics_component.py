@@ -123,6 +123,7 @@ class FKDynamicsComponent(luna_rig.AnimComponent):
         super(FKDynamicsComponent, self).attach_to_component(other_comp, hook_index=None)
         # Add dynamics attributes
         attrFn.add_divider(self.meta_parent.controls[0].transform, attr_name="DYNAMICS")
+        # TODO: Use proxy attr instead of copying
         attr_dict = attrFn.transfer_attr(self.hair_system, self.meta_parent.controls[0].transform, connect=True)
         for added_attr in attr_dict.values():
             self._store_settings(added_attr)

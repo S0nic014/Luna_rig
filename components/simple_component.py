@@ -22,16 +22,17 @@ class SimpleComponent(luna_rig.AnimComponent):
         return instance
 
     def add_control(self, guide_object, name, as_hook=False, bind_joint=None, *args, **kwargs):
-        if "parent" not in kwargs.keys():
-            kwargs["parent"] = self.group_ctls
+        parent = kwargs.pop("parent", None)
+
         new_control = luna_rig.Control.create(name=[self.indexed_name, name],
                                               guide=guide_object,
+                                              parent=self.group_ctls,
                                               *args,
                                               **kwargs)
         # Connect to hook
         self._store_controls([new_control])
-        if self.in_hook:
-            pm.parentConstraint(self.in_hook.transform, new_control.group, mo=1)
+        if parent:
+            pm.parentConstraint(parent, new_control.group, mo=1)
         # Store hook
         if as_hook:
             self.add_hook(new_control.transform, new_control.name)
@@ -44,3 +45,8 @@ class SimpleComponent(luna_rig.AnimComponent):
 
     def attach_to_skeleton(self):
         pass
+
+    def attach_to_component(self, other_comp, hook_index=None):
+        super(SimpleComponent, self).attach_to_component(other_comp, hook_index=hook_index)
+        if self.in_hook:
+            pm.parentConstraint(self.in_hook.transform, self.group_ctls)

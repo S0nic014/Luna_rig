@@ -57,7 +57,7 @@ class SDKCorrectiveManager(manager.AbstractManager):
                              attr + "Y": value_list[1],
                              attr + "Z": value_list[2]}
                 control.add_driven_pose(axis_dict, pm.PyNode(driver_attr), driver_value)
-            Logger.info("{0}: Imported {1} pose: {2}".format(self, corrective_component, latest_file))
+        Logger.info("{0}: Imported {1} pose: {2}".format(self, corrective_component, latest_file))
 
     def import_component_poses(self, component_node):
         if isinstance(component_node, luna_rig.AnimComponent):
@@ -71,11 +71,4 @@ class SDKCorrectiveManager(manager.AbstractManager):
     def import_all(cls):
         pose_manager = cls()
         for component in luna_rig.MetaNode.list_nodes(of_type=luna_rig.components.CorrectiveComponent):
-            Logger.debug(component)
             pose_manager.import_component_poses(component)
-
-
-if __name__ == "__main__":
-    man = SDKCorrectiveManager()
-    for corr_comp in luna_rig.MetaNode.list_nodes(of_type=luna_rig.components.CorrectiveComponent):
-        man.export_pose(corr_comp, "test", "l_arm_01_jnt.rz")
