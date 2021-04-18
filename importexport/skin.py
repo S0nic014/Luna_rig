@@ -169,7 +169,7 @@ class SkinCluster(object):
         if fmt == "json":
             fileFn.write_json(file_path, self.data, sort_keys=False)
         elif fmt == "pickle":
-            fileFn.write_cpickle(file_path, self.data)
+            fileFn.write_pickle(file_path, self.data)
 
     # Setters
     def set_influence_weights(self, skin_data):
@@ -219,7 +219,7 @@ class SkinCluster(object):
         if fmt == "json":
             skin_data = fileFn.load_json(file_path)
         elif fmt == "pickle":
-            skin_data = fileFn.load_cpickle(file_path)  # type: dict
+            skin_data = fileFn.load_pickle(file_path)  # type: dict
 
         # Find or create skin cluster
         deformer = deformerFn.get_deformer(geometry, "skinCluster")

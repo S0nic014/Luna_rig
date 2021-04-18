@@ -51,7 +51,7 @@ class NgLayersManager(manager_base.AbstractManager):
         # Export
         try:
             if self.file_format == "pickle":
-                fileFn.write_cpickle(new_file, json_data)
+                fileFn.write_pickle(new_file, json_data)
             elif self.file_format == "json":
                 fileFn.write_json(new_file, json_data, sort_keys=False)
             Logger.info("{0}: Exported layers {1}".format(self, new_file))
@@ -72,7 +72,7 @@ class NgLayersManager(manager_base.AbstractManager):
             return
         # Do import
         if self.file_format == "pickle":
-            imported_data = fileFn.load_cpickle(latest_file)
+            imported_data = fileFn.load_pickle(latest_file)
         elif self.file_format == "json":
             imported_data = fileFn.load_json(latest_file)
         ng_importer = JsonImporter()
