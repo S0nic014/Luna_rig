@@ -5,7 +5,6 @@ from PySide2 import QtCore
 from luna import Logger
 from luna import Config
 from luna import BuildVars
-from luna.utils import environFn
 from luna.utils import maya_utils
 from luna.workspace import project
 from luna.workspace import asset
@@ -35,7 +34,7 @@ class PyBuild(object):
         self.start_time = timeit.default_timer()
         Logger.info("Initiating new build...")
 
-        self.asset = asset.Asset(asset_name, asset_type)
+        self.asset = asset.Asset(self.project, asset_name, asset_type)
         # Import model and componets files
         asset_files.import_model()
         asset_files.import_skeleton()
@@ -44,7 +43,6 @@ class PyBuild(object):
             self.character = luna_rig.components.Character(existing_character)
         else:
             self.character = luna_rig.components.Character.create(name=asset_name)
-        environFn.set_character_var(self.character)
 
         # Override methods
         self.run()

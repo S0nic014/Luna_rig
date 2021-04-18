@@ -18,6 +18,8 @@ from luna_rig.core.shape_manager import ShapeManager
 
 class Control(object):
 
+    LINE_WIDTH = Config.get(RigVars.line_width, default=2.0)  # type: float
+
     def __repr__(self):
         return "Control({0})".format(self.transform)
 
@@ -159,7 +161,7 @@ class Control(object):
         instance.shape = shape
         instance.color = color
         instance.set_outliner_color(27)
-        ShapeManager.set_line_width(instance.transform, Config.get(RigVars.line_width, default=2.0, stored=True))
+        ShapeManager.set_line_width(instance.transform, cls.LINE_WIDTH)
         # Attributes
         instance.lock_attrib(exclude_attr=attributes, channel_box=False)
 

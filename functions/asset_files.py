@@ -1,7 +1,7 @@
 import pymel.core as pm
 import os
+import luna
 from luna import Logger
-from luna.utils import environFn
 from PySide2 import QtWidgets
 
 
@@ -12,7 +12,7 @@ def clear_all_references(*args):
 
 
 def browse_model():
-    current_asset = environFn.get_asset_var()
+    current_asset = luna.workspace.Asset.get()
     file_filters = "Maya (*.ma *mb);;Maya ASCII (*.ma);;Maya Binary(*.mb);;All Files (*.*)"
     selected_filter = "Maya (*.ma *mb)"
     model_path = QtWidgets.QFileDialog.getOpenFileName(None, "Select model file", current_asset.path, file_filters, selected_filter)[0]
@@ -23,7 +23,7 @@ def browse_model():
 
 
 def import_model():
-    current_asset = environFn.get_asset_var()
+    current_asset = luna.workspace.Asset.get()
     model_path = current_asset.model_path
     if not os.path.isfile(model_path):
         model_path = browse_model()
@@ -38,7 +38,7 @@ def import_model():
 
 
 def reference_model(*args):
-    current_asset = environFn.get_asset_var()
+    current_asset = luna.workspace.Asset.get()
     if current_asset:
         pm.createReference(current_asset.model_path)
     else:
@@ -46,7 +46,7 @@ def reference_model(*args):
 
 
 def import_skeleton():
-    current_asset = environFn.get_asset_var()
+    current_asset = luna.workspace.Asset.get()
     latest_skeleton_path = current_asset.latest_skeleton_path
     pm.importFile(latest_skeleton_path, loadReferenceDepth="none", dns=1)
     Logger.info("Imported skeleton: {0}".format(latest_skeleton_path))
@@ -54,7 +54,7 @@ def import_skeleton():
 
 
 def increment_save_file(typ="skeleton"):
-    current_asset = environFn.get_asset_var()
+    current_asset = luna.workspace.Asset.get()
     if not current_asset:
         pm.warning("Asset is not set!")
     new_file = getattr(current_asset, "new_{0}_path".format(typ))
@@ -63,7 +63,7 @@ def increment_save_file(typ="skeleton"):
 
 
 def save_file_as(typ="skeleton"):
-    current_asset = environFn.get_asset_var()
+    current_asset = luna.workspace.Asset.get()
     if not current_asset:
         pm.warning("Asset is not set!")
     start_dir = getattr(current_asset, typ)

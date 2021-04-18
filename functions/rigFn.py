@@ -1,8 +1,8 @@
 import pymel.core as pm
 import pymel.api as pma
-from luna import Logger
-from luna.utils import environFn
+import luna
 import luna_rig
+from luna import Logger
 
 
 def list_controls():
@@ -29,7 +29,7 @@ def get_build_character():
     :return: Character meta node as Character instance.
     :rtype: Character
     """
-    current_asset = environFn.get_asset_var()
+    current_asset = luna.workspace.Asset.get()
     all_characters = luna_rig.MetaNode.list_nodes(of_type=luna_rig.components.Character)
     for char_node in all_characters:
         if char_node.pynode.characterName.get() == current_asset.name:

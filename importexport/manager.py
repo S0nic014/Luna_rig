@@ -1,7 +1,8 @@
 import abc
+import luna
 from luna import Logger
-from luna.utils import environFn
 from luna.utils import fileFn
+import luna_rig.functions.rigFn as rigFn
 
 
 class AbstractManager(object):
@@ -27,8 +28,8 @@ class AbstractManager(object):
         """
         self.data_type = data_type  # type :str
         self.extension = extension  # type: str
-        self.asset = environFn.get_asset_var()
-        self.character = environFn.get_character_var()
+        self.asset = luna.workspace.Asset.get()
+        self.character = rigFn.get_build_character()
         if not self.asset:
             Logger.error("Asset is not set")
             raise RuntimeError
