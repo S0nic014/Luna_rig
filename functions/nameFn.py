@@ -4,20 +4,15 @@ import luna
 from luna import Logger
 
 
-class NamingConvention:
-    START_INDEX = luna.Config.get(luna.NamingVars.start_index, default=0)  # type: int
-    ZFILL = luna.Config.get(luna.NamingVars.index_padding, default=2)  # type: int
-    DEFAULT_TEMPLATE = "{side}_{name}_{suffix}"
-    ALL_TEMPLATES = luna.Config.get(luna.NamingVars.templates_dict, default={"default": DEFAULT_TEMPLATE})  # type: dict
-    CURRENT_TEMPLATE_NAME = luna.Config.get(luna.NamingVars.current_template, default="default")  # type: str
-
-    @classmethod
-    def get_template(cls):
-        return cls.ALL_TEMPLATES.get(cls.CURRENT_TEMPLATE_NAME)
+def get_template():
+    default_template = "{side}_{name}_{suffix}"
+    all_templates = luna.Config.get(luna.NamingVars.templates_dict, default={"default": default_template}, cached=True)  # type: dict
+    current_name = luna.Config.get(luna.NamingVars.current_template, default="default", cached=True)  # type: str
+    return all_templates.get(current_name)
 
 
 def deconstruct_name(node):
-    template = NamingConvention.get_template()
+    template = get_template()
     node = pm.PyNode(node)
     full_name = node.stripNamespace()
     name_parts = full_name.split("_")
@@ -55,9 +50,9 @@ def generate_name(name, side, suffix, override_index=None):
         name = "_".join(name)
     # Prepare for name generation
     timeout = 300
-    template = NamingConvention.get_template()
-    index = NamingConvention.START_INDEX
-    zfill = NamingConvention.ZFILL
+    template = get_template()
+    index = luna.Config.get(luna.NamingVars.start_index, default=0, cached=True)  # type: int
+    zfill = luna.Config.get(luna.NamingVars.index_padding, default=2, cached=True)  # type: int
     # Construct base name
     index_str = str(index).zfill(zfill) if override_index is None else override_index
     indexed_name = name + "_" + index_str

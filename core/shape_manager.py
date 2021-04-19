@@ -1,6 +1,7 @@
 import os
 import pymel.core as pm
 
+import luna
 import luna_rig
 from luna import Logger
 from luna.utils import fileFn
@@ -64,7 +65,7 @@ class ShapeManager:
             return False
         node = pm.PyNode(node)  # type: luna_rig.nt.Transform
         pm.delete(node.getShapes())
-        line_width = luna_rig.Control.LINE_WIDTH
+        line_width = luna.Config.get(luna.RigVars.line_width, default=2.0, cached=True)  # type: float
         for index, shape_dict in enumerate(shape_list):
             # Create temporary curve
             tmp_curve = pm.curve(p=shape_dict.get("points"), k=shape_dict.get("knots"), d=shape_dict.get("degree"))
