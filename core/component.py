@@ -20,7 +20,7 @@ class _compSignals(QtCore.QObject):
 class Component(luna_rig.MetaNode):
 
     def __new__(cls, node=None):
-        return object.__new__(cls, node)
+        return object.__new__(cls)
 
     def __init__(self, node):
         super(Component, self).__init__(node)
