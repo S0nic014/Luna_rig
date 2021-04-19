@@ -123,6 +123,7 @@ class SkinCluster(object):
                      "blendWeights": []}
 
     def get_geometry_components(self):
+        # TODO: Causes Maya2022 Internal Failure
         fn_set = om.MFnSet(self.pynode.__apimfn__().deformerSet())
         members = om.MSelectionList()
         fn_set.getMembers(members, False)
