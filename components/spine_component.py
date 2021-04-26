@@ -104,7 +104,6 @@ class FKIKSpineComponent(SpineComponent):
                                              parent=instance.group_noscale)
         attrFn.add_meta_attr(ik_curve)
         pm.rebuildCurve(ik_curve, d=3, kep=1, rpo=1, ch=0, tol=0.01, spans=4)
-        # ik_curve.inheritsTransform.set(0)
         ik_handle = pm.ikHandle(n=nameFn.generate_name([instance.name], side=instance.side, suffix="ikh"),
                                 sj=ctl_chain[0],
                                 ee=ctl_chain[-1],

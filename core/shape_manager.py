@@ -61,7 +61,6 @@ class ShapeManager:
     @classmethod
     def apply_shape(cls, node, shape_list, default_color=0):
         if not pm.objExists(node):
-            Logger.warning("ShapeManager: Transform {0} no longer exists".format(node))
             return False
         node = pm.PyNode(node)  # type: luna_rig.nt.Transform
         pm.delete(node.getShapes())

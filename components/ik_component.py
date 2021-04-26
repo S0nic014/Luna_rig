@@ -6,6 +6,7 @@ import luna_rig.functions.jointFn as jointFn
 import luna_rig.functions.attrFn as attrFn
 import luna_rig.functions.nameFn as nameFn
 import luna_rig.functions.nodeFn as nodeFn
+import luna_rig.functions.curveFn as curveFn
 
 
 class IKComponent(luna_rig.AnimComponent):
@@ -135,3 +136,122 @@ class IKComponent(luna_rig.AnimComponent):
         """Override: attach to skeleton"""
         for ctl_jnt, bind_jnt in zip(self.ctl_chain[:-1], self.bind_joints[:-1]):
             pm.parentConstraint(ctl_jnt, bind_jnt, mo=1)
+
+
+class IKSplineComponent(luna_rig.AnimComponent):
+
+    @property
+    def root_control(self):
+        return luna_rig.Control(self.pynode.rootControl.get())
+
+    @property
+    def shape_controls(self):
+        return [luna_rig.Control(conn) for conn in self.pynode.shapeControls.listConnections(d=1)]
+
+    @classmethod
+    def create(cls,
+               meta_parent=None,
+               side='c',
+               name='anim_component',
+               hook=None, character=None,
+               tag='',
+               start_joint=None,
+               end_joint=None,
+               ik_curve=None,
+               num_controls=None):
+
+        instance = super(IKSplineComponent, cls).create(meta_parent=meta_parent, side=side, name=name, hook=hook, character=character, tag=tag)  # type: IKSplineComponent
+        instance.pynode.addAttr("ikCurve", at="message")
+        instance.pynode.addAttr("rootControl", at="message")
+        instance.pynode.addAttr("shapeControls", at="message", multi=True, im=False)
+
+        if not start_joint and not ik_curve:
+            Logger.error("{0}: Requires start joint or curve to build on. Got neither".format(instance))
+            raise ValueError
+
+        # Create joint chain if not provided
+        if not start_joint:
+            pass
+        else:
+            joint_chain = jointFn.joint_chain(start_joint=start_joint, end_joint=end_joint)
+        attrFn.add_meta_attr(joint_chain)
+        ctl_chain = jointFn.duplicate_chain(original_chain=joint_chain, add_name="ctl", new_parent=instance.group_joints)
+
+        # Build curve if not provided
+        if not ik_curve:
+            ik_curve_points = [jnt.getTranslation(space="world") for jnt in joint_chain]
+            ik_curve = curveFn.curve_from_points(name=nameFn.generate_name([instance.indexed_name, "ik"], side=instance.side, suffix="crv"),
+                                                 points=ik_curve_points,
+                                                 parent=instance.group_noscale)
+            pm.rebuildCurve(ik_curve, d=3, kep=1, rpo=1, ch=0, tol=0.01, spans=4)
+        attrFn.add_meta_attr(ik_curve)
+
+        # IK handle
+        ik_handle = pm.ikHandle(n=nameFn.generate_name([instance.name], side=instance.side, suffix="ikh"),
+                                sj=ctl_chain[0],
+                                ee=ctl_chain[-1],
+                                c=ik_curve,
+                                sol="ikSplineSolver",
+                                roc=1,
+                                pcv=0,
+                                ccv=0,
+                                scv=0)[0]
+        pm.parent(ik_handle, instance.group_parts)
+
+        # Create controls
+        if not num_controls:
+            num_controls = len(ctl_chain)
+        shape_controls = []
+
+        ctl_locator = pm.spaceLocator(n="temp_control_loc")
+        # Root control
+        ctl_locator.translate.set(pm.pointOnCurve(ik_curve, pr=0.0, top=1))
+        root_control = luna_rig.Control.create(name=[instance.indexed_name, "root"],
+                                               side=instance.side,
+                                               guide=ctl_locator,
+                                               parent=instance.group_ctls,
+                                               delete_guide=False,
+                                               attributes="trs")
+
+        # Shape control
+        for index in range(0, num_controls + 1):
+            u_value = float(index) / float(num_controls)
+            ctl_locator.translate.set(pm.pointOnCurve(ik_curve, pr=u_value, top=1))
+            ctl = luna_rig.Control.create(name=[instance.indexed_name, "shape"],
+                                          side=instance.side,
+                                          guide=ctl_locator,
+                                          parent=root_control,
+                                          delete_guide=False,
+                                          attributes="tr",
+                                          shape="circle",
+                                          orient_axis="y",
+                                          joint=True)
+            shape_controls.append(ctl)
+        pm.delete(ctl_locator)
+        pm.skinCluster([each.joint for each in shape_controls], ik_curve, n=nameFn.generate_name([instance.indexed_name, "curve"], instance.side, "skin"))
+
+        # Store objects
+        instance._store_bind_joints(joint_chain)
+        instance._store_ctl_chain(ctl_chain)
+        instance._store_controls(shape_controls)
+        instance._store_controls([root_control])
+        ik_curve.metaParent.connect(instance.pynode.ikCurve)
+        root_control.transform.metaParent.connect(instance.pynode.rootControl)
+        for ctl in shape_controls:
+            ctl.transform.metaParent.connect(instance.pynode.shapeControls, na=True)
+
+        # Connections
+        instance.attach_to_component(meta_parent, hook_index=hook)
+        instance.connect_to_character(character_component=character, parent=True)
+
+        # Scale controls
+        scale_dict = {}
+        for ctl in shape_controls:
+            scale_dict[ctl] = 0.06
+        instance.scale_controls(scale_dict)
+
+        # House keeping
+        instance.group_parts.visibility.set(False)
+        instance.group_joints.visibility.set(False)
+
+        return instance

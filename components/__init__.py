@@ -3,6 +3,7 @@ from luna_rig.components.character_component import Character
 from luna_rig.components.fk_component import FKComponent
 from luna_rig.components.fk_component import HeadComponent
 from luna_rig.components.ik_component import IKComponent
+from luna_rig.components.ik_component import IKSplineComponent
 from luna_rig.components.fkik_component import FKIKComponent
 from luna_rig.components.fk_dynamics_component import FKDynamicsComponent
 from luna_rig.components.spine_component import FKIKSpineComponent
@@ -15,6 +16,7 @@ from luna_rig.components.simple_component import SimpleComponent
 from luna_rig.components.ribbon_component import RibbonComponent
 from luna_rig.components.lips_component import RibbonLipsComponent
 from luna_rig.components.corrective_component import CorrectiveComponent
+from luna_rig.components.wire_component import WireComponent
 
 # Components
 from luna_rig.components.stretch_component import IKSplineStretchComponent
