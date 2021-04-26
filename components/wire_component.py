@@ -2,6 +2,7 @@ import pymel.core as pm
 import luna_rig
 import luna_rig.functions.nameFn as nameFn
 import luna_rig.functions.attrFn as attrFn
+import luna_rig.functions.nodeFn as nodeFn
 from luna import Logger
 
 
@@ -37,10 +38,12 @@ class WireComponent(luna_rig.AnimComponent):
                side='c',
                name='wire_component',
                hook=None,
-               tag='', curve=None,
+               tag='',
+               curve=None,
                geometry=None,
                dropoff_distance=100.0,
-               num_controls=4):
+               num_controls=4,
+               control_lines=True):
         instance = super(WireComponent, cls).create(character=character, meta_parent=meta_parent, side=side, name=name, hook=hook, tag=tag)  # type: WireComponent
         instance.pynode.addAttr("rootControl", at="message")
         instance.pynode.addAttr("shapeControls", at="message", multi=True, im=False)
@@ -81,12 +84,27 @@ class WireComponent(luna_rig.AnimComponent):
                                           parent=root_control,
                                           delete_guide=False,
                                           attributes="tr",
-                                          shape="circle",
+                                          shape="joint",
                                           orient_axis="y",
                                           joint=True)
             shape_controls.append(ctl)
         pm.delete(ctl_locator)
         pm.skinCluster([each.joint for each in shape_controls], curve, n=nameFn.generate_name([instance.indexed_name, "curve"], instance.side, "skin"))
+
+        # Draw control target lines
+        if control_lines:
+            for ctl in shape_controls:
+                nearest_locator = pm.spaceLocator(n=nameFn.generate_name([ctl.indexed_name, "nearest"], ctl.side, suffix="loc"))
+                nearest_locator.setParent(ctl.group)
+                nearest_locator.inheritsTransform.set(False)
+                nearest_locator.visibility.set(False)
+                nearest_pt_crv = nodeFn.create("nearestPointOnCurve", [ctl.indexed_name, "wire"], ctl.side, "nrpt")
+                decomp_mtx = nodeFn.create("decomposeMatrix", [ctl.indexed_name, "wire"], ctl.side, "decomp")
+                ctl.joint.worldMatrix.connect(decomp_mtx.inputMatrix)
+                curve.getShape().local.connect(nearest_pt_crv.inputCurve)
+                decomp_mtx.outputTranslate.connect(nearest_pt_crv.inPosition)
+                nearest_pt_crv.position.connect(nearest_locator.translate)
+                ctl.add_wire(nearest_locator)
 
         # Store objects
         instance._store_controls([root_control])
@@ -106,7 +124,7 @@ class WireComponent(luna_rig.AnimComponent):
         # Scale controls
         scale_dict = {}
         for ctl in shape_controls:
-            scale_dict[ctl] = 0.06
+            scale_dict[ctl] = 0.02
         instance.scale_controls(scale_dict)
 
         # House keeping
