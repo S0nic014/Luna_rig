@@ -127,9 +127,12 @@ class Character(luna_rig.Component):
             geometry_grp.inheritsTransform.set(0)
 
         # Add meta parent attrs to nodes
-        attrFn.add_meta_attr([control_rig, deformation_rig, geometry_grp, locators_grp, world_locator, util_grp])
-        # for node in [control_rig, deformation_rig, geometry_grp, locators_grp, world_locator]:
-        #     node.addAttr("metaParent", at="message")
+        attrFn.add_meta_attr([control_rig,
+                              deformation_rig,
+                              geometry_grp,
+                              locators_grp,
+                              world_locator,
+                              util_grp])
 
         # Connect to meta node
         instance.pynode.characterName.set(name)

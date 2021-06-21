@@ -13,7 +13,7 @@ from luna_rig.importexport import manager as manager_base
 class NgLayers2Manager(manager_base.AbstractManager):
 
     def __init__(self):
-        super(NgLayers2Manager, self).__init__("ng_layers", "layers")
+        super(NgLayers2Manager, self).__init__("ng_layers2", "layers")
 
     @property
     def path(self):
