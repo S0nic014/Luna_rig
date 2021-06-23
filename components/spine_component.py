@@ -41,12 +41,6 @@ class SpineComponent(luna_rig.AnimComponent):
         instance.pynode.addAttr("ikCurve", at="message")
         return instance
 
-    def add_stretch(self, default_value=False):
-        pass
-
-    def add_free_pivot(self):
-        pass
-
 
 class FKIKSpineComponent(SpineComponent):
 
